@@ -1,23 +1,23 @@
 import type { RoyaltyPayout } from '../engine'
-import { PARTICIPANT_LABEL } from '../samples'
 
 interface Props {
   payouts: RoyaltyPayout[]
   revenueMist: bigint
   settled: boolean
+  labels?: Record<string, string>
 }
 
-const sui = (mist: bigint) => (Number(mist) / 1e9).toFixed(0)
+const sui = (mist: bigint) => (Number(mist) / 1e9).toFixed(2)
 
-export function Settlement({ payouts, revenueMist, settled }: Props) {
+export function Settlement({ payouts, revenueMist, settled, labels = {} }: Props) {
   return (
     <div className="card">
-      <h2>Customs Settlement</h2>
+      <h2>Customs settlement</h2>
       <p className="sub">co_creation_policy::distribute_royalties · dust-safe integer split</p>
 
       <div className="kpi" style={{ marginBottom: 8 }}>
         <div className="k">
-          <div className="label">Travel essay revenue</div>
+          <div className="label">Revenue</div>
           <div className="val">{sui(revenueMist)} SUI</div>
         </div>
         <div className="k">
@@ -28,11 +28,11 @@ export function Settlement({ payouts, revenueMist, settled }: Props) {
         </div>
       </div>
 
-      {payouts.length === 0 && <div className="note info">Fund escrow & pass consent to preview the on-chain split.</div>}
+      {payouts.length === 0 && <div className="note info">Grant a recreate above to settle the split on-chain.</div>}
 
       {payouts.map((p) => (
         <div className={`payout ${settled ? 'flash' : ''}`} key={p.address}>
-          <span className="addr">{PARTICIPANT_LABEL[p.address] ?? p.address}</span>
+          <span className="addr">{labels[p.address] ?? p.address}</span>
           <span className="pct">{p.weight}%</span>
           <span className="amt">{sui(p.amountMist)} SUI</span>
         </div>

@@ -1,133 +1,150 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  calculateAASE,
-  buildRecreateReadiness,
-  calculateRoyaltyPayouts,
-  prepareCoCreationActivation,
-  InMemoryAuthenticityMemoryClient,
-  writeAgentClue,
-  buildMemWalInspectorSnapshot,
+  calculateAASE, buildRecreateReadiness, calculateRoyaltyPayouts,
+  prepareCoCreationActivation, InMemoryAuthenticityMemoryClient,
+  writeAgentClue, buildMemWalInspectorSnapshot,
 } from './engine'
 import type {
-  AgentId, MemWalClue, RoyaltyPayout, VisaStamp, CoCreationMemoryRecord,
+  AASEGrade, AgentId, MemWalClue, RoyaltyPayout, VisaStamp, CoCreationMemoryRecord,
 } from './engine'
-import { AUTHENTIC, SYNTHETIC, PARTICIPANTS, ESCROW_MIST, REVENUE_MIST, type Scenario } from './samples'
+import { analyzeFile, type AnalysisResult } from './lib/analyze'
+import { Uploader } from './components/Uploader'
 import { AaseAudit } from './components/AaseAudit'
 import { MemWalInspector } from './components/MemWalInspector'
-import { PassportCard, type PassportView } from './components/PassportCard'
 import { ConsentGate } from './components/ConsentGate'
 import { Settlement } from './components/Settlement'
+import { PassportCard, type PassportView } from './components/PassportCard'
 
 type Snapshot = {
   clues: MemWalClue[]
   reputation: Record<AgentId, { clueCount: number; totalImpact: number; criticalCount: number }>
 }
-
 const EMPTY: Snapshot = { clues: [], reputation: {} as Snapshot['reputation'] }
 
-function severityOf(score: number): MemWalClue['severity'] {
-  if (score < 30) return 'critical'
-  if (score < 70) return 'warning'
-  return 'info'
-}
+const YOU = '0xyou_origin_creator'
+const REMIX = '0xrecreator'
+const LABELS = { [YOU]: 'You · origin creator', [REMIX]: 'Recreator · 2nd creator' }
 
-// Build a real MemWal blackboard snapshot from a scenario's agent findings.
-async function snapshotFor(scenario: Scenario): Promise<Snapshot> {
-  const client = new InMemoryAuthenticityMemoryClient()
-  const ids: string[] = []
-  for (const a of scenario.agentScores) {
-    const clue = await writeAgentClue(client, {
-      agentId: a.agentId,
-      severity: severityOf(a.score),
-      message: a.evidence?.[0] ?? `${a.agentId} returned score ${a.score}`,
-      scoreImpact: a.score - 70,
-      metadata: { confidence: a.confidence },
-    })
-    ids.push(clue.id)
+// Synthesize a sample image (no bundled assets) and run the real pipeline on it.
+function makeSample(kind: 'authentic' | 'synthetic'): Promise<File> {
+  const c = document.createElement('canvas'); c.width = 320; c.height = 320
+  const ctx = c.getContext('2d')!
+  if (kind === 'authentic') {
+    const g = ctx.createLinearGradient(0, 0, 320, 320)
+    g.addColorStop(0, '#2b6cff'); g.addColorStop(1, '#ff9a3d')
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 320, 320)
+  } else {
+    const img = ctx.createImageData(320, 320)
+    for (let i = 0; i < img.data.length; i += 4) {
+      img.data[i] = Math.random() * 255; img.data[i + 1] = Math.random() * 255
+      img.data[i + 2] = Math.random() * 255; img.data[i + 3] = 255
+    }
+    ctx.putImageData(img, 0, 0)
   }
-  return buildMemWalInspectorSnapshot(client, ids)
+  return new Promise((res) => c.toBlob((b) => res(new File([b!], `${kind}-sample.png`, { type: 'image/png' })), 'image/png'))
 }
-
-const STAGES = [
-  { n: 'STAGE 1', t: 'Authenticity audit & block' },
-  { n: 'STAGE 2', t: 'Passport + Sovereign Vault' },
-  { n: 'STAGE 3', t: 'Consent → settlement' },
-]
 
 export default function App() {
-  const [stage, setStage] = useState(0)
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [minGrade, setMinGrade] = useState<AASEGrade>('A')
+  const [originRoyalty, setOriginRoyalty] = useState(30)
   const [escrowFunded, setEscrowFunded] = useState(false)
+  const [escrowSui, setEscrowSui] = useState(50)
+  const [revenueSui, setRevenueSui] = useState(100)
   const [published, setPublished] = useState(false)
-  const [snap, setSnap] = useState<Snapshot>(EMPTY)
   const [archived, setArchived] = useState<CoCreationMemoryRecord | undefined>()
+  const [snap, setSnap] = useState<Snapshot>(EMPTY)
 
-  const activeScenario: Scenario = stage === 0 ? SYNTHETIC : AUTHENTIC
+  async function handleFile(f: File) {
+    setError(null); setAnalyzing(true); setPublished(false); setArchived(undefined)
+    try {
+      setAnalysis(await analyzeFile(f))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setAnalyzing(false)
+    }
+  }
 
-  // Real AASE assessments
-  const blockedAssessment = useMemo(() => calculateAASE(SYNTHETIC.agentScores, 'A'), [])
-  const authenticAssessment = useMemo(() => calculateAASE(AUTHENTIC.agentScores, 'A'), [])
-
-  // Real recreate-readiness (consent trigger)
-  const readiness = useMemo(
-    () => buildRecreateReadiness({
-      passportId: '0xpassport_sovereign_sunrise',
-      agentScores: AUTHENTIC.agentScores,
-      participants: PARTICIPANTS,
-      escrowAmountMist: escrowFunded ? ESCROW_MIST : 0n,
-      minimumGrade: 'A',
-    }),
-    [escrowFunded],
+  const participants = useMemo(
+    () => [{ address: YOU, weight: originRoyalty }, { address: REMIX, weight: 100 - originRoyalty }],
+    [originRoyalty],
   )
 
-  // Passport view: origin visa always; Country B visa appears in stage 3
-  const passport: PassportView = useMemo(() => {
-    const stamps: VisaStamp[] = [
-      { creatorAddress: '0xorigin_creator', countryCode: 'ORIGIN', share: 30, stampedAt: new Date().toISOString() },
-    ]
-    if (stage === 2) {
-      stamps.push({ creatorAddress: '0xcountry_b_remix', countryCode: 'B', share: 20, stampedAt: new Date().toISOString() })
-    }
+  const assessment = useMemo(
+    () => (analysis ? calculateAASE(analysis.scores, minGrade) : null),
+    [analysis, minGrade],
+  )
+
+  const readiness = useMemo(() => {
+    if (!analysis) return null
+    return buildRecreateReadiness({
+      passportId: `passport:${analysis.hash.slice(0, 24)}`,
+      agentScores: analysis.scores,
+      participants,
+      escrowAmountMist: escrowFunded ? BigInt(Math.round(escrowSui * 1e9)) : 0n,
+      minimumGrade: minGrade,
+    })
+  }, [analysis, participants, escrowFunded, escrowSui, minGrade])
+
+  const passport: PassportView | null = useMemo(() => {
+    if (!analysis || !assessment) return null
+    const stamps: VisaStamp[] = [{ creatorAddress: YOU, countryCode: 'ORIGIN', share: originRoyalty, stampedAt: '' }]
+    if (published) stamps.push({ creatorAddress: REMIX, countryCode: 'B', share: 100 - originRoyalty, stampedAt: '' })
     const used = stamps.reduce((s, v) => s + v.share, 0)
     return {
-      passportId: '0xpassport_sovereign_sunrise',
-      contentHash: 'a3f9c1e7b22d4f8e6c0a91b5d7e3f240c8a1b6e4f9d2c7a05e8b3f6d1c4a7e90',
-      grade: authenticAssessment.grade,
-      score: authenticAssessment.score,
-      mediaBlobId: 'walrus://b1c3...sunrise',
-      evidenceBlobId: 'walrus://e7a2...sealed-poe',
+      passportId: `passport:${analysis.hash.slice(0, 16)}…`,
+      contentHash: analysis.hash,
+      grade: assessment.grade,
+      score: assessment.score,
+      mediaBlobId: `walrus://${analysis.hash.slice(0, 16)}`,
+      evidenceBlobId: `walrus://sealed-${analysis.hash.slice(8, 24)}`,
       visaStamps: stamps,
       remainingShare: 100 - used,
     }
-  }, [stage, authenticAssessment])
+  }, [analysis, assessment, originRoyalty, published])
 
   const payouts: RoyaltyPayout[] = useMemo(
-    () => (published && readiness.ready ? calculateRoyaltyPayouts(REVENUE_MIST, PARTICIPANTS) : []),
-    [published, readiness.ready],
+    () => (published && readiness?.ready ? calculateRoyaltyPayouts(BigInt(Math.round(revenueSui * 1e9)), participants) : []),
+    [published, readiness, revenueSui, participants],
   )
 
-  // MemWal snapshot per active scenario
   useEffect(() => {
+    if (!analysis) { setSnap(EMPTY); return }
     let alive = true
-    snapshotFor(activeScenario).then((s) => { if (alive) setSnap(s) })
+    ;(async () => {
+      const client = new InMemoryAuthenticityMemoryClient()
+      const ids: string[] = []
+      for (const a of analysis.scores) {
+        const clue = await writeAgentClue(client, {
+          agentId: a.agentId,
+          severity: a.score < 30 ? 'critical' : a.score < 70 ? 'warning' : 'info',
+          message: a.evidence?.[0] ?? `${a.agentId} → ${a.score}`,
+          scoreImpact: a.score - 70,
+        })
+        ids.push(clue.id)
+      }
+      const s = await buildMemWalInspectorSnapshot(client, ids)
+      if (alive) setSnap(s)
+    })()
     return () => { alive = false }
-  }, [activeScenario])
+  }, [analysis])
 
-  async function publishAndSettle() {
-    const activation = await prepareCoCreationActivation({
-      passportId: passport.passportId,
-      agentScores: AUTHENTIC.agentScores,
-      participants: PARTICIPANTS,
-      escrowAmountMist: ESCROW_MIST,
-      minimumGrade: 'A',
+  async function grantAndSettle() {
+    if (!analysis || !readiness?.ready) return
+    const act = await prepareCoCreationActivation({
+      passportId: `passport:${analysis.hash.slice(0, 24)}`,
+      agentScores: analysis.scores,
+      participants,
+      escrowAmountMist: BigInt(Math.round(escrowSui * 1e9)),
+      minimumGrade: minGrade,
       policyId: '0xco_creation_policy',
     })
-    setArchived(activation.memoryRecord)
+    setArchived(act.memoryRecord)
     setPublished(true)
-  }
-
-  function goto(s: number) {
-    setStage(s)
-    if (s < 2) setPublished(false)
   }
 
   return (
@@ -137,118 +154,132 @@ export default function App() {
           <div className="seal">🛂</div>
           <div>
             <h1>Content Right</h1>
-            <p>Programmable recreate consent — authenticity → escrow → automatic royalty split</p>
+            <p>Register your work, set the terms once — recreators get programmable consent + auto royalties.</p>
           </div>
         </div>
-        <span className="badge">Sui · SEAL · Walrus · MemWal</span>
+        <a className="badge" href="https://github.com/CisThard/content_passport" target="_blank" rel="noreferrer">Sui · SEAL · Walrus · MemWal</a>
       </header>
 
-      <div className="steps">
-        {STAGES.map((s, i) => (
-          <div className={`step ${stage === i ? 'active' : ''}`} key={i} onClick={() => goto(i)}>
-            <div className="n">{s.n}</div>
-            <div className="t">{s.t}</div>
-          </div>
-        ))}
-      </div>
+      <section className="hero">
+        <h2 className="hero-h">Prove it’s yours. Let others recreate it — on your terms.</h2>
+        <p className="hero-p">
+          Upload an original, get an authenticity passport, and define a recreate license once.
+          When a second creator meets your terms, consent and the royalty split happen automatically — no DMs, no contracts.
+        </p>
+      </section>
 
-      {stage === 0 && (
-        <div className="grid">
-          <AaseAudit assessment={blockedAssessment} />
-          <div>
-            <MemWalInspector clues={snap.clues} reputation={snap.reputation} />
-            <div className="card">
-              <h2>Recreate gate</h2>
-              <p className="sub">synthetic upload — consent never activates</p>
-              <div className="note warn">
-                Grade <b>{blockedAssessment.grade}</b> (score {blockedAssessment.score}) is below the <b>A</b>
-                threshold. No co-creation context is archived; the second creator is blocked before any escrow.
-              </div>
-              <div className="row" style={{ marginTop: 14 }}>
-                <button className="act indigo" onClick={() => goto(1)}>Now register an authentic original →</button>
-              </div>
+      {/* STEP 1 — Register */}
+      <div className="step-head"><span className="step-no">1</span> Register your original</div>
+      <div className="grid">
+        <div>
+          {!analysis && <Uploader onFile={handleFile} busy={analyzing} />}
+          {!analysis && (
+            <div className="row" style={{ marginTop: 12, justifyContent: 'center' }}>
+              <span className="hint">No image handy?</span>
+              <button className="act ghost" disabled={analyzing} onClick={async () => handleFile(await makeSample('authentic'))}>Try an authentic sample</button>
+              <button className="act ghost" disabled={analyzing} onClick={async () => handleFile(await makeSample('synthetic'))}>Try a synthetic sample</button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {stage === 1 && (
-        <div className="grid">
-          <div>
-            <AaseAudit assessment={authenticAssessment} />
-            <SovereignVault />
-          </div>
-          <div>
-            <PassportCard p={passport} />
-            <div className="card">
-              <h2>Sovereign Vault</h2>
-              <p className="sub">Proof-of-Effort sealed (SEAL 3-of-5) → Walrus blob</p>
-              <div className="note ok">
-                Original + sketches packaged as a PoE artifact, threshold-encrypted, and stored on Walrus as
-                <b> {passport.evidenceBlobId}</b>. Future creators reuse this artifact.
-              </div>
-              <div className="row" style={{ marginTop: 14 }}>
-                <button className="act indigo" onClick={() => goto(2)}>Travel to Country B & recreate →</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {stage === 2 && (
-        <div className="grid">
-          <div>
-            <ConsentGate readiness={readiness} escrowFunded={escrowFunded} />
-            <div className="card">
-              <h2>Activate the trigger</h2>
-              <p className="sub">fund escrow → consent flips automatically (no sign-off)</p>
-              <div className="row">
-                <button
-                  className={`act ${escrowFunded ? 'ghost' : ''}`}
-                  onClick={() => setEscrowFunded((v) => !v)}
-                >
-                  {escrowFunded ? 'Withdraw escrow' : 'Fund 100 SUI escrow'}
-                </button>
-                <button className="act" disabled={!readiness.ready || published} onClick={publishAndSettle}>
-                  Publish travel essay & settle
-                </button>
-              </div>
-              {archived && (
-                <div className="note ok">
-                  Shared-context archived → <b>{archived.namespace}:{archived.key}</b> (policy {archived.policyId}).
+          )}
+          {error && <div className="note warn">{error}</div>}
+          {analysis && assessment && (
+            <>
+              <div className="preview-card">
+                <img src={analysis.previewUrl} alt="upload preview" />
+                <div className="preview-meta">
+                  <div className="field">sha-256 <b>{analysis.hash.slice(0, 28)}…</b></div>
+                  <div className="field">size <b>{analysis.width}×{analysis.height}</b></div>
+                  <div className="field">EXIF <b>{analysis.exif ? `${Object.keys(analysis.exif).length} tags` : 'none'}</b></div>
+                  <div className="field">ELA δ <b>{analysis.elaAvg.toFixed(2)}</b></div>
+                  <button className="act ghost" style={{ marginTop: 10 }} onClick={() => { setAnalysis(null); setPublished(false) }}>Upload another</button>
                 </div>
-              )}
+              </div>
+              <AaseAudit assessment={assessment} />
+            </>
+          )}
+        </div>
+        <div>
+          {analysis && passport && <PassportCard p={passport} />}
+          {analysis && <MemWalInspector clues={snap.clues} reputation={snap.reputation} />}
+          {!analysis && (
+            <div className="card placeholder">
+              <h2>What happens here</h2>
+              <p className="sub">100% in your browser</p>
+              <ul className="bullets">
+                <li><b>SHA-256</b> fingerprint of your file</li>
+                <li><b>EXIF</b> camera/timestamp consistency</li>
+                <li><b>Error-Level-Analysis</b> via canvas recompression</li>
+                <li>Combined by the real <b>AASE</b> engine into a grade</li>
+              </ul>
             </div>
-          </div>
-          <div>
-            <PassportCard p={passport} />
-            <Settlement payouts={payouts} revenueMist={REVENUE_MIST} settled={published} />
+          )}
+        </div>
+      </div>
+
+      {/* STEP 2 — License */}
+      <div className="step-head"><span className="step-no">2</span> Set your recreate license</div>
+      <div className="grid">
+        <div className="card">
+          <h2>License terms</h2>
+          <p className="sub">define once — the trigger enforces it for every recreator</p>
+
+          <label className="ctl">
+            <span>Your royalty share <b>{originRoyalty}%</b> · recreator gets {100 - originRoyalty}%</span>
+            <input type="range" min={5} max={95} step={5} value={originRoyalty} disabled={!analysis}
+              onChange={(e) => setOriginRoyalty(Number(e.target.value))} />
+          </label>
+
+          <label className="ctl">
+            <span>Minimum authenticity grade</span>
+            <select value={minGrade} disabled={!analysis} onChange={(e) => setMinGrade(e.target.value as AASEGrade)}>
+              {['AAA', 'AA', 'A', 'B', 'C'].map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </label>
+
+          <label className="ctl">
+            <span>Escrow to unlock consent <b>{escrowSui} SUI</b></span>
+            <input type="range" min={0} max={500} step={10} value={escrowSui} disabled={!analysis}
+              onChange={(e) => setEscrowSui(Number(e.target.value))} />
+          </label>
+
+          <div className="row" style={{ marginTop: 6 }}>
+            <button className={`act ${escrowFunded ? 'ghost' : ''}`} disabled={!analysis}
+              onClick={() => setEscrowFunded((v) => !v)}>
+              {escrowFunded ? '✓ Escrow funded' : 'Fund escrow'}
+            </button>
           </div>
         </div>
-      )}
-
-      <div className="foot">CONTENT RIGHT · SUI OVERFLOW 2026 · WIRED TO THE REAL AASE / ESCROW / MEMWAL ENGINE</div>
-    </div>
-  )
-}
-
-function SovereignVault() {
-  const [lit, setLit] = useState(0)
-  useEffect(() => {
-    setLit(0)
-    const t = setInterval(() => setLit((n) => (n >= 5 ? 5 : n + 1)), 280)
-    return () => clearInterval(t)
-  }, [])
-  return (
-    <div className="card">
-      <h2>SEAL Threshold Encryption</h2>
-      <p className="sub">5 key shares · 3-of-5 to decrypt · 10-min session key</p>
-      <div className="nodes">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div className={`node ${i <= lit ? 'lit' : ''}`} key={i}>N{i}</div>
-        ))}
+        <div>
+          {readiness
+            ? <ConsentGate readiness={readiness} escrowFunded={escrowFunded} />
+            : <div className="card placeholder"><h2>Consent preview</h2><p className="sub">register a work first</p></div>}
+        </div>
       </div>
-      <div className="note info">Proof-of-Effort split into 5 shares and distributed to independent SEAL nodes.</div>
+
+      {/* STEP 3 — Recreate */}
+      <div className="step-head"><span className="step-no">3</span> A recreator publishes & settles</div>
+      <div className="grid">
+        <div className="card">
+          <h2>Recreate & settle</h2>
+          <p className="sub">when consent is active, revenue splits on-chain automatically</p>
+          <label className="ctl">
+            <span>Recreation revenue <b>{revenueSui} SUI</b></span>
+            <input type="range" min={10} max={1000} step={10} value={revenueSui} disabled={!readiness?.ready}
+              onChange={(e) => setRevenueSui(Number(e.target.value))} />
+          </label>
+          <div className="row">
+            <button className="act" disabled={!readiness?.ready || published} onClick={grantAndSettle}>
+              {published ? '✓ Settled' : 'Grant recreate & settle'}
+            </button>
+          </div>
+          {!readiness?.ready && analysis && <div className="note info">Meet the license terms in step 2 to enable settlement.</div>}
+          {archived && <div className="note ok">Shared-context archived → <b>{archived.namespace}:{archived.key}</b></div>}
+        </div>
+        <div>
+          <Settlement payouts={payouts} revenueMist={BigInt(Math.round(revenueSui * 1e9))} settled={published} labels={LABELS} />
+        </div>
+      </div>
+
+      <div className="foot">CONTENT RIGHT · authenticity → escrow → automatic royalty split · runs on the real AASE / consent engine</div>
     </div>
   )
 }
