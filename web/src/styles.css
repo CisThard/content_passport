@@ -178,6 +178,43 @@ button.act:disabled { opacity: 0.4; cursor: not-allowed; }
 .bullets { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--txt-2); line-height: 1.9; }
 .bullets b { color: var(--txt); }
 
+/* How it works */
+.how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 20px; }
+@media (max-width: 760px) { .how { grid-template-columns: 1fr; } }
+.how-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.how-n { width: 28px; height: 28px; border-radius: 8px; background: rgba(124,131,255,0.15); color: var(--indigo); display: grid; place-items: center; font-family: var(--mono); font-weight: 700; font-size: 14px; }
+.how-t { font-size: 15px; font-weight: 500; margin: 12px 0 6px; }
+.how-d { font-size: 13px; color: var(--txt-2); line-height: 1.6; }
+
+/* Verdict banner */
+.verdict-banner { display: flex; justify-content: space-between; align-items: center; gap: 14px; border-radius: 14px; padding: 16px 18px; border: 1px solid var(--line); }
+.verdict-banner.v-ok { background: radial-gradient(ellipse at left, rgba(69,212,131,0.14), transparent); border-color: rgba(69,212,131,0.4); }
+.verdict-banner.v-warn { background: radial-gradient(ellipse at left, rgba(244,185,66,0.12), transparent); border-color: rgba(244,185,66,0.4); }
+.verdict-banner.v-bad { background: radial-gradient(ellipse at left, rgba(255,93,93,0.12), transparent); border-color: rgba(255,93,93,0.4); }
+.vb-label { font-size: 18px; font-weight: 600; }
+.vb-note { font-size: 12px; color: var(--txt-2); margin-top: 3px; }
+.vb-score { text-align: right; font-family: var(--mono); }
+.vb-score .num { font-size: 30px; font-weight: 700; display: block; }
+.vb-score .grade { font-size: 10px; color: var(--txt-3); text-transform: uppercase; }
+
+/* Evidence rows */
+.evi { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.evi-st { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.evi-body { min-width: 0; }
+.evi-h { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.evi-tag { font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 5px; }
+.st-pass { color: var(--green); background: rgba(69,212,131,0.14); }
+.st-warn { color: var(--amber); background: rgba(244,185,66,0.14); }
+.st-fail { color: var(--red); background: rgba(255,93,93,0.14); }
+.st-absent { color: var(--txt-3); background: rgba(255,255,255,0.05); }
+.evi-measured { font-size: 12px; color: var(--txt); margin-top: 4px; font-family: var(--mono); }
+.evi-basis { font-size: 11px; color: var(--txt-3); margin-top: 3px; line-height: 1.4; }
+.evi-basis.cite { color: var(--txt-2); }
+
+/* Methodology */
+.methodology { margin-top: 22px; font-size: 12px; color: var(--txt-3); line-height: 1.7; border-top: 1px solid var(--line); padding-top: 16px; }
+.methodology b { color: var(--txt-2); font-weight: 500; }
+
 .foot { margin-top: 40px; text-align: center; font-family: var(--mono); font-size: 10px; color: var(--txt-3); letter-spacing: 0.1em; }
 .flash { animation: flash .6s ease; }
 @keyframes flash { 0% { background: rgba(124,131,255,0.25); } 100% { background: transparent; } }

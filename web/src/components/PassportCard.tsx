@@ -11,15 +11,15 @@ export interface PassportView {
   remainingShare: number
 }
 
-export function PassportCard({ p }: { p: PassportView }) {
+export function PassportCard({ p, ready }: { p: PassportView; ready?: boolean }) {
   const origin = p.visaStamps.find((s) => s.countryCode === 'ORIGIN')
   const countryB = p.visaStamps.find((s) => s.countryCode === 'B')
   return (
     <div className="passport">
       <div className="pp-h">
         <div>
-          <div className="id">GENESIS PASSPORT</div>
-          <div className="pp-title">Recreate-Ready · Grade {p.grade}</div>
+          <div className="id">CONTENT PASSPORT</div>
+          <div className="pp-title">{ready ? 'Recreate-ready' : 'Not yet recreate-ready'} · Grade {p.grade}</div>
         </div>
         <span className={`gradechip g-${p.grade}`}>{p.score}</span>
       </div>
