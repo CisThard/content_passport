@@ -65,7 +65,9 @@ export default function App() {
       const next = await analyzeFile(f)
       setAnalysis(next)
       setMemwal(await buildInspectorFromAnalysis(next))
-      setMemoryGraph(buildBrowserMemoryGraph(next, published))
+      const graph = buildBrowserMemoryGraph(next, published)
+      persistGraphSnapshot(graph)
+      setMemoryGraph(graph)
     }
     catch (e) { setError(e instanceof Error ? e.message : String(e)) }
     finally { setAnalyzing(false) }
@@ -113,7 +115,9 @@ export default function App() {
       escrowAmountMist: BigInt(Math.round(escrowSui * 1e9)), minimumGrade: minGrade, policyId: '0xpolicy',
     })
     setArchived(act.memoryRecord); setPublished(true)
-    setMemoryGraph(buildBrowserMemoryGraph(analysis, true))
+    const graph = buildBrowserMemoryGraph(analysis, true)
+    persistGraphSnapshot(graph)
+    setMemoryGraph(graph)
   }
 
   return (
@@ -189,7 +193,11 @@ export default function App() {
           <div className="step-head"><span className="step-no">M</span> MemWal Inspector</div>
           <div className="grid">
             <MemWalInspector clues={memwal.clues} reputation={memwal.reputation} />
-            <MemoryGraph graph={memoryGraph} />
+            <MemoryGraph
+              graph={memoryGraph}
+              onRestore={async (blobId) => setMemoryGraph(await restoreGraphSnapshot(blobId))}
+              onClear={() => { setAnalysis(null); setPublished(false); setMemoryGraph(null); setMemwal({ clues: [], reputation: {} as Record<AgentId, { clueCount: number; totalImpact: number; criticalCount: number }> }) }}
+            />
           </div>
 
           <div className="step-head"><span className="step-no">2</span> Set your recreate license</div>
@@ -336,6 +344,27 @@ function buildBrowserMemoryGraph(analysis: AnalysisResult, settled: boolean): Co
       },
     ],
   }
+}
+
+function persistGraphSnapshot(graph: ContentMemoryGraph) {
+  const snapshot = graph.artifacts.find((artifact) => artifact.kind === 'memory-snapshot')
+  if (!snapshot) return
+  localStorage.setItem(`cr:graph:${snapshot.walrusBlobId}`, JSON.stringify(graph))
+}
+
+async function restoreGraphSnapshot(blobId: string): Promise<ContentMemoryGraph> {
+  const normalized = blobId.startsWith('walrus://') ? blobId : `walrus://${blobId}`
+  const local = localStorage.getItem(`cr:graph:${normalized}`)
+  if (local) return { ...(JSON.parse(local) as ContentMemoryGraph), restoredFromWalrus: true }
+
+  const aggregator = import.meta.env.VITE_WALRUS_AGGREGATOR as string | undefined
+  if (!aggregator) {
+    throw new Error('No local snapshot found. Set VITE_WALRUS_AGGREGATOR to restore from a real Walrus aggregator.')
+  }
+  const id = normalized.replace(/^walrus:\/\//, '')
+  const response = await fetch(`${aggregator.replace(/\/$/, '')}/v1/blobs/${encodeURIComponent(id)}`)
+  if (!response.ok) throw new Error(`Walrus restore failed: ${response.status}`)
+  return { ...await response.json() as ContentMemoryGraph, restoredFromWalrus: true }
 }
 
 async function buildInspectorFromAnalysis(analysis: AnalysisResult) {

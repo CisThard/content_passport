@@ -78,14 +78,43 @@ npm test
 npm run demo
 ```
 
+## Walrus Memory CLI
+
+Use the local CLI wrapper to create or verify the MemWal setup without leaking
+secrets into the repository:
+
+```bash
+npm run memwal:login
+npm run memwal:health
+npm run memwal:remember -- "Content Right setup verification succeeded."
+npm run memwal:recall -- "setup verification succeeded"
+npm run memwal:restore
+```
+
+If browser login is unavailable, use the on-chain account flow:
+
+```bash
+npm run memwal:delegate
+npm run memwal:create-account
+npm run memwal:add-delegate
+```
+
+`memwal:delegate` prints a delegate private key once. Store it in
+`~/.memwal/credentials.json` or a private `.env`, never in git.
+
 ## Environment
 
 ```bash
 CONTENT_RIGHT_PACKAGE_ID=0x...
 WALRUS_PUBLISHER=https://publisher.walrus-testnet.walrus.space
 WALRUS_AGGREGATOR=https://aggregator.walrus-testnet.walrus.space
-MEMWAL_RELAYER_URL=https://...
-MEMWAL_DELEGATE_KEY=...
+MEMWAL_ACCOUNT_ID=0x...
+MEMWAL_PRIVATE_KEY=...
+MEMWAL_SERVER_URL=https://relayer.memory.walrus.xyz
+MEMWAL_NAMESPACE=content-right-hackathon
+MEMWAL_PACKAGE_ID=0x...
+MEMWAL_REGISTRY_ID=0x...
+SUI_PRIVATE_KEY=suiprivkey1...
 ```
 
 `CONTENT_RIGHT_PACKAGE_ID` is used by the Sui transaction helpers after the Move

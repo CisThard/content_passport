@@ -4,6 +4,7 @@ export * from "./co-creation.js";
 export * from "./evidence.js";
 export * from "./escrow.js";
 export * from "./memory.js";
+export * from "./memwal.js";
 export * from "./passport.js";
 export * from "./recreate-readiness.js";
 export * from "./sui.js";
