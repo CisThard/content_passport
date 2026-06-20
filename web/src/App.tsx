@@ -82,7 +82,7 @@ export default function App() {
   }
 
   const stepThroughWall = async () => {
-    setVortexCaption("2.7 게이트 틈새로 빨려 들어가는 중...")
+    setVortexCaption("Being pulled through the crack of Gate 2.7...")
     setVortexActive(true)
     await new Promise(r => setTimeout(r, 1800))
     setEnteredGate(true)
@@ -91,7 +91,7 @@ export default function App() {
 
   async function handleFile(f: File) {
     setError(null); setPublished(false); setArchived(undefined); setAgentLogs([])
-    setVortexCaption("Aurelius House의 문이 열리고 있습니다...")
+    setVortexCaption("The doors of Aurelius House are opening...")
     setVortexActive(true)
     await new Promise(r => setTimeout(r, 1800))
     setVortexActive(false)
@@ -308,14 +308,14 @@ export default function App() {
 
       {!enteredGate ? (
         <div className="welcome-portal">
-          <h1 className="welcome-h">비밀리에 개방된<br />Gate 2.7</h1>
+          <h1 className="welcome-h">The Secretly Opened<br />Gate 2.7</h1>
           <p className="welcome-p">
-            차가운 공항 터미널 한구석, 어떤 안내판에도 적혀있지 않은 <strong>'2.7 게이트(Gate 2.7)'</strong>가 조용히 빛나고 있습니다.<br /><br />
-            그 숨겨진 벽 틈새로 한 발짝 내딛는 순간, 눈앞에는 별가루가 쏟아지는 찬란한 은하수 활주로와 함께 마법 기숙사 홀이 나타납니다.
-            이곳에 입장한 당신에게는 작품의 저작권을 지키고 로열티 분배를 프로그래밍할 수 있는 신비로운 <strong>'콘텐츠 여권(Content Passport)'</strong>이 주어집니다.
+            In a cold corner of the airport terminal, a <strong>'Gate 2.7'</strong> — listed on no signboard — glows quietly.<br /><br />
+            The moment you step through that hidden crack in the wall, a brilliant Milky Way runway showering stardust appears before you, along with the hall of a magical residence.
+            To everyone who enters here, a mysterious <strong>'Content Passport'</strong> is granted — one that protects the copyright of your work and lets you program royalty distribution.
           </p>
           <button className="act indigo" style={{ padding: '14px 32px', fontSize: '14px', borderRadius: '12px' }} onClick={stepThroughWall}>
-            비밀의 문 통과하기 (Platform 2.7) ➔
+            Pass Through the Secret Door (Platform 2.7) ➔
           </button>
         </div>
       ) : (
@@ -324,16 +324,16 @@ export default function App() {
           {!analysis && (
             <>
               <section className="hero" style={{ textAlign: 'center', maxWidth: 680, margin: '20px auto 40px' }}>
-                <h2 className="hero-h" style={{ fontFamily: 'var(--serif)', fontSize: '28px', color: '#fff' }}>인장으로 증명되는 진위. 자동으로 실현되는 라이선스.</h2>
+                <h2 className="hero-h" style={{ fontFamily: 'var(--serif)', fontSize: '28px', color: '#fff' }}>Authenticity proven by a seal. Licensing realized automatically.</h2>
                 <p className="hero-p" style={{ fontSize: '13px', color: 'var(--txt-2)', lineHeight: 1.7 }}>
-                  창작의 세계 속에서 다른 이들의 2차 창작을 허용하되, 영구히 소유권과 지분을 보장받고 싶으신가요? 
-                  비주얼 기숙사 <strong>'아우렐리우스'</strong>의 요정들이 창작물을 엄격히 실사하고, 임계 암호화로 뒷면을 잠가 둔 당신만의 여권을 발급받으세요.
+                  Want to allow others to create derivative works while permanently securing your ownership and stake?
+                  Let the fairies of the visual residence <strong>'Aurelius'</strong> rigorously inspect your creation and issue your own passport, its reverse side locked with threshold encryption.
                 </p>
               </section>
 
               <HowItWorks />
 
-              <div className="step-head" style={{ marginTop: 40 }}><span className="step-no">▶</span> 2.7 승강장 — 창작물 스캔하기</div>
+              <div className="step-head" style={{ marginTop: 40 }}><span className="step-no">▶</span> Platform 2.7 — Scan Your Creation</div>
               
               <div className="card config-panel" style={{ marginBottom: 18 }}>
                 <h2>⚙️ Walrus Testnet Configuration</h2>
@@ -352,16 +352,16 @@ export default function App() {
 
               <Uploader onFile={handleFile} busy={analyzing} />
               <div className="row" style={{ marginTop: 12, justifyContent: 'center' }}>
-                <span className="hint">샘플 불러오기:</span>
-                <button className="act ghost" disabled={analyzing} onClick={async () => handleFile(await makeSample('authentic'))}>아우렐리우스 기숙사 실사 통과본</button>
-                <button className="act ghost" disabled={analyzing} onClick={async () => handleFile(await makeSample('synthetic'))}>위조/조작된 이미지</button>
+                <span className="hint">Load a sample:</span>
+                <button className="act ghost" disabled={analyzing} onClick={async () => handleFile(await makeSample('authentic'))}>Aurelius-verified original</button>
+                <button className="act ghost" disabled={analyzing} onClick={async () => handleFile(await makeSample('synthetic'))}>Forged / manipulated image</button>
               </div>
               {error && <div className="note warn">{error}</div>}
 
               <p className="methodology">
-                실사 점수(AASE)는 공신력 있는 포렌식 연구 방법론 — <b>C2PA Content Credentials</b> (c2pa.org),
-                <b> Error Level Analysis</b> (Farid, Photo Forensics, MIT Press 2016), 
-                <b> EXIF 일관성 분석</b> (Kee, Johnson &amp; Farid, 2011)에 기반하여 투명하게 계산됩니다.
+                The authenticity score (AASE) is calculated transparently based on credible forensic research methodologies — <b>C2PA Content Credentials</b> (c2pa.org),
+                <b> Error Level Analysis</b> (Farid, Photo Forensics, MIT Press 2016),
+                and <b>EXIF consistency analysis</b> (Kee, Johnson &amp; Farid, 2011).
               </p>
             </>
           )}
@@ -369,8 +369,8 @@ export default function App() {
           {/* Interactive Agent Console during and after analysis */}
           {(analyzing || agentLogs.length > 0) && (
             <div className="card agent-console" style={{ marginBottom: 22 }}>
-              <h2>🤖 아우렐리우스 기숙사 실사 스크롤</h2>
-              <p className="sub">요정 및 파수꾼 K-9 요원들의 실시간 교차 검증 로그</p>
+              <h2>🤖 Aurelius House Inspection Scroll</h2>
+              <p className="sub">Real-time cross-verification log from the fairies and the K-9 sentinel agents</p>
               <div className="console-box">
                 {agentLogs.map((log, i) => (
                   <div key={i} className={`console-line ${log.type}`}>
@@ -379,7 +379,7 @@ export default function App() {
                     <span className="msg">{log.message}</span>
                   </div>
                 ))}
-                {analyzing && <div className="console-line system typing">Aurelius 기숙사 실사단 판정 중...</div>}
+                {analyzing && <div className="console-line system typing">The Aurelius House inspection team is deliberating...</div>}
               </div>
             </div>
           )}
@@ -387,7 +387,7 @@ export default function App() {
           {/* Tool — revealed after analysis */}
           {analysis && (
             <>
-              <div className="step-head"><span className="step-no">1</span> 아우렐리우스 실사 성적표 및 은빛 여권</div>
+              <div className="step-head"><span className="step-no">1</span> Aurelius Inspection Report &amp; Silver Passport</div>
               <div className="grid">
                 <AuthenticityReport signals={analysis.signals} verdict={analysis.verdict} grade={analysis.grade} score={analysis.score} />
                 <div>
@@ -396,21 +396,21 @@ export default function App() {
                     <div className="preview-meta">
                       <div className="field">sha-256 <b>{analysis.hash.slice(0, 24)}…</b></div>
                       <div className="field">size <b>{analysis.width}×{analysis.height}</b></div>
-                      <button className="act ghost" style={{ marginTop: 10 }} onClick={() => { setAnalysis(null); setPublished(false); setMemoryGraph(null); setMemwal({ clues: [], reputation: {} as Record<AgentId, { clueCount: number; totalImpact: number; criticalCount: number }> }); setAgentLogs([]) }}>← 다시 스캔하기</button>
+                      <button className="act ghost" style={{ marginTop: 10 }} onClick={() => { setAnalysis(null); setPublished(false); setMemoryGraph(null); setMemwal({ clues: [], reputation: {} as Record<AgentId, { clueCount: number; totalImpact: number; criticalCount: number }> }); setAgentLogs([]) }}>← Scan again</button>
                     </div>
                   </div>
                   {passport && <PassportCard p={passport} ready={!!readiness?.ready} />}
                   {passport && (
                     <div className="card" style={{ border: '1.5px solid var(--teal)', boxShadow: '0 10px 25px rgba(52, 211, 153, 0.1)' }}>
                       <h2>Sovereign Secret Vault</h2>
-                      <p className="sub">다섯 요정이 분산 수호하는 뒷장의 비밀 금고 (임계 해독)</p>
+                      <p className="sub">The secret vault on the reverse side, guarded in a distributed way by five fairies (threshold decryption)</p>
                       <DecryptModal evidenceBlobId={passport.evidenceBlobId} contentHash={passport.contentHash} disabled={!readiness?.ready} />
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="step-head"><span className="step-no">M</span> MemWal 실시간 상태 감시반</div>
+              <div className="step-head"><span className="step-no">M</span> MemWal Real-time Status Monitor</div>
               <div className="grid">
                 <MemWalInspector clues={memwal.clues} reputation={memwal.reputation} />
                 <MemoryGraph
@@ -420,46 +420,46 @@ export default function App() {
                 />
               </div>
 
-              <div className="step-head"><span className="step-no">2</span> 여권 뒷면의 봉인 계약 ( programmable license )</div>
+              <div className="step-head"><span className="step-no">2</span> The Sealed Contract on the Passport's Reverse ( programmable license )</div>
               <div className="grid">
                 <div className="card">
-                  <h2>기숙사 라이선스 조건 설정</h2>
-                  <p className="sub">2차 창작자가 마법의 도장을 찍기 위해 만족해야 하는 온체인 스펠</p>
+                  <h2>Set Residence License Conditions</h2>
+                  <p className="sub">The on-chain spell that a derivative creator must satisfy to apply the magical stamp</p>
                   <label className="ctl">
-                    <span>창작물 리믹스 시 당신의 지분 비율: <b>{originRoyalty}%</b></span>
+                    <span>Your stake when your work is remixed: <b>{originRoyalty}%</b></span>
                     <input type="range" min={5} max={95} step={5} value={originRoyalty} onChange={(e) => setOriginRoyalty(+e.target.value)} />
                   </label>
                   <label className="ctl">
-                    <span>요청되는 최소 실사 등급</span>
+                    <span>Minimum required authenticity grade</span>
                     <select value={minGrade} onChange={(e) => setMinGrade(e.target.value as AASEGrade)}>
                       {['AAA', 'AA', 'A', 'B', 'C'].map((g) => <option key={g} value={g}>{g}</option>)}
                     </select>
                   </label>
                   <label className="ctl">
-                    <span>승인 발동을 위한 보증금 (에스크로) <b>{escrowSui} SUI</b></span>
+                    <span>Deposit to trigger approval (escrow) <b>{escrowSui} SUI</b></span>
                     <input type="range" min={0} max={500} step={10} value={escrowSui} onChange={(e) => setEscrowSui(+e.target.value)} />
                   </label>
                   <button className={`act ${escrowFunded ? 'ghost' : ''}`} onClick={() => setEscrowFunded((v) => !v)}>
-                    {escrowFunded ? '✓ 보증금 충전 완료' : '보증금 예치하기 (SUI)'}
+                    {escrowFunded ? '✓ Deposit funded' : 'Deposit escrow (SUI)'}
                   </button>
                 </div>
                 {readiness && <ConsentGate readiness={readiness} escrowFunded={escrowFunded} />}
               </div>
 
-              <div className="step-head"><span className="step-no">3</span> 리믹스 도장 날인 및 정산 ( Settle )</div>
+              <div className="step-head"><span className="step-no">3</span> Stamp the Remix &amp; Settle ( Settle )</div>
               <div className="grid">
                 <div className="card">
-                  <h2>은하수 협업 및 즉각 정산</h2>
-                  <p className="sub">조건 충족 시 에스크로 지분대로 금화가 자동 분배됩니다</p>
+                  <h2>Milky Way Collaboration &amp; Instant Settlement</h2>
+                  <p className="sub">When conditions are met, the coins are distributed automatically according to the escrow stakes</p>
                   <label className="ctl">
-                    <span>2차 리믹스 수익금 규모 <b>{revenueSui} SUI</b></span>
+                    <span>Derivative remix revenue <b>{revenueSui} SUI</b></span>
                     <input type="range" min={10} max={1000} step={10} value={revenueSui} disabled={!readiness?.ready} onChange={(e) => setRevenueSui(+e.target.value)} />
                   </label>
                   <button className="act" disabled={!readiness?.ready || published} onClick={grantAndSettle}>
-                    {published ? '✓ 분배 완료' : '리믹스 승인 및 수익 즉시 정산 ➔'}
+                    {published ? '✓ Distribution complete' : 'Approve remix & settle revenue instantly ➔'}
                   </button>
-                  {!readiness?.ready && <div className="note info" style={{ color: 'var(--amber)', borderColor: 'rgba(255,215,0,0.2)' }}>Step 2의 마법 봉인 계약 조건이 아직 활성화되지 않았습니다.</div>}
-                  {archived && <div className="note ok">온체인 영수증이 공유 보관소(shared-context)에 아카이브되었습니다 → <b>{archived.namespace}</b></div>}
+                  {!readiness?.ready && <div className="note info" style={{ color: 'var(--amber)', borderColor: 'rgba(255,215,0,0.2)' }}>The magical sealed contract conditions from Step 2 are not active yet.</div>}
+                  {archived && <div className="note ok">The on-chain receipt has been archived to the shared-context store → <b>{archived.namespace}</b></div>}
                 </div>
                 <Settlement payouts={payouts} revenueMist={BigInt(Math.round(revenueSui * 1e9))} settled={published} labels={LABELS} />
               </div>
