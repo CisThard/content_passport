@@ -11,3 +11,4 @@ export * from "./sui.js";
 export * from "./types.js";
 export * from "./walrus.js";
 export * from "./workflow.js";
+export * from "./langchain.js";

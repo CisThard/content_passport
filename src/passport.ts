@@ -1,3 +1,4 @@
+import { generateKeyPairSync, sign, verify, createPublicKey, KeyObject } from "node:crypto";
 import { calculateAASE, gradeMeets } from "./aase.js";
 import { sealProofOfEffort } from "./evidence.js";
 import { WalrusClient } from "./walrus.js";
@@ -19,6 +20,8 @@ export interface IssueGenesisPassportInput {
   minimumGrade?: AASEGrade;
   originStamp: Omit<VisaStamp, "stampedAt">;
   now?: Date;
+  auditorPrivateKey?: KeyObject | string;
+  auditorPublicKey?: string;
 }
 
 export interface GenesisPassportIssuance {
@@ -50,6 +53,14 @@ export async function issueGenesisPassport(
   };
   validateStamp(originStamp);
 
+  let privateKey = input.auditorPrivateKey;
+  let publicKeyHex = input.auditorPublicKey;
+  if (!privateKey) {
+    const keys = generateKeyPairSync("ed25519");
+    privateKey = keys.privateKey;
+    publicKeyHex = keys.publicKey.export({ type: "spki", format: "der" }).toString("hex");
+  }
+
   const passport: GenesisPassport = {
     passportId: `passport:${input.proofOfEffort.mediaHash.slice(0, 24)}`,
     contentHash: input.proofOfEffort.mediaHash,
@@ -61,9 +72,28 @@ export async function issueGenesisPassport(
     visaStamps: [originStamp],
     remainingShare: 100 - originStamp.share,
     issuedAt: now.toISOString(),
+    signatory: publicKeyHex,
   };
 
+  const dataToSign = Buffer.from(`${passport.contentHash}:${passport.grade}:${passport.score}`, "utf8");
+  passport.signature = sign(null, dataToSign, privateKey).toString("hex");
+
   return { passport, mediaBlob, evidenceBlob, sealedEvidence };
+}
+
+export function verifyPassportSignature(passport: GenesisPassport): boolean {
+  if (!passport.signature || !passport.signatory) return false;
+  try {
+    const dataToVerify = Buffer.from(`${passport.contentHash}:${passport.grade}:${passport.score}`, "utf8");
+    const publicKey = createPublicKey({
+      key: Buffer.from(passport.signatory, "hex"),
+      format: "der",
+      type: "spki",
+    });
+    return verify(null, dataToVerify, publicKey, Buffer.from(passport.signature, "hex"));
+  } catch {
+    return false;
+  }
 }
 
 export function stampVisa(

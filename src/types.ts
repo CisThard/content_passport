@@ -158,6 +158,8 @@ export interface GenesisPassport {
   visaStamps: VisaStamp[];
   remainingShare: number;
   issuedAt: string;
+  signature?: string;
+  signatory?: string;
 }
 
 export interface WorkflowArtifact {

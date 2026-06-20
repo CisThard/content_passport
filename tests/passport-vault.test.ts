@@ -128,4 +128,34 @@ describe("Genesis Passport, Sovereign Vault, and MemWal board", () => {
       ),
     ).toThrow("SEAL session key expired.");
   });
+
+  it("verifies a valid passport signature and fails on modified fields", async () => {
+    const { verifyPassportSignature } = await import("../src/index.js");
+    const walrus = new InMemoryWalrusClient();
+    const media = Buffer.from("signature-media");
+    const contentHash = sha256(media);
+
+    const issuance = await issueGenesisPassport({
+      media,
+      walrus,
+      agentScores: authenticScores,
+      now: new Date("2026-06-19T00:00:00.000Z"),
+      originStamp: { creatorAddress: "0xorigin", countryCode: "ORIGIN", share: 30 },
+      proofOfEffort: {
+        title: "Sketch for Signature",
+        creatorAddress: "0xorigin",
+        mediaHash: contentHash,
+        createdAt: "2026-06-19T00:00:00.000Z",
+        artifacts: [],
+      },
+    });
+
+    expect(issuance.passport.signature).toBeDefined();
+    expect(issuance.passport.signatory).toBeDefined();
+    expect(verifyPassportSignature(issuance.passport)).toBe(true);
+
+    // Modify a field to simulate forgery
+    const forgedPassport = { ...issuance.passport, grade: "F" as const };
+    expect(verifyPassportSignature(forgedPassport)).toBe(false);
+  });
 });

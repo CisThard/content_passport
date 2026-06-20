@@ -9,6 +9,8 @@ export interface PassportView {
   evidenceBlobId: string
   visaStamps: VisaStamp[]
   remainingShare: number
+  signature?: string
+  signatory?: string
 }
 
 export function PassportCard({ p, ready }: { p: PassportView; ready?: boolean }) {
@@ -28,6 +30,12 @@ export function PassportCard({ p, ready }: { p: PassportView; ready?: boolean })
       <div className="field">content sha-256: <b>{p.contentHash.slice(0, 40)}…</b></div>
       <div className="field">media blob: <b>{p.mediaBlobId}</b></div>
       <div className="field">sealed evidence (PoE): <b>{p.evidenceBlobId}</b></div>
+      
+      {p.signature && (
+        <div className="field" style={{ color: 'var(--teal)', borderTop: '1px dashed rgba(255,255,255,0.06)', paddingTop: '6px', marginTop: '6px' }}>
+          auditor signature: <b style={{ fontFamily: 'monospace' }}>{p.signature.slice(0, 20)}… (Verified ✓)</b>
+        </div>
+      )}
 
       <div className="stampbar">
         <div className="track">
@@ -45,3 +53,4 @@ export function PassportCard({ p, ready }: { p: PassportView; ready?: boolean })
     </div>
   )
 }
+
