@@ -237,13 +237,16 @@ export default function Verify() {
                 flexDirection: 'column', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                borderStyle: 'dashed',
-                background: 'rgba(13, 16, 38, 0.1)',
-                opacity: 0.6 
+                backgroundImage: "linear-gradient(rgba(8, 10, 22, 0.85), rgba(8, 10, 22, 0.95)), url('/c-pass.jpg')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                borderColor: 'rgba(99, 102, 241, 0.25)',
+                boxShadow: '0 0 30px rgba(99, 102, 241, 0.05)',
+                opacity: 0.85
               }}
             >
-              <span style={{ fontSize: '40px', marginBottom: '16px' }}>🛂</span>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', padding: '0 30px', lineHeight: 1.5 }}>
+              <span style={{ fontSize: '40px', marginBottom: '16px', filter: 'drop-shadow(0 0 10px rgba(99,102,241,0.5))' }}>🛂</span>
+              <p style={{ fontSize: '13px', color: '#fff', textAlign: 'center', padding: '0 30px', lineHeight: 1.5, textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
                 Forensics verdict report card will dynamically render here once audit analysis is triggered.
               </p>
             </div>

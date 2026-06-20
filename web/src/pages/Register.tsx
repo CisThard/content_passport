@@ -106,7 +106,7 @@ export default function Register() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           {passportData ? (
             <div className="holo-passport-container" style={{ animation: 'fadeInUp 0.6s ease' }}>
-              <div className="holo-passport certified scanning">
+              <div className="holo-passport certified scanning" style={{ backgroundImage: "url('/c-pass.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <div className="holo-laser-scanner"></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontFamily: 'var(--sans)', fontSize: '10px', fontWeight: 800, color: 'var(--neon-gold)', letterSpacing: '1px' }}>
