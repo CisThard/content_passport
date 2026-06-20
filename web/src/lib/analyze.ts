@@ -18,7 +18,7 @@ import type { AgentScore } from '../engine'
 export type SignalStatus = 'pass' | 'warn' | 'fail' | 'absent'
 
 export interface Signal {
-  id: 'provenance' | 'compression' | 'metadata'
+  id: 'provenance' | 'compression' | 'metadata' | 'entropy' | 'context-fusion'
   label: string
   status: SignalStatus
   measured: string   // raw objective value, human-readable
@@ -85,6 +85,32 @@ async function elaMeanError(img: HTMLImageElement): Promise<number> {
   return n ? sum / n : 0
 }
 
+async function rasterStats(img: HTMLImageElement): Promise<{ entropy: number; dominantRatio: number }> {
+  const scale = Math.min(1, 512 / Math.max(img.naturalWidth, img.naturalHeight))
+  const w = Math.max(1, Math.round(img.naturalWidth * scale))
+  const h = Math.max(1, Math.round(img.naturalHeight * scale))
+  const c = document.createElement('canvas'); c.width = w; c.height = h
+  const ctx = c.getContext('2d')!
+  ctx.drawImage(img, 0, 0, w, h)
+  const data = ctx.getImageData(0, 0, w, h).data
+  const histogram = new Array<number>(256).fill(0)
+  let samples = 0
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2])
+    histogram[gray] += 1
+    samples += 1
+  }
+  let entropy = 0
+  let maxBucket = 0
+  for (const count of histogram) {
+    if (count === 0) continue
+    maxBucket = Math.max(maxBucket, count)
+    const p = count / samples
+    entropy -= p * Math.log2(p)
+  }
+  return { entropy, dominantRatio: samples ? maxBucket / samples : 0 }
+}
+
 // ── 3. Metadata: EXIF / JPEG-header consistency ──
 const EDIT_SW = /photoshop|gimp|lightroom|midjourney|stable diffusion|dall|firefly|generated|gan/i
 function metadataSignal(exif: Record<string, unknown> | null): { signal: Signal; score: number } {
@@ -146,37 +172,62 @@ export async function analyzeFile(file: File): Promise<AnalysisResult> {
   // Compression (ELA)
   let width = 0, height = 0, ela = 0
   let compression: Signal
+  let entropySignal: Signal
+  let entropyScore = 70
   let elaScore = 50
   try {
     const img = await loadImage(previewUrl)
     width = img.naturalWidth; height = img.naturalHeight
     ela = await elaMeanError(img)
+    const stats = await rasterStats(img)
     elaScore = clamp(Math.round(100 - ela * 5))
     const status: SignalStatus = ela < 6 ? 'pass' : ela < 16 ? 'warn' : 'fail'
     compression = { id: 'compression', label: 'Compression integrity', status,
       measured: `ELA mean error ${ela.toFixed(2)} / 255`,
       threshold: '<6 pass · 6–16 warn · >16 fail (re-save / splice spikes residual)',
-      basis: 'Error Level Analysis — Farid, Photo Forensics (MIT Press, 2016)' }
+      basis: 'Error Level Analysis — JPEG recompression residuals; clue only, not a standalone verdict' }
+    const unusualEntropy = stats.entropy > 7.85 || stats.entropy < 2.5 || stats.dominantRatio > 0.35
+    entropyScore = unusualEntropy ? 45 : 78
+    entropySignal = {
+      id: 'entropy', label: 'Entropy & repetition',
+      status: unusualEntropy ? 'warn' : 'pass',
+      measured: `Shannon entropy ${stats.entropy.toFixed(2)} bits/pixel · dominant bucket ${(stats.dominantRatio * 100).toFixed(1)}%`,
+      threshold: '2.5–7.85 bits/pixel and dominant bucket ≤35% ⇒ natural-range signal',
+      basis: 'NIST SP 800-90B style statistical-health lens: most-common-value and compression/repetition estimators',
+    }
   } catch {
     compression = { id: 'compression', label: 'Compression integrity', status: 'warn',
       measured: 'ELA unavailable for this file', threshold: 'requires a decodable raster image',
       basis: 'Error Level Analysis — Farid, Photo Forensics (MIT Press, 2016)' }
+    entropySignal = { id: 'entropy', label: 'Entropy & repetition', status: 'warn',
+      measured: 'Raster entropy unavailable for this file', threshold: 'requires a decodable raster image',
+      basis: 'NIST SP 800-90B statistical-health tests for repetition and predictability' }
   }
 
   const meta = metadataSignal(exif)
+  const provScore = c2pa ? 100 : seenBefore ? 20 : 70
+  const aiScore = clamp(Math.round(elaScore * 0.40 + meta.score * 0.28 + entropyScore * 0.18 + provScore * 0.14))
+  const aiSignal: Signal = {
+    id: 'context-fusion',
+    label: 'K-9 context fusion',
+    status: aiScore >= 70 ? 'pass' : aiScore >= 45 ? 'warn' : 'fail',
+    measured: `Local forensic fusion score ${aiScore}/100 from ELA, EXIF, provenance, entropy`,
+    threshold: '≥70 pass · 45–69 warn · <45 fail before consent',
+    basis: 'Blackboard/fusion pattern: local forensic clues are injected into the higher-level detector instead of single-pass classification',
+  }
 
-  const signals: Signal[] = [provenance, compression, meta.signal]
+  const signals: Signal[] = [provenance, compression, meta.signal, entropySignal, aiSignal]
 
   // Map objective signals → consent-engine agent scores
-  const provScore = c2pa ? 100 : seenBefore ? 20 : 70
   const scores: AgentScore[] = [
     { agentId: 'forensic-agent', score: elaScore, confidence: 0.95, evidence: [compression.measured] },
     { agentId: 'metadata-agent', score: meta.score, confidence: 0.9, evidence: [meta.signal.measured] },
+    { agentId: 'ai-detection-agent', score: aiScore, confidence: 0.72, evidence: [aiSignal.measured] },
     { agentId: 'memory-bonus', score: provScore, confidence: 0.6, evidence: [provenance.measured] },
   ]
 
-  const totalW = 0.35 + 0.30 + 0.10
-  const composite = clamp(Math.round((elaScore * 0.35 + meta.score * 0.30 + provScore * 0.10) / totalW))
+  const totalW = 0.35 + 0.30 + 0.25 + 0.10
+  const composite = clamp(Math.round((elaScore * 0.35 + meta.score * 0.30 + aiScore * 0.25 + provScore * 0.10) / totalW))
   const grade = gradeFor(composite)
   const verdict: Verdict = composite >= 70 ? 'verified' : composite >= 40 ? 'inconclusive' : 'likely-manipulated'
 

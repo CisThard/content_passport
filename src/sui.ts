@@ -176,6 +176,7 @@ export function buildSealApproveTx(params: {
     target: `${params.packageId}::seal_policy::seal_approve`,
     arguments: [
       tx.object(params.policyId),
+      tx.object("0x6"),
       tx.pure.vector("u8", bytes(params.sessionPublicKey)),
       tx.pure.u64(params.ttlMs),
     ],

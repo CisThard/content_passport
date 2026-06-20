@@ -1,4 +1,11 @@
 export type AgentId =
+  | AASEAgentId
+  | "rights-agent"
+  | "seal-agent"
+  | "settlement-agent"
+  | "archivist-agent";
+
+export type AASEAgentId =
   | "forensic-agent"
   | "metadata-agent"
   | "ai-detection-agent"
@@ -7,14 +14,14 @@ export type AgentId =
 export type AASEGrade = "AAA" | "AA" | "A" | "B" | "C" | "D" | "F";
 
 export interface AgentScore {
-  agentId: AgentId;
+  agentId: AASEAgentId;
   score: number;
   confidence: number;
   evidence?: string[];
 }
 
 export interface AASEContribution {
-  agentId: AgentId;
+  agentId: AASEAgentId;
   rawScore: number;
   boundedScore: number;
   confidence: number;
@@ -33,7 +40,7 @@ export interface AASEAssessment {
   baseWeightedScore: number;
   confidenceAdjustedWeight: number;
   contributions: AASEContribution[];
-  missingAgents: AgentId[];
+  missingAgents: AASEAgentId[];
   decision: "recreate-ready" | "blocked";
   warnings: string[];
 }
@@ -114,10 +121,14 @@ export interface ProofOfEffort {
 
 export interface SealedProofOfEffort {
   cipherText: Uint8Array;
+  iv: Uint8Array;
+  authTag: Uint8Array;
   digest: string;
+  algorithm: "AES-256-GCM+Shamir-GF256";
   threshold: number;
   shares: string[];
   sessionKey: {
+    algorithm: "Ed25519";
     publicKey: string;
     expiresAt: string;
   };
@@ -128,6 +139,12 @@ export interface WalrusStoredBlob {
   digest: string;
   size: number;
   storedAt: string;
+  objectId?: string;
+  txDigest?: string;
+  certifiedEpoch?: number;
+  endEpoch?: number;
+  source: "memory" | "walrus-http" | "walrus-sdk";
+  metadata?: Record<string, string | number | boolean>;
 }
 
 export interface GenesisPassport {
@@ -141,4 +158,50 @@ export interface GenesisPassport {
   visaStamps: VisaStamp[];
   remainingShare: number;
   issuedAt: string;
+}
+
+export interface WorkflowArtifact {
+  id: string;
+  kind:
+    | "media"
+    | "sealed-evidence"
+    | "agent-clue"
+    | "audit-report"
+    | "passport"
+    | "license"
+    | "settlement"
+    | "memory-snapshot";
+  name: string;
+  mimeType: string;
+  digest: string;
+  size: number;
+  walrusBlobId: string;
+  createdBy: AgentId;
+  createdAt: string;
+  reusedFrom?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface AgentWorkflowStep {
+  id: string;
+  agentId: AgentId;
+  action: string;
+  status: "pending" | "running" | "completed" | "blocked";
+  startedAt: string;
+  completedAt?: string;
+  inputArtifactIds: string[];
+  outputArtifactIds: string[];
+  memoryKeys: string[];
+  summary: string;
+  walrusBlobId?: string;
+}
+
+export interface ContentMemoryGraph {
+  passportId: string;
+  namespace: string;
+  artifacts: WorkflowArtifact[];
+  steps: AgentWorkflowStep[];
+  restoredFromWalrus: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

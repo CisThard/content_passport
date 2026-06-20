@@ -1,6 +1,7 @@
 import {
   assertSealCanDecrypt,
   buildMemWalInspectorSnapshot,
+  decryptProofOfEffort,
   InMemoryAuthenticityMemoryClient,
   InMemoryWalrusClient,
   issueGenesisPassport,
@@ -55,6 +56,13 @@ describe("Genesis Passport, Sovereign Vault, and MemWal board", () => {
       issuance.sealedEvidence.shares.slice(0, 3),
       new Date("2026-06-19T00:05:00.000Z"),
     );
+    const unsealed = decryptProofOfEffort(
+      issuance.sealedEvidence,
+      issuance.sealedEvidence.shares.slice(1, 4),
+      new Date("2026-06-19T00:05:00.000Z"),
+    );
+    expect(unsealed.title).toBe("Origin Sketch");
+    expect(Buffer.from(unsealed.artifacts[0]!.bytes).toString("utf8")).toBe("layer sketch");
 
     const countryBPassport = stampVisa(
       issuance.passport,

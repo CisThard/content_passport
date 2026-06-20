@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import sharp from "sharp";
-import { forensicAgent, metadataAgent, analyzeImage } from "../src/agents.js";
+import { forensicAgent, metadataAgent, analyzeImage, analyzeImageWithMemWal } from "../src/agents.js";
 
 async function cleanImage(): Promise<Uint8Array> {
   // Smooth gradient — compresses cleanly (low ELA residual).
@@ -54,5 +54,12 @@ describe("analyzeImage", () => {
     expect(scores.map((s) => s.agentId).sort()).toEqual(
       ["ai-detection-agent", "forensic-agent", "memory-bonus", "metadata-agent"],
     );
+  });
+
+  it("writes local and AI clues into the MemWal inspector snapshot", async () => {
+    const audit = await analyzeImageWithMemWal(await cleanImage());
+    expect(audit.clueIds).toHaveLength(3);
+    expect(audit.inspector.clues.map((clue) => clue.agentId)).toContain("ai-detection-agent");
+    expect(audit.inspector.reputation["forensic-agent"].clueCount).toBe(1);
   });
 });

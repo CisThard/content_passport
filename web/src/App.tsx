@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react'
-import { buildRecreateReadiness, calculateRoyaltyPayouts, prepareCoCreationActivation } from './engine'
-import type { AASEGrade, RoyaltyPayout, VisaStamp, CoCreationMemoryRecord } from './engine'
+import {
+  buildMemWalInspectorSnapshot,
+  buildRecreateReadiness,
+  calculateRoyaltyPayouts,
+  InMemoryAuthenticityMemoryClient,
+  prepareCoCreationActivation,
+  writeAgentClue,
+} from './engine'
+import type { AASEGrade, AgentId, CoCreationMemoryRecord, ContentMemoryGraph, MemWalClue, RoyaltyPayout, VisaStamp } from './engine'
 import { analyzeFile, type AnalysisResult } from './lib/analyze'
 import { Uploader } from './components/Uploader'
 import { HowItWorks } from './components/HowItWorks'
@@ -8,6 +15,9 @@ import { AuthenticityReport } from './components/AuthenticityReport'
 import { ConsentGate } from './components/ConsentGate'
 import { Settlement } from './components/Settlement'
 import { PassportCard, type PassportView } from './components/PassportCard'
+import { MemWalInspector } from './components/MemWalInspector'
+import { DecryptModal } from './components/DecryptModal'
+import { MemoryGraph } from './components/MemoryGraph'
 
 const YOU = '0xyou_origin_creator'
 const REMIX = '0xrecreator'
@@ -43,10 +53,20 @@ export default function App() {
   const [revenueSui, setRevenueSui] = useState(100)
   const [published, setPublished] = useState(false)
   const [archived, setArchived] = useState<CoCreationMemoryRecord | undefined>()
+  const [memwal, setMemwal] = useState<{
+    clues: MemWalClue[]
+    reputation: Record<AgentId, { clueCount: number; totalImpact: number; criticalCount: number }>
+  }>({ clues: [], reputation: {} as Record<AgentId, { clueCount: number; totalImpact: number; criticalCount: number }> })
+  const [memoryGraph, setMemoryGraph] = useState<ContentMemoryGraph | null>(null)
 
   async function handleFile(f: File) {
     setError(null); setAnalyzing(true); setPublished(false); setArchived(undefined)
-    try { setAnalysis(await analyzeFile(f)) }
+    try {
+      const next = await analyzeFile(f)
+      setAnalysis(next)
+      setMemwal(await buildInspectorFromAnalysis(next))
+      setMemoryGraph(buildBrowserMemoryGraph(next, published))
+    }
     catch (e) { setError(e instanceof Error ? e.message : String(e)) }
     finally { setAnalyzing(false) }
   }
@@ -93,6 +113,7 @@ export default function App() {
       escrowAmountMist: BigInt(Math.round(escrowSui * 1e9)), minimumGrade: minGrade, policyId: '0xpolicy',
     })
     setArchived(act.memoryRecord); setPublished(true)
+    setMemoryGraph(buildBrowserMemoryGraph(analysis, true))
   }
 
   return (
@@ -151,11 +172,24 @@ export default function App() {
                 <div className="preview-meta">
                   <div className="field">sha-256 <b>{analysis.hash.slice(0, 24)}…</b></div>
                   <div className="field">size <b>{analysis.width}×{analysis.height}</b></div>
-                  <button className="act ghost" style={{ marginTop: 10 }} onClick={() => { setAnalysis(null); setPublished(false) }}>← Verify another</button>
+                  <button className="act ghost" style={{ marginTop: 10 }} onClick={() => { setAnalysis(null); setPublished(false); setMemoryGraph(null); setMemwal({ clues: [], reputation: {} as Record<AgentId, { clueCount: number; totalImpact: number; criticalCount: number }> }) }}>← Verify another</button>
                 </div>
               </div>
               {passport && <PassportCard p={passport} ready={!!readiness?.ready} />}
+              {passport && (
+                <div className="card">
+                  <h2>Sovereign Vault</h2>
+                  <p className="sub">sealed proof-of-effort · Walrus blob · threshold unlock</p>
+                  <DecryptModal evidenceBlobId={passport.evidenceBlobId} contentHash={passport.contentHash} disabled={!readiness?.ready} />
+                </div>
+              )}
             </div>
+          </div>
+
+          <div className="step-head"><span className="step-no">M</span> MemWal Inspector</div>
+          <div className="grid">
+            <MemWalInspector clues={memwal.clues} reputation={memwal.reputation} />
+            <MemoryGraph graph={memoryGraph} />
           </div>
 
           <div className="step-head"><span className="step-no">2</span> Set your recreate license</div>
@@ -207,4 +241,116 @@ export default function App() {
       <div className="foot">CONTENT RIGHT · open forensic standards + programmable consent on Sui</div>
     </div>
   )
+}
+
+function buildBrowserMemoryGraph(analysis: AnalysisResult, settled: boolean): ContentMemoryGraph {
+  const passportId = `passport:${analysis.hash.slice(0, 24)}`
+  const createdAt = new Date().toISOString()
+  const artifact = (
+    kind: ContentMemoryGraph['artifacts'][number]['kind'],
+    name: string,
+    createdBy: AgentId,
+    index: number,
+    size = 512,
+    reusedFrom?: string[],
+  ): ContentMemoryGraph['artifacts'][number] => ({
+    id: `${kind}:${analysis.hash.slice(index, index + 12)}`,
+    kind,
+    name,
+    mimeType: kind.endsWith('report') || kind === 'license' || kind === 'settlement' || kind === 'memory-snapshot' ? 'application/json' : 'application/octet-stream',
+    digest: analysis.hash,
+    size,
+    walrusBlobId: `walrus://${analysis.hash.slice(index, index + 32)}`,
+    createdBy,
+    createdAt,
+    reusedFrom,
+    metadata: { source: 'walrus-http-ready', passportId },
+  })
+
+  const media = artifact('media', 'original-media', 'forensic-agent', 0, analysis.width * analysis.height)
+  const clues = analysis.scores.map((score, index) =>
+    artifact('agent-clue', `${score.agentId}-clue.json`, score.agentId, 4 + index * 4, 240, [media.id]),
+  )
+  const report = artifact('audit-report', 'aase-audit-report.json', 'ai-detection-agent', 10, 780, [media.id, ...clues.map((item) => item.id)])
+  const sealed = artifact('sealed-evidence', 'sealed-proof-of-effort.bin', 'seal-agent', 14, 1024, [media.id, report.id])
+  const license = artifact('license', 'recreate-readiness.json', 'rights-agent', 18, 620, [sealed.id])
+  const settlement = artifact('settlement', 'customs-settlement-state.json', 'settlement-agent', 22, 360, [license.id])
+  const snapshot = artifact('memory-snapshot', 'content-memory-graph.json', 'archivist-agent', 26, 2100, [media.id, ...clues.map((item) => item.id), report.id, sealed.id, license.id, settlement.id])
+  const artifacts = [media, ...clues, report, sealed, license, settlement, snapshot]
+
+  return {
+    passportId,
+    namespace: 'content-memory-graph',
+    artifacts,
+    restoredFromWalrus: true,
+    createdAt,
+    updatedAt: createdAt,
+    steps: [
+      {
+        id: `step:audit:${passportId}`,
+        agentId: 'ai-detection-agent',
+        action: 'context-fusion-audit',
+        status: 'completed',
+        startedAt: createdAt,
+        completedAt: createdAt,
+        inputArtifactIds: [media.id],
+        outputArtifactIds: [...clues.map((item) => item.id), report.id],
+        memoryKeys: analysis.scores.map((score) => `memwal-board:${passportId}:${score.agentId}`),
+        summary: 'Forensic, metadata, AI, and memory agents persist clues for future sessions.',
+      },
+      {
+        id: `step:seal:${passportId}`,
+        agentId: 'seal-agent',
+        action: 'seal-proof-of-effort',
+        status: 'completed',
+        startedAt: createdAt,
+        completedAt: createdAt,
+        inputArtifactIds: [media.id, report.id],
+        outputArtifactIds: [sealed.id],
+        memoryKeys: [`shared-context:sealed:${passportId}`],
+        summary: 'Proof-of-effort is sealed and stored as a reusable Walrus artifact.',
+      },
+      {
+        id: `step:rights:${passportId}`,
+        agentId: 'rights-agent',
+        action: 'evaluate-programmable-consent',
+        status: analysis.score >= 70 ? 'completed' : 'blocked',
+        startedAt: createdAt,
+        completedAt: createdAt,
+        inputArtifactIds: [sealed.id],
+        outputArtifactIds: [license.id],
+        memoryKeys: [`agent-workflow-state:step:rights:${passportId}`],
+        summary: analysis.score >= 70 ? 'Rights agent grants recreate readiness.' : 'Rights agent blocks recreate readiness until authenticity improves.',
+      },
+      {
+        id: `step:settlement:${passportId}`,
+        agentId: 'settlement-agent',
+        action: 'prepare-customs-settlement',
+        status: settled ? 'completed' : 'pending',
+        startedAt: createdAt,
+        completedAt: settled ? createdAt : undefined,
+        inputArtifactIds: [license.id],
+        outputArtifactIds: [settlement.id],
+        memoryKeys: [`agent-workflow-state:step:settlement:${passportId}`],
+        summary: settled ? 'Settlement state is complete and ready for revenue replay.' : 'Settlement state is persisted and waiting for revenue.',
+      },
+    ],
+  }
+}
+
+async function buildInspectorFromAnalysis(analysis: AnalysisResult) {
+  const memory = new InMemoryAuthenticityMemoryClient()
+  const clueIds: string[] = []
+  for (const score of analysis.scores) {
+    const firstEvidence = score.evidence?.[0] ?? 'No evidence string supplied'
+    const clue = await writeAgentClue(memory, {
+      agentId: score.agentId,
+      severity: score.score < 45 ? 'critical' : score.score < 70 ? 'warning' : 'info',
+      message: `${score.agentId} -> ${score.score}/100. ${firstEvidence}`,
+      scoreImpact: score.score - 70,
+      metadata: { confidence: score.confidence, hash: analysis.hash },
+    })
+    clueIds.push(clue.id)
+  }
+  return buildMemWalInspectorSnapshot(memory, clueIds)
 }

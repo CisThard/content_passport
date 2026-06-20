@@ -9,3 +9,4 @@ export * from "./recreate-readiness.js";
 export * from "./sui.js";
 export * from "./types.js";
 export * from "./walrus.js";
+export * from "./workflow.js";

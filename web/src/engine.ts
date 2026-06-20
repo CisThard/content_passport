@@ -30,4 +30,7 @@ export type {
   MemWalClue,
   CoCreationMemoryRecord,
   VisaStamp,
+  ContentMemoryGraph,
+  WorkflowArtifact,
+  AgentWorkflowStep,
 } from '../../src/types.js'

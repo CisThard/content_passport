@@ -1,13 +1,13 @@
-import { AASEAssessment, AASEContribution, AASEGrade, AgentId, AgentScore } from "./types.js";
+import { AASEAgentId, AASEAssessment, AASEContribution, AASEGrade, AgentScore } from "./types.js";
 
-export const AASE_AGENT_ORDER: AgentId[] = [
+export const AASE_AGENT_ORDER: AASEAgentId[] = [
   "forensic-agent",
   "metadata-agent",
   "ai-detection-agent",
   "memory-bonus",
 ];
 
-export const BASE_WEIGHTS: Record<AgentId, number> = {
+export const BASE_WEIGHTS: Record<AASEAgentId, number> = {
   "forensic-agent": 0.35,
   "metadata-agent": 0.30,
   "ai-detection-agent": 0.25,
@@ -63,7 +63,7 @@ export function calculateAASE(
   let totalDynamicWeight = 0;
   const scores: number[] = [];
   const contributions: AASEContribution[] = [];
-  const seenAgents = new Set<AgentId>();
+  const seenAgents = new Set<AASEAgentId>();
 
   for (const result of results) {
     const boundedScore = clamp(result.score, 0, 100);

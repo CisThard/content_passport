@@ -6,6 +6,7 @@ export const MEMWAL_BOARD_NAMESPACE = "memwal-board";
 export interface AuthenticityMemoryClient {
   remember(namespace: string, key: string, value: unknown): Promise<void>;
   recall<T = unknown>(namespace: string, key: string): Promise<T | undefined>;
+  list?<T = unknown>(namespace: string): Promise<Array<{ key: string; value: T }>>;
 }
 
 export class InMemoryAuthenticityMemoryClient implements AuthenticityMemoryClient {
@@ -17,6 +18,65 @@ export class InMemoryAuthenticityMemoryClient implements AuthenticityMemoryClien
 
   async recall<T = unknown>(namespace: string, key: string): Promise<T | undefined> {
     return this.store.get(memoryKey(namespace, key)) as T | undefined;
+  }
+
+  async list<T = unknown>(namespace: string): Promise<Array<{ key: string; value: T }>> {
+    const prefix = `${namespace}:`;
+    return Array.from(this.store.entries())
+      .filter(([key]) => key.startsWith(prefix))
+      .map(([key, value]) => ({ key: key.slice(prefix.length), value: value as T }));
+  }
+}
+
+export class HttpAuthenticityMemoryClient implements AuthenticityMemoryClient {
+  private readonly endpoint: string;
+  private readonly delegateKey?: string;
+  private readonly fetchImpl: typeof fetch;
+
+  constructor(
+    endpointOrOptions: string | { endpoint: string; delegateKey?: string },
+    fetchImpl: typeof fetch = fetch,
+  ) {
+    if (typeof endpointOrOptions === "string") {
+      this.endpoint = endpointOrOptions;
+    } else {
+      this.endpoint = endpointOrOptions.endpoint;
+      this.delegateKey = endpointOrOptions.delegateKey;
+    }
+    this.fetchImpl = fetchImpl;
+  }
+
+  async remember(namespace: string, key: string, value: unknown): Promise<void> {
+    const response = await this.fetchImpl(`${this.endpoint.replace(/\/$/, "")}/memory/${encodeURIComponent(namespace)}/${encodeURIComponent(key)}`, {
+      method: "PUT",
+      headers: this.headers(),
+      body: JSON.stringify(value),
+    });
+    if (!response.ok) throw new Error(`MemWal remember failed: ${response.status} ${response.statusText}`);
+  }
+
+  async recall<T = unknown>(namespace: string, key: string): Promise<T | undefined> {
+    const response = await this.fetchImpl(`${this.endpoint.replace(/\/$/, "")}/memory/${encodeURIComponent(namespace)}/${encodeURIComponent(key)}`, {
+      headers: this.headers(),
+    });
+    if (response.status === 404) return undefined;
+    if (!response.ok) throw new Error(`MemWal recall failed: ${response.status} ${response.statusText}`);
+    return response.json() as Promise<T>;
+  }
+
+  async list<T = unknown>(namespace: string): Promise<Array<{ key: string; value: T }>> {
+    const response = await this.fetchImpl(`${this.endpoint.replace(/\/$/, "")}/memory/${encodeURIComponent(namespace)}`, {
+      headers: this.headers(),
+    });
+    if (!response.ok) throw new Error(`MemWal list failed: ${response.status} ${response.statusText}`);
+    return response.json() as Promise<Array<{ key: string; value: T }>>;
+  }
+
+  private headers(): Record<string, string> {
+    return {
+      "content-type": "application/json",
+      ...(this.delegateKey ? { authorization: `Bearer ${this.delegateKey}` } : {}),
+    };
   }
 }
 
@@ -42,13 +102,16 @@ export async function recallAgentClue(
 
 export async function buildMemWalInspectorSnapshot(
   client: AuthenticityMemoryClient,
-  clueIds: string[],
+  clueIds?: string[],
 ): Promise<{
   clues: MemWalClue[];
   reputation: Record<AgentId, { clueCount: number; totalImpact: number; criticalCount: number }>;
 }> {
-  const clues = (await Promise.all(clueIds.map((id) => recallAgentClue(client, id))))
-    .filter((clue): clue is MemWalClue => Boolean(clue))
+  const clues = (clueIds
+    ? (await Promise.all(clueIds.map((id) => recallAgentClue(client, id)))).filter((clue): clue is MemWalClue => Boolean(clue))
+    : client.list
+      ? (await client.list<MemWalClue>(MEMWAL_BOARD_NAMESPACE)).map((entry) => entry.value)
+      : [])
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   const reputation = clues.reduce(

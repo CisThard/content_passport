@@ -1,6 +1,12 @@
 import sharp from "sharp";
 import exifr from "exifr";
 import { AgentScore } from "./types.js";
+import {
+  AuthenticityMemoryClient,
+  buildMemWalInspectorSnapshot,
+  InMemoryAuthenticityMemoryClient,
+  writeAgentClue,
+} from "./memory.js";
 
 /**
  * Real authenticity agents (gap closer): produce AgentScore[] from an actual
@@ -135,12 +141,53 @@ async function geminiDetect(media: Uint8Array, clues: AgentScore[]): Promise<Age
 
 /** Full real audit for one image → AgentScore[] ready for calculateAASE. */
 export async function analyzeImage(media: Uint8Array): Promise<AgentScore[]> {
+  const audit = await analyzeImageWithMemWal(media);
+  return audit.scores;
+}
+
+export async function analyzeImageWithMemWal(
+  media: Uint8Array,
+  memory: AuthenticityMemoryClient = new InMemoryAuthenticityMemoryClient(),
+): Promise<{
+  scores: AgentScore[];
+  clueIds: string[];
+  inspector: Awaited<ReturnType<typeof buildMemWalInspectorSnapshot>>;
+}> {
   const [forensic, metadata] = await Promise.all([forensicAgent(media), metadataAgent(media)]);
+  const clueIds = [
+    (await writeAgentClue(memory, clueFromScore(forensic, forensic.score < 60 ? "critical" : "info"))).id,
+    (await writeAgentClue(memory, clueFromScore(metadata, metadata.score < 60 ? "warning" : "info"))).id,
+  ];
+
+  const inspectorBeforeAi = await buildMemWalInspectorSnapshot(memory, clueIds);
   const ai = await aiDetectionAgent(media, [forensic, metadata]);
-  const memory: AgentScore = { agentId: "memory-bonus", score: 100, confidence: 0.7, evidence: ["No prior clash in MemWal history"] };
-  return [forensic, metadata, ai, memory];
+  clueIds.push((await writeAgentClue(memory, {
+    agentId: "ai-detection-agent",
+    severity: ai.score < 50 ? "critical" : "info",
+    message: `K-9 sniffer scored ${ai.score}/100 using ${inspectorBeforeAi.clues.length} MemWal context clues.`,
+    scoreImpact: ai.score - 70,
+    metadata: { evidence: ai.evidence, injectedClueIds: clueIds },
+  })).id);
+
+  const memoryScore: AgentScore = { agentId: "memory-bonus", score: 100, confidence: 0.7, evidence: ["No prior clash in MemWal history"] };
+  const scores = [forensic, metadata, ai, memoryScore];
+  return {
+    scores,
+    clueIds,
+    inspector: await buildMemWalInspectorSnapshot(memory, clueIds),
+  };
 }
 
 function msg(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
+}
+
+function clueFromScore(score: AgentScore, severity: "info" | "warning" | "critical") {
+  return {
+    agentId: score.agentId,
+    severity,
+    message: `${score.agentId} scored ${score.score}/100 at confidence ${score.confidence.toFixed(2)}.`,
+    scoreImpact: score.score - 70,
+    metadata: { evidence: score.evidence },
+  };
 }

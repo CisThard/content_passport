@@ -62,6 +62,7 @@ button.act:active { transform: scale(0.98); }
 button.act.ghost { background: transparent; color: var(--txt); border: 1px solid var(--line-2); }
 button.act.indigo { background: var(--indigo); color: #fff; }
 button.act:disabled { opacity: 0.4; cursor: not-allowed; }
+button.mini { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line-2); background: transparent; color: var(--txt-2); cursor: pointer; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
 /* AASE */
@@ -96,6 +97,27 @@ button.act:disabled { opacity: 0.4; cursor: not-allowed; }
 .rep { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
 .rep .pill { font-family: var(--mono); font-size: 10px; padding: 4px 8px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line); color: var(--txt-2); }
 
+/* Memory graph */
+.graph-kpi .k .val { font-size: 18px; }
+.timeline { display: flex; flex-direction: column; gap: 10px; }
+.timeline-step { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--panel-2); }
+.timeline-step.completed { border-color: rgba(69,212,131,0.24); }
+.timeline-step.blocked { border-color: rgba(255,93,93,0.25); }
+.timeline-step.pending { border-color: rgba(244,185,66,0.25); }
+.ts-head { display: flex; justify-content: space-between; gap: 10px; font-family: var(--mono); font-size: 10px; color: var(--txt-2); }
+.ts-head b { color: var(--teal); text-transform: uppercase; }
+.timeline-step.blocked .ts-head b { color: var(--red); }
+.timeline-step.pending .ts-head b { color: var(--amber); }
+.ts-action { font-size: 13px; font-weight: 600; margin-top: 5px; }
+.ts-summary { font-size: 12px; color: var(--txt-2); line-height: 1.45; margin-top: 4px; }
+.ts-meta { font-family: var(--mono); color: var(--txt-3); font-size: 10px; margin-top: 6px; }
+.artifact-list { display: flex; flex-direction: column; gap: 8px; }
+.artifact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(130px, auto); gap: 10px; align-items: center; border-top: 1px solid var(--line); padding: 10px 0; }
+.artifact-name { font-size: 12px; font-weight: 600; }
+.artifact-meta { font-family: var(--mono); color: var(--txt-3); font-size: 10px; margin-top: 3px; }
+.artifact code { font-family: var(--mono); color: var(--teal); font-size: 10px; word-break: break-all; text-align: right; }
+@media (max-width: 760px) { .artifact { grid-template-columns: 1fr; } .artifact code { text-align: left; } }
+
 /* Passport */
 .passport { border: 1px solid var(--line-2); border-radius: 16px; background: linear-gradient(160deg, #15110a 0%, #0f1014 50%); padding: 18px; position: relative; overflow: hidden; }
 .passport .pp-h { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -115,8 +137,13 @@ button.act:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Vault */
 .nodes { display: flex; gap: 8px; justify-content: center; margin: 14px 0; }
-.node { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line-2); display: grid; place-items: center; font-family: var(--mono); font-size: 10px; color: var(--txt-3); background: var(--panel-2); transition: all .4s; }
+.node { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line-2); display: grid; place-items: center; font-family: var(--mono); font-size: 10px; color: var(--txt-3); background: var(--panel-2); transition: all .4s; cursor: pointer; }
 .node.lit { color: #fff; border-color: var(--indigo); background: rgba(124,131,255,0.18); box-shadow: 0 0 16px rgba(124,131,255,0.35); }
+.node:disabled { opacity: 0.45; cursor: not-allowed; }
+.vault-card { margin-top: 12px; }
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.vault-card .field { font-family: var(--mono); font-size: 10px; color: var(--txt-2); margin: 8px 0; word-break: break-all; }
+.vault-card .field b { color: var(--txt); font-weight: 600; }
 
 /* Consent gate */
 .gate { text-align: center; padding: 20px; border-radius: 14px; border: 1px solid var(--line); }

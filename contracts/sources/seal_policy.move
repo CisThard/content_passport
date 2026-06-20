@@ -1,4 +1,5 @@
 module content_right::seal_policy {
+    use sui::clock::{Self, Clock};
     use sui::event;
 
     const EInvalidThreshold: u64 = 0;
@@ -11,6 +12,13 @@ module content_right::seal_policy {
         authorized_creators: vector<address>,
         threshold: u8,
         key_nodes: vector<address>,
+        approvals: vector<SealApproval>,
+    }
+
+    public struct SealApproval has store {
+        requester: address,
+        session_public_key: vector<u8>,
+        expires_at_ms: u64,
     }
 
     public struct SealPolicyCreated has copy, drop {
@@ -24,6 +32,7 @@ module content_right::seal_policy {
         requester: address,
         session_public_key: vector<u8>,
         ttl_ms: u64,
+        expires_at_ms: u64,
     }
 
     public fun create_policy(
@@ -43,6 +52,7 @@ module content_right::seal_policy {
             authorized_creators,
             threshold,
             key_nodes,
+            approvals: vector::empty<SealApproval>(),
         };
         let policy_id = object::id(&policy);
 
@@ -56,20 +66,42 @@ module content_right::seal_policy {
     }
 
     public fun seal_approve(
-        policy: &SealPolicy,
+        policy: &mut SealPolicy,
+        clock: &Clock,
         session_public_key: vector<u8>,
         ttl_ms: u64,
         ctx: &mut TxContext,
     ) {
         let requester = tx_context::sender(ctx);
         assert!(contains_address(&policy.authorized_creators, requester), ENotAuthorized);
+        assert!(ttl_ms > 0, EInvalidThreshold);
+        let expires_at_ms = clock::timestamp_ms(clock) + ttl_ms;
+        let event_session_public_key = copy_bytes(&session_public_key);
+
+        vector::push_back(&mut policy.approvals, SealApproval {
+            requester,
+            session_public_key,
+            expires_at_ms,
+        });
 
         event::emit(SealApproved {
             policy_id: object::id(policy),
             requester,
-            session_public_key,
+            session_public_key: event_session_public_key,
             ttl_ms,
+            expires_at_ms,
         });
+    }
+
+    fun copy_bytes(bytes: &vector<u8>): vector<u8> {
+        let mut out = vector::empty<u8>();
+        let len = vector::length(bytes);
+        let mut i = 0;
+        while (i < len) {
+            vector::push_back(&mut out, *vector::borrow(bytes, i));
+            i = i + 1;
+        };
+        out
     }
 
     fun contains_address(values: &vector<address>, target: address): bool {
