@@ -363,8 +363,8 @@ export default function App() {
       policyId: '0xpolicy',
     })
     
-    let graph = buildBrowserMemoryGraph(analysis, true)
-    
+    const graph = buildBrowserMemoryGraph(analysis, true)
+
     setArchived(act.memoryRecord)
     setPublished(true)
     localStorage.setItem(`cr:graph:${graph.passportId}`, JSON.stringify(graph))
@@ -448,7 +448,7 @@ export default function App() {
             <div className="brand-icon">🛂</div>
             <div className="brand-text">
               <h1>Content Passport</h1>
-              <p>Magical On-chain Art Sovereignity &amp; Persistent Memory Registry</p>
+              <p>Magical On-chain Art Sovereignty &amp; Persistent Memory Registry</p>
             </div>
           </div>
           <a href="https://github.com/CisThard/content_passport" target="_blank" rel="noreferrer" className="brand-github">
@@ -870,7 +870,7 @@ export default function App() {
                               {payouts.map((pay, i) => (
                                 <tr key={i}>
                                   <td style={{ fontFamily: 'var(--mono)', fontSize: 11 }}>{LABELS[pay.address as keyof typeof LABELS] || pay.address}</td>
-                                  <td>{originRoyalty}%</td>
+                                  <td>{pay.weight}%</td>
                                   <td style={{ color: 'var(--magic-gold)', fontWeight: 600 }}>{(Number(pay.amountMist) / 1e9).toFixed(2)} SUI</td>
                                 </tr>
                               ))}
@@ -904,7 +904,7 @@ export default function App() {
                   <div>
                     <div className="magical-card purple">
                       <div className="card-title">💬 Conversation Deck</div>
-                      <div className="card-subtitle">Chat history backed by decentralised Walrus blobs</div>
+                      <div className="card-subtitle">Chat history backed by decentralized Walrus blobs</div>
                       
                       <div className="magic-chat-interface">
                         <div className="chat-messages">
