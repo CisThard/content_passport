@@ -1,0 +1,67 @@
+<!-- Source: https://developer.android.com/about/versions/12 -->
+
+* [ Android Developers ](<https://developer.android.com/>)
+  * [ Essentials ](<https://developer.android.com/get-started>)
+  * [ Releases ](<https://developer.android.com/about/versions>)
+
+
+Stay organized with collections  Save and categorize content based on your preferences. 
+
+###  [ ![android 12](/static/images/about/versions/12/android12-black.png) ](<https://developer.android.com/about/versions/12/get>)
+
+A new system UI with Material You that's expressive, dynamic, and personal. Extend your apps with redesigned widgets, AppSearch, Game Mode, and new codecs. Support new protections like privacy dashboard and approximate location. Improve productivity with rich content insertion, easier blurs, improved native debugging, and much more.
+
+[Get started](<https://developer.android.com/about/versions/12/get>)
+
+[ ![](https://developer.android.com/static/images/picto-icons/app-optimization-2.svg) ](<https://developer.android.com/about/versions/12/behavior-changes-all>)
+
+###  [ Behavior Changes ](<https://developer.android.com/about/versions/12/behavior-changes-all>)
+
+Learn about system changes for privacy, security, and performance that may affect your app when it's running on Android 12. 
+
+[All apps](<https://developer.android.com/about/versions/12/behavior-changes-all>) [Apps targeting Android 12](<https://developer.android.com/about/versions/12/behavior-changes-12>)
+
+[ ![](https://developer.android.com/static/images/about/versions/12/android12-hero.svg) ](<https://developer.android.com/about/versions/12/features>)
+
+###  [ New features & APIs ](<https://developer.android.com/about/versions/12/features>)
+
+Explore new features from rich content insertion, extensions to native image decoding, compatible media transcoding, and more. 
+
+[Learn More](<https://developer.android.com/about/versions/12/features>)
+
+  1. **Set up a runtime environment** — see [Get Android 12](</about/versions/12/get>) to flash a Google Pixel device or set up an emulator.
+  2. **Set up Android Studio** — try the Android 12 SDK and tools. See the [Setup Guide](</about/versions/12/setup-sdk>) for steps. 
+  3. **Learn about what's new** — review the [behavior changes for all apps](</about/versions/12/behavior-changes-all>) and the [behavior changes for apps targeting Android 12](</about/versions/12/behavior-changes-12>) that might’ve affected your app.
+  4. **Test your app** — run through all flows to look for issues. [Toggle behavior changes](</about/versions/12/reference/compat-framework-changes>) at runtime to isolate issues.
+  5. **Update your app** — targeting Android 12 if possible, test with users using beta channels or other groups.
+
+
+[ ![](https://developer.android.com/static/images/picto-icons/toggle.svg) ](<https://developer.android.com/about/versions/12/reference/compat-framework-changes>)
+
+###  [ Compatibility tools ](<https://developer.android.com/about/versions/12/reference/compat-framework-changes>)
+
+Toggle top behavior changes and debug with integrated logging—no need to change targeting. 
+
+[Learn More](<https://developer.android.com/about/versions/12/reference/compat-framework-changes>)
+
+[ ![](https://developer.android.com/static/images/picto-icons/code.svg) ](<https://developer.android.com/about/versions/12/migration>)
+
+###  [ Migrate your apps ](<https://developer.android.com/about/versions/12/migration>)
+
+Follow this checklist of steps to get your apps ready for Android 12. 
+
+[Learn More](<https://developer.android.com/about/versions/12/migration>)
+
+[ ![](https://developer.android.com/static/images/picto-icons/chat-bubbles-3.svg) ](<https://source.android.com/source/report-bugs.html>)
+
+###  [ Give Feedback ](<https://source.android.com/source/report-bugs.html>)
+
+Your feedback and issue reports are critical! Use our main issue tracker to let us know! 
+
+[Learn More](<https://source.android.com/source/report-bugs.html>)
+
+Content and code samples on this page are subject to the licenses described in the [Content License](</license>). Java and OpenJDK are trademarks or registered trademarks of Oracle and/or its affiliates.
+
+Last updated 2024-09-03 UTC.
+
+[[["Easy to understand","easyToUnderstand","thumb-up"],["Solved my problem","solvedMyProblem","thumb-up"],["Other","otherUp","thumb-up"]],[["Missing the information I need","missingTheInformationINeed","thumb-down"],["Too complicated / too many steps","tooComplicatedTooManySteps","thumb-down"],["Out of date","outOfDate","thumb-down"],["Samples / code issue","samplesCodeIssue","thumb-down"],["Other","otherDown","thumb-down"]],["Last updated 2024-09-03 UTC."],[],[]]

@@ -48,7 +48,7 @@ export default function Chat() {
     if (normalized.includes('passport') || normalized.includes('register') || normalized.includes('identity')) {
       responseText = 'Creator Passports are registered as distinct NFTs on the Sui blockchain. Ephemeral Ed25519 SessionKeys allow you to run sign-free sponsored transactions for 10 minutes, optimizing browser UI responsiveness.'
     } else if (normalized.includes('verify') || normalized.includes('ai') || normalized.includes('forensic') || normalized.includes('ela')) {
-      responseText = 'The Aurelius Forensics Lab utilizes the 3-layer Agent Authenticity Checkpoint (AASE). It evaluates JPEG compression quantization artifacts via Error Level Analysis (ELA), kameraraw EXIF headers, and Gemini Flash refractions.'
+      responseText = 'The Gryffindor Forensics Lab utilizes the 3-layer Agent Authenticity Checkpoint (AASE). It evaluates JPEG compression quantization artifacts via Error Level Analysis (ELA), kameraraw EXIF headers, and Gemini Flash refractions.'
     } else if (normalized.includes('vault') || normalized.includes('shamir') || normalized.includes('shards') || normalized.includes('seal')) {
       responseText = 'The SEAL Vault decomposes your symmetric AES-256 file keys into 5 threshold shares via Shamir Secret Sharing. Since at least 3 shards are required to reconstruct, raw masterpiece assets remain absolutely secure on Walrus.'
     } else if (normalized.includes('remix') || normalized.includes('escrow') || normalized.includes('royalty') || normalized.includes('stamp')) {

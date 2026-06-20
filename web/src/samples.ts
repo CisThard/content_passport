@@ -28,7 +28,7 @@ export const SAMPLE_MEDIAS: MediaSample[] = [
     id: 'real-sony-a7r4',
     name: 'sony_a7r4_raw_origin.jpg',
     type: 'real',
-    title: '동해 새벽녘 어선 광경 (DSLR 촬영 원본)',
+    title: 'East Sea Dawn Fishing Boat (DSLR Original Raw)',
     meta: {
       camera: 'Sony ILCE-7RM4 (Alpha 7R IV)',
       lens: 'FE 24-70mm F2.8 GM',
@@ -46,13 +46,13 @@ export const SAMPLE_MEDIAS: MediaSample[] = [
       inconsistentPixels: 140
     },
     aiProbability: 4.8,
-    note: '센서 고유 노이즈 패턴과 EXIF 메타데이터 서명이 완벽히 일치합니다. 인공적인 픽셀 그리드 변형 흔적이 관찰되지 않아 100% 실사 촬영물로 판정되었습니다.'
+    note: 'The camera sensor noise profile matches the EXIF metadata signatures perfectly. No synthetic pixel grid variations or artificial modifications were observed, certifying this as a 100% authentic capture.'
   },
   {
     id: 'ai-stable-diffusion',
     name: 'sdxl_cyberpunk_neon_city.jpg',
     type: 'ai',
-    title: '네온 불빛의 사이버펑크 서울 골목길 (AI 생성)',
+    title: 'Cyberpunk Neon Alley in Seoul (AI Generated)',
     meta: {
       camera: 'Camera Hardware Undefined (Missing Header)',
       lens: 'LENS PARAMETERS NOT FOUND',
@@ -70,6 +70,6 @@ export const SAMPLE_MEDIAS: MediaSample[] = [
       inconsistentPixels: 458920
     },
     aiProbability: 99.4,
-    note: 'EXIF 하드웨어 메타데이터가 아예 제거되어 있으며, sharpness 오차율 밀도(ELA) 검사에서 생성 AI 특유의 인공 구조적 픽셀 그리드가 대량 감지되었습니다.'
+    note: 'EXIF hardware metadata has been completely stripped, and Error Level Analysis (ELA) detected a massive density of artificial pixel grid structures typical of modern generative neural networks.'
   }
 ]

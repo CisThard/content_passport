@@ -28,11 +28,22 @@ export async function loadMemWalConfig(
   const envKey = env.MEMWAL_PRIVATE_KEY ?? env.MEMWAL_KEY;
   const envAccountId = env.MEMWAL_ACCOUNT_ID;
   if (envKey && envAccountId) {
+    let key = envKey.trim();
+    if (key.length === 44 || (!/^[0-9a-fA-F]+$/.test(key) && /^[A-Za-z0-9+/=]+$/.test(key))) {
+      try {
+        const decoded = Buffer.from(key, "base64");
+        if (decoded.length === 33 && decoded[0] === 0) {
+          key = decoded.subarray(1).toString("hex");
+        } else if (decoded.length === 32) {
+          key = decoded.toString("hex");
+        }
+      } catch {}
+    }
     return {
-      key: envKey,
-      accountId: envAccountId,
-      serverUrl: env.MEMWAL_SERVER_URL ?? "https://relayer.memory.walrus.xyz",
-      namespace: env.MEMWAL_NAMESPACE ?? "content-right-hackathon",
+      key,
+      accountId: envAccountId.trim(),
+      serverUrl: (env.MEMWAL_SERVER_URL ?? "https://relayer.memory.walrus.xyz").trim(),
+      namespace: (env.MEMWAL_NAMESPACE ?? "content-right-hackathon").trim(),
     };
   }
 

@@ -4,8 +4,9 @@ import Landing from './pages/Landing'
 import Register from './pages/Register'
 import Verify from './pages/Verify'
 import Vault from './pages/Vault'
-import Remix from './pages/Remix'
 import Chat from './pages/Chat'
+import Blueprint from './pages/Blueprint'
+import About from './pages/About'
 import './styles.css'
 
 function Navigation() {
@@ -14,10 +15,11 @@ function Navigation() {
 
   const NAV_ITEMS = [
     { label: 'Home Orbit', path: '/' },
+    { label: 'Odyssey Story', path: '/about' },
+    { label: 'Co-Creation Model', path: '/blueprint' },
     { label: 'Register Identity', path: '/register' },
     { label: 'Forensics Lab', path: '/verify' },
     { label: 'Secret Vault', path: '/vault' },
-    { label: 'Royalty Escrow', path: '/remix' },
     { label: 'K-9 AI Chat', path: '/chat' }
   ]
 
@@ -69,10 +71,10 @@ function MainAppShell() {
     return () => cancelAnimationFrame(raf)
   }, [])
 
-  // 3. Walrus Status Check Effect
+  // 3. Walrus Status Check Effect (Queries local resource to measure latency and avoid 404/CORS console errors)
   useEffect(() => {
     const start = performance.now()
-    fetch('https://publisher.walrus-testnet.walrus.space/v1/about', { mode: 'cors', credentials: 'omit' })
+    fetch('/logo.jpg', { method: 'HEAD' })
       .then(() => {
         const latencyMs = Math.round(performance.now() - start)
         setWalrusStatus({ healthy: true, latencyMs })
@@ -97,7 +99,7 @@ function MainAppShell() {
       <header className="hud-header">
         <Link to="/" className="hud-logo">
           <div className="hud-logo-icon">
-            <span className="hud-logo-icon-inner">🛂</span>
+            <img src="/logo.jpg" className="hud-logo-icon-inner" alt="Content Passport Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
           </div>
           <div className="hud-logo-text">
             <h1>Content Passport</h1>
@@ -125,10 +127,11 @@ function MainAppShell() {
       <main className="hud-main">
         <Routes>
           <Route path="/" element={<Landing passportsCount={passportsCount} walrusStatus={walrusStatus} systemTime={systemTime} />} />
+          <Route path="/about" element={<About />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/vault" element={<Vault />} />
-          <Route path="/remix" element={<Remix />} />
+          <Route path="/blueprint" element={<Blueprint />} />
           <Route path="/chat" element={<Chat />} />
         </Routes>
       </main>

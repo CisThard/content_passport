@@ -1,0 +1,275 @@
+<!-- Source: https://docs.sui.io/onchain-finance/tokenized-assets/deploy-tokenized-asset -->
+
+* [](</>)
+  * [Tokenized Assets](</onchain-finance/tokenized-assets/>)
+  * Deploy a Tokenized Asset
+
+
+On this page
+
+# Deploy a Tokenized Asset
+
+This guide covers how to publish the [asset tokenization](</onchain-finance/tokenized-assets/asset-tokenization>) packages and interact with your tokenized asset.
+
+  * Prerequisites
+
+
+  * [Install Sui](</getting-started/onboarding/sui-install>)
+  * [Configure a Sui client](</getting-started/onboarding/configure-sui-client>)
+  * [Get SUI from faucet](</getting-started/onboarding/get-coins>)
+  * Node.js and npm installed
+  * Git installed
+
+
+## Clone the repository​
+
+Clone the `asset-tokenization` repository and navigate to the `setup` directory:
+[code] 
+    $ git clone https://github.com/MystenLabs/asset-tokenization.git  
+    $ cd asset-tokenization  
+    
+[/code]
+
+Copy the `.env.template` file to `.env` and install dependencies:
+[code] 
+    $ cp setup/.env.template setup/.env  
+    $ cd setup && npm install  
+    
+[/code]
+
+## Initialize the Sui Client CLI​
+
+info
+
+See ["Hello, World!"](</getting-started/onboarding/hello-world>) for a more detailed guide on publishing packages or [Sui Client CLI](</references/cli/client>) for a complete reference of `client` commands in the Sui CLI.
+
+Before publishing your code, you must first initialize the Sui Client CLI, if you haven't already. To do so, in a terminal or console at the root directory of the project enter `sui client`. If you receive the following response, complete the remaining instructions:
+[code] 
+    Config file ["<FILE-PATH>/.sui/sui_config/client.yaml"] doesn't exist, do you want to connect to a Sui full node server [y/N]?  
+    
+[/code]
+
+Enter `y` to proceed. You receive the following response:
+[code] 
+    Sui full node server URL (Defaults to Sui Testnet if not specified) :  
+    
+[/code]
+
+Leave this blank (press Enter). You receive the following response:
+[code] 
+    Select key scheme to generate key pair (0 for ed25519, 1 for secp256k1, 2: for secp256r1):  
+    
+[/code]
+
+Select `0`. Now you should have a Sui address set up.
+
+## Publishing​
+
+You can publish the contracts manually using the Sui CLI, or use the provided bash script to automatically deploy and populate most of the `.env` fields.
+
+The [`setup/.env.template`](<https://github.com/MystenLabs/asset-tokenization/blob/main/setup/.env.template>) file defines all required variables. For more details, see the setup folder's [README](<https://github.com/MystenLabs/asset-tokenization/tree/main/setup>).
+
+### Publishing packages​
+
+Publish both packages in order: `asset_tokenization` first, then `template`.
+
+tip
+
+Beginning with the Sui `v1.24.1` [release](<https://github.com/MystenLabs/sui/releases/tag/mainnet-v1.24.1>), the `--gas-budget` option is no longer required for CLI commands.
+
+#### `asset_tokenization` package​
+
+You can publish the `asset_tokenization` package manually with `sui client publish` or automatically using the provided bash script (`npm run publish-asset-tokenization`), which also populates `SUI_NETWORK`, `ASSET_TOKENIZATION_PACKAGE_ID`, and `REGISTRY` in your `.env` file.
+
+To publish manually, run the following from the `move/asset_tokenization` directory:
+[code] 
+    $ sui client publish --gas-budget <GAS-BUDGET>  
+    
+[/code]
+
+The package should successfully deploy, and you then see:
+[code] 
+    INCLUDING DEPENDENCY Sui  
+    INCLUDING DEPENDENCY MoveStdlib  
+    BUILDING asset_tokenization  
+    Successfully verified dependencies on-chain against source.  
+    
+[/code]
+
+Store the `package ID` and `registry ID` from the created objects in your `.env` file. The package system automatically records the published address in `Published.toml`, so you do not need to manually edit `Move.toml` after publishing.
+
+For more details, see the setup folder's [README](<https://github.com/MystenLabs/asset-tokenization/tree/main/setup>).
+
+#### `template` package​
+
+You can publish the `template` package manually with `sui client publish` or automatically through the WASM library using `npm run publish-template`.
+
+To publish manually, run the following from the `move/template` directory:
+[code] 
+    $ sui client publish --gas-budget <GAS-BUDGET>  
+    
+[/code]
+
+The package should successfully deploy, and you then see:
+[code] 
+    INCLUDING DEPENDENCY asset_tokenization  
+    INCLUDING DEPENDENCY Sui  
+    INCLUDING DEPENDENCY MoveStdlib  
+    BUILDING template  
+    Successfully verified dependencies on-chain against source.  
+    
+[/code]
+
+Store the `package ID`, `asset metadata ID`, `asset cap ID`, and `Publisher ID` from the created objects in your `.env` file.
+
+For more details, see the setup folder's [README](<https://github.com/MystenLabs/asset-tokenization/tree/main/setup>).
+
+## WebAssembly (WASM) and the template package​
+
+tip
+
+You can find a public-facing reference to the WASM library in the [move-binary-format-wasm](<https://www.npmjs.com/package/@mysten/move-bytecode-template>) Sui repo subfolder.
+
+The WASM feature enables Move bytecode serialization and deserialization in a browser environment, allowing you to edit existing contracts without a local build environment. For asset tokenization, this lets you create and publish new asset types directly from the browser.
+
+### Bytecode manipulation​
+
+caution
+
+If you modify the template package, you must repeat this process. Some alterations, like changing a constant name, do not affect the produced bytecode.
+
+The WASM library manipulates the compiled bytecode of the `template` module. To retrieve it, navigate inside the `template` folder and run:
+[code] 
+    $ xxd -c 0 -p build/template/bytecode_modules/template.mv | head -n 1  
+    
+[/code]
+
+Click to openConsole response
+
+The response looks similar to the following:
+[code]
+    a11ceb0b060000000a010010021026033637046d0a05776807df01ec0108cb03800106cb043  
+    e0a8905050c8e0549001303140107010d01120215021602170004020001000c01000101010c  
+    010001020307000302070100000403070006050200070607000009000100010a0a0b0102021  
+    2050700030c010401000311060401000418050800050e0601010c050f1001010c06100d0e00  
+    070b050300030304030109060c070f02080007080600040b040108070b010108000b0201080  
+    00b04010807010807010b04010900010a020109000108030108050108000809000308030805  
+    08050b0401080701070806020b010109000b02010900010b02010800010608060105010b010  
+    10800020900050841737365744361700d41737365744d65746164617461064f7074696f6e06  
+    537472696e670854454d504c415445095478436f6e746578740355726c0561736369690b647  
+    56d6d795f6669656c6404696e6974096e65775f6173736574156e65775f756e736166655f66  
+    726f6d5f6279746573046e6f6e65066f7074696f6e137075626c69635f73686172655f6f626  
+    a6563740f7075626c69635f7472616e736665720673656e64657204736f6d6506737472696e  
+    670874656d706c6174650f746f6b656e697a65645f6173736574087472616e736665720a747  
+    85f636f6e746578740375726c04757466380000000000000000000000000000000000000000  
+    000000000000000000000000000000000000000000000000000000000000000000000000000  
+    000000000000100000000000000000000000000000000000000000000000000000000000000  
+    02d9ebdef1e3cb5eb135362572b18faeb61259afe651a463f1384745ebd7fd51da030864000  
+    000000000000a02070653796d626f6c0a0205044e616d650a020c0b4465736372697074696f  
+    6e0a02090869636f6e5f75726c0101010a02010000020108010000000002230704070621040  
+    738000c02050b0704110938010c020b020c050b0007000701110207021105070311050b0507  
+    050a0138020c040c030b0438030b030b012e110838040200  
+    
+[/code]
+
+Copy the output and paste it into the return statement of the `getBytecode` method in [bytecode-template.ts](<https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/bytecode-template.ts>).
+
+Because the template package contains 2 modules, you also need to retrieve the bytecode for the `genesis` module. This bytecode is not edited but is required to deploy the template module. Navigate to the `template` folder and run:
+[code] 
+    $ xxd -c 0 -p build/template/bytecode_modules/genesis.mv | head -n 1  
+    
+[/code]
+
+Copy the output and paste it into the bytecode constant in [genesis_bytecode.ts](<https://github.com/MystenLabs/asset-tokenization/blob/main/setup/src/utils/genesis_bytecode.ts>).
+
+With this setup, the library can deserialize the bytecode, apply your edits, and serialize it again for publishing.
+
+### Template module constants​
+
+The `template` module defines a set of constants that the WASM library can modify:
+[code] 
+    ...  
+    const TOTAL_SUPPLY: u64 = 100;  
+    const SYMBOL: vector<u8> = b"Symbol";  
+    const NAME: vector<u8> = b"Name";  
+    const DESCRIPTION: vector<u8> = b"Description";  
+    const ICON_URL: vector<u8> = b"icon_url";  
+    const BURNABLE: bool = true;  
+    ...  
+    
+[/code]
+
+The TypeScript code that performs the edit and deploys identifies and updates these constants:
+[code] 
+    ...  
+    const template = getBytecode();  
+       
+    const compiledModule = new CompiledModule(  
+      JSON.parse(wasm.deserialize(template))  
+    )  
+      .updateConstant(0, totalSupply, "100", "u64")  
+      .updateConstant(1, symbol, "Symbol", "string")  
+      .updateConstant(2, asset_name, "Name", "string")  
+      .updateConstant(3, description, "Description", "string")  
+      .updateConstant(4, iconUrl, "icon_url", "string")  
+      .updateConstant(5, burnable, "true", "bool")  
+      .changeIdentifiers({  
+        template: moduleName,  
+        TEMPLATE: moduleName.toUpperCase(),  
+      });  
+       
+    const bytesToPublish = wasm.serialize(JSON.stringify(compiledModule));  
+    ...  
+    
+[/code]
+
+The `updateConstant` method takes 4 arguments:
+
+  * `idx`: The index of the constant in the constant pool, sequential starting from 0.
+  * `value`: The updated value for the constant.
+  * `expectedValue`: The current value of the constant, used to reduce the risk of accidentally updating the wrong constant.
+  * `expectedType`: The current type of the constant, for the same reason.
+
+
+The `changeIdentifiers` method updates identifiers such as the module name and struct name. It takes a JSON object with keys of the current identifier names and values of the desired names.
+
+To deploy the changed template module, build and publish:
+[code] 
+    ...  
+    const tx = new Transaction();  
+      tx.setGasBudget(100000000);  
+      const [upgradeCap] = tx.publish({  
+        modules: [[...fromHex(bytesToPublish)], [...fromHex(genesis_bytecode)]],  
+        dependencies: [  
+          normalizeSuiObjectId("0x1"),  
+          normalizeSuiObjectId("0x2"),  
+          normalizeSuiObjectId(packageId),  
+        ],  
+      });  
+       
+      tx.transferObjects(  
+        [upgradeCap],  
+        tx.pure(signer.getPublicKey().toSuiAddress(), "address")  
+      );  
+    ...  
+    
+[/code]
+
+The `modules` array contains 2 elements: the edited template module and the genesis module. The `packageId` is the address the `asset_tokenization` package was deployed to.
+
+## TypeScript commands​
+
+After publishing, use the TypeScript setup scripts to interact with your tokenized asset. For a full reference of available commands, see the [Asset Tokenization TypeScript CLI Reference](</references/ts-asset-tokenization>).
+
+[Edit this page](<https://github.com/MystenLabs/sui/tree/main/docs/docs/../content/onchain-finance/tokenized-assets/deploy-tokenized-asset.mdx>)
+
+[PreviousAsset Tokenization](</onchain-finance/tokenized-assets/asset-tokenization>)[NextCreate a Non-Fungible Token](</onchain-finance/tokenized-assets/create-nft>)
+
+  * Clone the repository
+  * Initialize the Sui Client CLI
+  * Publishing
+    * Publishing packages
+  * WebAssembly (WASM) and the template package
+    * Bytecode manipulation
+    * Template module constants
+  * TypeScript commands

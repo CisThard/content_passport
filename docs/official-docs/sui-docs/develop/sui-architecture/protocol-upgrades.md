@@ -1,0 +1,56 @@
+<!-- Source: https://docs.sui.io/develop/sui-architecture/protocol-upgrades -->
+
+* [](</>)
+  * [Sui Architecture](</develop/sui-architecture/>)
+  * Protocol Upgrades
+
+
+On this page
+
+# Protocol Upgrades
+
+The Sui protocol, framework, and execution engine are frequently extended to include new functionality and bug fixes. This functionality is added as new code released to validator operators as part of regular software releases.
+
+As [consensus](</develop/sui-architecture/consensus>) requires that all validators agree on the results of executing each transaction, how is code released that changes transaction execution, given that operators cannot all upgrade at the same instant? Further, how is it ensured that all transaction history can be replayed even after functionality has changed?
+
+To solve this, Sui uses a process called protocol upgrades.
+
+## Protocol upgrade process​
+
+The process for protocol upgrades includes the following steps:
+
+  1. A developer codes the new feature but restricts access to it with a feature flag, a boolean configuration variable initially set to false.
+
+  2. The value of the feature flag is retrieved from a struct called `ProtocolConfig`.
+
+  3. The developer creates a new version of the `ProtocolConfig` struct where the feature flag is set to true.
+
+  4. A new release of the Sui validator software is built and released to validator and full node operators.
+
+  5. When the validator process starts, it continues to use the previous version of `ProtocolConfig` (flag set to false). All validators behave identically regardless of whether they have the new software.
+
+  6. As validators are upgraded, they signal to the validator committee that they are prepared to switch to the new version of the configuration (flag enabled).
+
+  7. If 2/3 or more of validators vote to switch to the new protocol version, the new version takes effect at the beginning of the next epoch.
+
+  8. The new feature becomes active.
+
+
+Full node operators follow a similar process but do not participate in voting. They follow the actions recorded by validators.
+
+When validators switch to a new protocol version, they record the new version number in the special end-of-epoch transaction. Full nodes execute this transaction as they replay the chain history, allowing them to switch to the new protocol version at the correct time.
+
+## Framework upgrades​
+
+Not all new Sui functionality comes from validator code changes. Developers also extend the Sui framework. For example, they might add new native functions to expose functionality to smart contracts. The process for framework updates is similar to protocol upgrades.
+
+Instead of feature flags, Sui objects coordinate framework changes. The Sui framework is a special object with ID `0x2`. The Move source code for the framework is built into the validator binary.
+
+If a validator notices that its built-in framework differs from the framework in object `0x2`, it signals to other validators that it wants to upgrade the framework to a new version. As with `ProtocolConfig`, if 2/3 or more of validators agree, the new framework object is written at the end of the current epoch. Transactions executed in the new epoch then use the new version of the framework.
+
+[Edit this page](<https://github.com/MystenLabs/sui/tree/main/docs/docs/../content/develop/sui-architecture/protocol-upgrades.mdx>)
+
+[PreviousSecurity](</develop/sui-architecture/sui-security>)[NextObjects](</develop/objects/>)
+
+  * Protocol upgrade process
+  * Framework upgrades

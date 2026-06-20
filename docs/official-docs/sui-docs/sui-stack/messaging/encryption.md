@@ -1,0 +1,167 @@
+<!-- Source: https://docs.sui.io/sui-stack/messaging/encryption -->
+
+* [](</>)
+  * [Messaging SDK](</sui-stack/messaging/>)
+  * Architecture
+  * Encryption
+
+
+On this page
+
+# Encryption
+
+This document describes how the SDK encrypts and decrypts messages. For security properties, guarantees, and threat model, see [Security](</sui-stack/messaging/security>).
+
+## Envelope encryption model​
+
+Each messaging group has a **Data Encryption Key (DEK)** , an AES-256-GCM symmetric key. The DEK is:
+
+  1. Generated client-side
+  2. **Seal-encrypted** (threshold encryption across independent key servers)
+  3. Stored onchain in an `EncryptionHistory` object (a versioned list of encrypted DEKs)
+
+
+Messages are encrypted with the DEK using AES-256-GCM. The relayer only ever sees ciphertext.
+[code] 
+    Message plaintext  
+           |  
+           v  
+      AES-256-GCM encrypt (DEK + random nonce + AAD)  
+           |  
+           v  
+      Ciphertext + nonce + keyVersion --> Relayer  
+    
+[/code]
+
+To decrypt, a group member fetches the encrypted DEK from onchain, proves access through Seal's `seal_approve` mechanism, and receives the plaintext DEK for local AES-GCM decryption.
+
+## Send flow​
+
+When `sendMessage()` is called:
+
+  1. **Resolve DEK** : Check local cache. On miss: fetch encrypted DEK from `EncryptionHistory` onchain, build a `seal_approve` transaction, Seal-decrypt, cache the result.
+  2. **Generate nonce** : Random 96-bit (12-byte) nonce.
+  3. **Build AAD** : Additional Authenticated Data binding ciphertext to context.
+  4. **AES-GCM encrypt** : Encrypt the message text with `DEK + nonce + AAD`.
+  5. **Sign** : Sign the canonical message content for sender verification.
+  6. **Send** : Transmit ciphertext, nonce, `keyVersion`, and signature to the relayer.
+
+
+## Receive flow​
+
+When `getMessage()`, `getMessages()`, or `subscribe()` is called:
+
+  1. **Fetch** : Retrieve encrypted message(s) from the relayer.
+  2. **Resolve DEK** : Same cache-first flow as sending.
+  3. **Reconstruct AAD** : From context fields (`groupId`, `keyVersion`, `senderAddress`).
+  4. **AES-GCM decrypt** : Decrypt the ciphertext. If AAD mismatches, decryption fails.
+  5. **Verify sender** : Check the per-message signature against the sender's public key.
+  6. **Resolve attachments** : Decrypt attachment metadata, provide lazy download handles.
+
+
+## Additional Authenticated Data (AAD)​
+
+Every message is encrypted with AAD that binds the ciphertext to its context:
+[code] 
+    [groupId (32 bytes)][keyVersion (8 bytes LE u64)][senderAddress (32 bytes)]  
+    
+[/code]
+
+AAD is never stored; both sender and receiver reconstruct it from known context. If any field mismatches (for example, a message is replayed into a different group or attributed to a different sender), AES-GCM decryption fails with an authentication error.
+
+## Sender verification​
+
+Each message includes a per-message signature over the canonical content, protecting against message forgery by allowing clients to validate that a message was authored by the claimed sender:
+[code] 
+    "{groupId}:{hex(encryptedText)}:{hex(nonce)}:{keyVersion}"  
+    
+[/code]
+
+The sender's public key (with scheme flag prefix identifying Ed25519, Secp256k1, or Secp256r1) is stored alongside the message. All group members can independently verify that:
+
+  1. The signature is valid for the canonical content
+  2. The public key derives to the claimed `senderAddress`
+
+
+The SDK performs this verification automatically during decryption and populates `DecryptedMessage.senderVerified`. Messages where verification fails or signature data is missing have `senderVerified: false`.
+
+## Session key management​
+
+Seal operations require a **session key** , a short-lived key that authorizes decryption requests to Seal key servers. The SDK manages session keys internally through three tiers. See [Setup](</sui-stack/messaging/setup>) for configuration details.
+
+**Tier 1: Signer-based** (recommended):
+[code] 
+    encryption: { sessionKey: { signer: keypair } }  
+    
+[/code]
+
+The SDK calls `SessionKey.create()` with the signer and handles certification automatically. Works with dapp-kit-next `CurrentAccountSigner`, `Keypair`, and Enoki.
+
+**Tier 2: Callback-based:**
+[code] 
+    encryption: {  
+      sessionKey: {  
+        address: '0x...',  
+        onSign: async (message) => signPersonalMessage(message),  
+      },  
+    }  
+    
+[/code]
+
+The SDK creates a session key, then calls `onSign()` with the personal message bytes for wallet signing. For current dapp-kit without the Signer abstraction.
+
+**Tier 3: Manual:**
+[code] 
+    encryption: { sessionKey: { getSessionKey: () => mySessionKey } }  
+    
+[/code]
+
+Full control over the session key lifecycle. The SDK calls `getSessionKey()` whenever it needs a key.
+
+Session keys are refreshed automatically before expiry (configurable through `ttlMin` and `refreshBufferMs`).
+
+## Key versioning​
+
+The `EncryptionHistory` onchain object stores encrypted DEKs as a versioned list (0-indexed):
+
+  * **Version 0** is created with the group (initial DEK)
+  * Each `rotateEncryptionKey()` call appends a new version
+  * Messages reference their `keyVersion` so receivers know which DEK to use
+  * Old versions remain accessible to current group members through Seal
+
+
+Key rotation creates a new, independent DEK. Old DEKs cannot be derived from new ones and vice versa. The protection rotation provides is against removed members: after rotation, a member who has lost `MessagingReader` permission cannot obtain the new DEK from Seal. See [Security](</sui-stack/messaging/security>) for the full picture on forward secrecy and post-compromise security.
+
+## DEK caching​
+
+Decrypted DEKs are cached in-memory (through `ClientCache` backed by a `TtlMap`), keyed by `[groupId, keyVersion]`. Cached entries expire automatically when the Seal session key expires, so the DEK cache lifetime matches the session key TTL. This avoids repeated Seal decryption calls:
+
+  * **Cache warm on create/rotate** : When the SDK generates a new DEK (group creation or key rotation), it immediately caches the plaintext DEK.
+  * **Cache miss on decrypt** : First decryption for a given group/version triggers a Seal round-trip. Subsequent decryptions use the cached DEK.
+  * **Manual invalidation** : `client.messaging.encryption.clearCache(groupId?)` clears all or group-specific cached DEKs.
+
+
+## Attachment encryption​
+
+Each file attachment is encrypted with the same group DEK but a separate random nonce. File metadata (`fileName`, `mimeType`, `fileSize`) is encrypted separately with its own nonce. See [Attachments](</sui-stack/messaging/attachments>) for the full attachment encryption model.
+
+## Nonce handling​
+
+AES-GCM uses random 96-bit nonces. NIST SP 800-38D recommends at most 2^32 (~4 billion) encryptions per key to keep the nonce collision probability at or below 2^-32. A nonce collision under the same key is catastrophic: it leaks the XOR of two plaintexts and breaks authentication. In practice this limit is extremely high and unlikely to be reached in typical messaging usage before key rotation.
+
+For high-volume groups, rotate keys periodically to reset the nonce space.
+
+[Edit this page](<https://github.com/MystenLabs/sui/tree/main/docs/docs/../content/sui-stack/messaging/encryption.mdx>)
+
+[PreviousExample Patterns](</sui-stack/messaging/examples>)[NextSecurity](</sui-stack/messaging/security>)
+
+  * Envelope encryption model
+  * Send flow
+  * Receive flow
+  * Additional Authenticated Data (AAD)
+  * Sender verification
+  * Session key management
+  * Key versioning
+  * DEK caching
+  * Attachment encryption
+  * Nonce handling

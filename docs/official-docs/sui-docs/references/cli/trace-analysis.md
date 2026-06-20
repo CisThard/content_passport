@@ -1,0 +1,56 @@
+<!-- Source: https://docs.sui.io/references/cli/trace-analysis -->
+
+* [](</>)
+  * [Sui CLI](</references/cli>)
+  * Sui Trace Analysis
+
+
+On this page
+
+# Sui Trace Analysis
+
+[Replaying a transaction](</references/cli/replay>) generates a trace file that contains detailed information about the execution of the transaction, such as gas usage, functions called, instructions executed, and more. Use the Sui CLI to analyze a trace file and extract useful insights.
+
+info
+
+Currently, only gas profile analysis is supported for transactions traced with the replay command. Support for additional analyses is planned.
+
+### Profile a transaction​
+
+Use the `sui analyze-trace -p <PATH_TO_TRACE_FILE> gas-profile` command to analyze a trace for a transaction and produce a gas profile.
+
+The command outputs a profile to the current working directory in the format `gas_profile_{TRACE_FILE_NAME}.json`. You can also supply an optional `--output/-o` flag to the `analyze-trace` command to specify a different output directory for the profile. Use [speedscope](<https://www.speedscope.app/>) to display the profile that was generated.
+
+To install speedscope, run:
+[code] 
+    $ npm install -g speedscope  
+    
+[/code]
+
+Then, to open a profile in speedscope, run:
+[code] 
+    $ speedscope <PATH/PROFILE-OUTPUT-FILE>  
+    
+[/code]
+
+When viewing the profile in speedscope, there are three different views available: Timer Order, Left Heavy, and Sandwich.
+
+In each view, a bar's vertical width corresponds to the percentage of gas consumption incurred by the function. Hover your mouse over a bar or click a bar to see the computation units accrued by the function invocation.
+
+The transaction's total computation and storage units are multiplied by the gas price to determine the total gas cost of the transaction based on a tier system.
+
+**Time Order** shows the call stack of function invocations from left to right in the order of invocation, while **Left Heavy** combines repeated sequences of nested invocations into a single combined call stack.
+
+**Left Heavy** displays these sequences from left to right by total incurred gas consumption per combined call stack. This is useful to quickly observe the total gas consumption over all calls when there have been hundreds of repeated calls to the same function.
+
+In both views, click the top section and drag to zoom in or out over different sections of the profile.
+
+**Sandwich** view shows a list of discrete values that correspond to gas consumption per function. The **Total** value shows the gas cost incurred in all functions called by the function. **Self** shows the gas cost for only the given function.
+
+Observing a transaction's gas consumption provides insight into the expected gas cost of a package. During package development, you can [run a local network](</getting-started/onboarding/local-network>) and publish your package locally. Then, create a transaction that calls your package and run the profiler on that transaction to see a breakdown of the gas cost.
+
+[Edit this page](<https://github.com/MystenLabs/sui/tree/main/docs/docs/../content/references/cli/trace-analysis.mdx>)
+
+[PreviousSui Replay CLI](</references/cli/replay>)[NextSui Validator CLI](</references/cli/validator>)
+
+  * Profile a transaction

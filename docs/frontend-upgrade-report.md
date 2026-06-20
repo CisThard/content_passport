@@ -14,14 +14,14 @@
 2. **글로벌 단일 영어화 (English Localization)**
    * 플랫폼의 모든 UI 구성, 뱃지, 설명 요강 및 시뮬레이터 터미널 로그, AI 상담 챗봇 스크립트까지 세련된 테크니컬 영어 사양으로 전면 번역 및 최적화했습니다.
 
-3. **브랜드 리소스 입체 연동 (`c-pass.jpg`)**
-   * `docs/c-pass.jpg`를 여권 발급 카드(`Register`) 및 진위 판정 대기 카드(`Verify`)의 반투명 오버레이 배경 리소스로 융합하여 실물 홀로그램 카드가 빛나는 듯한 미학을 완성했습니다.
+3. **브랜드 리소스 입체 연동 (`digital-passport.jpg`)**
+   * `docs/c-pass.jpg`를 복사한 `web/public/digital-passport.jpg`를 여권 발급 카드(`Register`) 및 진위 판정 대기 카드(`Verify`)의 반투명 오버레이 배경 리소스로 융합하여 실물 홀로그램 카드가 빛나는 듯한 미학을 완성했습니다.
 
 ---
 
 ## 🏗️ 4대 챔버(Chambers) & 코어 페이지 구현 사양
 
-### 🎫 1. 2.7 Gate Chamber (Register Identity)
+### 🎫 1. Platform 9 ¾ Chamber (Register Identity)
 *   **기능:** SuiNS(Sui Name Service) 도메인 영토 선포 및 무서명 10분 TTL 세SessionKey 가동.
 *   **인터랙션:** 트랜잭션 진행 상황을 덤프하는 민팅 터미널 콘솔 로그와 발급 성공 시 3D 롤링 회전을 시각화한 홀로그램 여권 위젯 렌더링.
 
@@ -33,9 +33,9 @@
 *   **기능:** Shamir Secret Sharing(3/5) 알고리즘을 사용한 AES 대칭 키 분산 및 Walrus 블롭 영구 봉인.
 *   **인터랙션:** 드롭존 파일 업로드 트리거, 자물쇠 주위를 회전하는 5개의 별 모양 키 조각(Shards)이 해독 요청 시 중심으로 수렴하며 닫힌 자물쇠(`🔒`)가 열린 자물쇠(`🔓`)로 풀리는 궤도 모션, Walrus 분산 노드 상태표 구현.
 
-### 🚂 4. Escrow Stamp Junction (Remix Escrow)
-*   **기능:** `co_creation_policy.move` 원장에 따른 2차 리믹스 기숙사 협업 지분 설계 및 정산.
-*   **인터랙션:** 기숙사 지분 배분 비율을 조절하는 제어 슬라이더(합계 100% 자동 검산), Move 계약 상태 갱신 PTB 로그 덤프, 활성화된 지분율을 나타내는 3D 스탬프 카드북 렌더링.
+### 🚂 4. Co-Creation Economic Architecture (Blueprint Model)
+*   **기능:** `co_creation_policy.move`에 인라인된 순방향 및 역방향 경제 아키텍처(Remix Chain 및 Bounty Quest)의 비즈니스 시나리오 가이드라인 매핑.
+*   **인터랙션:** Anya, Ben, Chloe 등 창작 가문들의 수익 가치를 SUI 단량으로 조절하는 실시간 지분율 시뮬레이터 연동 및 개발 로드맵 알림 탑재.
 
 ### 💬 5. K-9 Sniffer AI Central (Chat Center)
 *   **기능:** 에이전트와 실시간 대화하는 챗 인터페이스.

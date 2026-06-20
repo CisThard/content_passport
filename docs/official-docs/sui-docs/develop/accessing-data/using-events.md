@@ -1,0 +1,530 @@
+<!-- Source: https://docs.sui.io/develop/accessing-data/using-events -->
+
+* [](</>)
+  * [Accessing Data](</develop/accessing-data/>)
+  * Emitting Events
+
+
+On this page
+
+# Emitting Events
+
+Move code can interact with objects stored on Sui. Some applications track an object's activity and trigger certain workflows within the application based on that activity, such as application updates based on how many times an NFT is minted or the amount of SUI a smart contract generates.
+
+Move supports activity monitoring through emitting events. Emitting events consists of three steps:
+
+  1. Defining an event struct in your Move module that captures the data you want to track.
+
+  2. Using the `emit` function to emit events when relevant actions occur.
+
+  3. Processing events using either a custom indexer or by polling the network.
+
+
+## Defining event struct​
+
+Event structs have the `copy` and `drop` abilities. In the event, define the fields you need to capture relevant data about the action.
+
+[crates/sui-indexer-alt-e2e-tests/packages/emit_event/sources/emit_event.move](<https://github.com/MystenLabs/sui/blob/main/crates/sui-indexer-alt-e2e-tests/packages/emit_event/sources/emit_event.move>)
+[code]
+    public struct TestEvent has copy, drop {  
+        message: ascii::String,  
+        value: u64,  
+    }  
+    
+[/code]
+
+## Using the `emit` function​
+
+Use the `sui::event::emit` function to emit an event when the action you want to monitor occurs:
+
+[crates/sui-indexer-alt-e2e-tests/packages/emit_event/sources/emit_event.move](<https://github.com/MystenLabs/sui/blob/main/crates/sui-indexer-alt-e2e-tests/packages/emit_event/sources/emit_event.move>)
+[code]
+    public struct TestEvent has copy, drop {  
+        message: ascii::String,  
+        value: u64,  
+    }  
+    
+[/code]
+
+## Processing events​
+
+After your Move code emits events, you need to process them. There are 2 approaches:
+
+  * **Custom indexer** : Stream checkpoints and filter events continuously for real-time processing.
+
+  * **Polling** : Query the Sui network periodically for emitted events. This approach requires a database to store retrieved data.
+
+
+### Event object structure​
+
+When you process events, each event object contains the following attributes:
+
+  * `id`: JSON object containing the transaction digest ID and event sequence.
+
+  * `packageId`: The object ID of the package that emits the event.
+
+  * `transactionModule`: The module that performs the transaction.
+
+  * `sender`: The Sui network address that triggered the event.
+
+  * `type`: The type of event being emitted.
+
+  * `parsedJson`: JSON object describing the event.
+
+  * `bcs`: Binary canonical serialization value.
+
+  * `timestampMs`: Unix epoch timestamp in milliseconds.
+
+
+[examples/trading/contracts/escrow/sources/lock.move](<https://github.com/MystenLabs/sui/blob/main/examples/trading/contracts/escrow/sources/lock.move>)
+[code]
+    public fun lock<T: key + store>(obj: T, ctx: &mut TxContext): (Locked<T>, Key) {  
+        let key = Key { id: object::new(ctx) };  
+        let mut lock = Locked {  
+            id: object::new(ctx),  
+            key: object::id(&key),  
+        };  
+      
+        event::emit(LockCreated {  
+            lock_id: object::id(&lock),  
+            key_id: object::id(&key),  
+            creator: ctx.sender(),  
+            item_id: object::id(&obj),  
+        });  
+      
+        dof::add(&mut lock.id, LockedObjectKey {}, obj);  
+      
+        (lock, key)  
+    }  
+    
+[/code]
+
+### Querying events with RPC​
+
+The Sui RPC provides a [`queryEvents`](</sui-api-ref#suix_queryEvents>) method to query onchain packages and return available events. As an example, the following `curl` command queries the DeepBookV3 package on Mainnet for a specific type of event:
+[code] 
+    $ curl -X POST https://fullnode.mainnet.sui.io:443 \  
+    -H "Content-Type: application/json" \  
+    -d '{  
+      "jsonrpc": "2.0",  
+      "id": 1,  
+      "method": "suix_queryEvents",  
+      "params": [  
+        {  
+          "MoveModule": {  
+            "package": "0x158f2027f60c89bb91526d9bf08831d27f5a0fcb0f74e6698b9f0e1fb2be5d05",  
+            "module": "deepbook_utils",  
+            "type": "0xdee9::clob_v2::DepositAsset<0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN>"  
+          }  
+        },  
+        null,  
+        3,  
+        false  
+      ]  
+    }'  
+    
+[/code]
+
+Click to open
+
+Successful response
+[code]
+    {  
+    	"jsonrpc": "2.0",  
+    	"result": {  
+    		"data": [  
+    			{  
+    				"id": {  
+    					"txDigest": "8NB8sXb4m9PJhCyLB7eVH4onqQWoFFzVUrqPoYUhcQe2",  
+    					"eventSeq": "0"  
+    				},  
+    				"packageId": "0x158f2027f60c89bb91526d9bf08831d27f5a0fcb0f74e6698b9f0e1fb2be5d05",  
+    				"transactionModule": "deepbook_utils",  
+    				"sender": "0x8b35e67a519fffa11a9c74f169228ff1aa085f3a3d57710af08baab8c02211b9",  
+    				"type": "0xdee9::clob_v2::WithdrawAsset<0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN>",  
+    				"parsedJson": {  
+    					"owner": "0x704c8c0d8052be7b5ca7174222a8980fb2ad3cd640f4482f931deb6436902627",  
+    					"pool_id": "0x7f526b1263c4b91b43c9e646419b5696f424de28dda3c1e6658cc0a54558baa7",  
+    					"quantity": "6956"  
+    				},  
+    				"bcs": "2szz6igTRuGmD7YATo8BEg81VLaei4od62wehadwMXYJv63UzJE16USL9pHFYBAGbwNkDYLCk53d45eFj3tEZK1vDGqtXcqH5US",  
+    				"timestampMs": "1691757698019"  
+    			},  
+    			{  
+    				"id": {  
+    					"txDigest": "8NB8sXb4m9PJhCyLB7eVH4onqQWoFFzVUrqPoYUhcQe2",  
+    					"eventSeq": "1"  
+    				},  
+    				"packageId": "0x158f2027f60c89bb91526d9bf08831d27f5a0fcb0f74e6698b9f0e1fb2be5d05",  
+    				"transactionModule": "deepbook_utils",  
+    				"sender": "0x8b35e67a519fffa11a9c74f169228ff1aa085f3a3d57710af08baab8c02211b9",  
+    				"type": "0xdee9::clob_v2::OrderFilled<0x2::sui::SUI, 0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN>",  
+    				"parsedJson": {  
+    					"base_asset_quantity_filled": "0",  
+    					"base_asset_quantity_remaining": "1532800000000",  
+    					"is_bid": false,  
+    					"maker_address": "0x78a1ff467e9c15b56caa0dedfcfbdfe47c0c385f28b05fdc120b2de188cc8736",  
+    					"maker_client_order_id": "1691757243084",  
+    					"maker_rebates": "0",  
+    					"order_id": "9223372036854839628",  
+    					"original_quantity": "1614700000000",  
+    					"pool_id": "0x7f526b1263c4b91b43c9e646419b5696f424de28dda3c1e6658cc0a54558baa7",  
+    					"price": "605100",  
+    					"taker_address": "0x704c8c0d8052be7b5ca7174222a8980fb2ad3cd640f4482f931deb6436902627",  
+    					"taker_client_order_id": "20082022",  
+    					"taker_commission": "0"  
+    				},  
+    				"bcs": "DcVGz85dWTLU4S33N7VYrhgbkm79ENhHVnp5kBfENEWEeMxHQuvsczg94teh6WHdYtwPqdEsPWdvSJ7ne5qiMxxn3kBm36KLyuuzHV1QdzF45GN8ZU1MDGU4XppiaqcMeRpPPiW8JpUDyeQoobKEV8fMqcyYpDq6KWtZ1WMoGvEDxFKDgFvW9Q7bt1JAzQehRkEKEDZ6dTwfiHw92QuFqczmZ5MKJLYzeysUsSw",  
+    				"timestampMs": "1691757698019"  
+    			},  
+    			{  
+    				"id": {  
+    					"txDigest": "8b3byDuRojHXqmSz16PsyzfdXJEY5nZBGTM23gMsMAY8",  
+    					"eventSeq": "0"  
+    				},  
+    				"packageId": "0x158f2027f60c89bb91526d9bf08831d27f5a0fcb0f74e6698b9f0e1fb2be5d05",  
+    				"transactionModule": "deepbook_utils",  
+    				"sender": "0x8b35e67a519fffa11a9c74f169228ff1aa085f3a3d57710af08baab8c02211b9",  
+    				"type": "0xdee9::clob_v2::OrderFilled<0x2::sui::SUI, 0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN>",  
+    				"parsedJson": {  
+    					"base_asset_quantity_filled": "700000000",  
+    					"base_asset_quantity_remaining": "0",  
+    					"is_bid": false,  
+    					"maker_address": "0x03b86e93d80b27763ee1fc2c37e285465dff835769de9462d9ad4ebcf46ac6df",  
+    					"maker_client_order_id": "20082022",  
+    					"maker_rebates": "634",  
+    					"order_id": "9223372036854839643",  
+    					"original_quantity": "1000000000",  
+    					"pool_id": "0x7f526b1263c4b91b43c9e646419b5696f424de28dda3c1e6658cc0a54558baa7",  
+    					"price": "604100",  
+    					"taker_address": "0x704c8c0d8052be7b5ca7174222a8980fb2ad3cd640f4482f931deb6436902627",  
+    					"taker_client_order_id": "20082022",  
+    					"taker_commission": "1058"  
+    				},  
+    				"bcs": "DcVGz85dWTLU4S33N7VYrhgbkm79ENhHVnp5kBfENEWEjN45pa9U3AkNhxfTRZbaHTQLugLBXttE32hpJKRsbrZGdryXMPmNA8EpHJnVcnYMXZmWXkNXvY1XjEYnAKU4BnhyJ9BQuxRJDXLA4DEu5uWEpWjLPD2ZHuxqHCn7GpUxvxJjHkKjr9jVVfeR6sN2uRhUXkThEDjCekrqaqwidkyXNmTzmZG4fre3eoZ",  
+    				"timestampMs": "1691758372427"  
+    			}  
+    		],  
+    		"nextCursor": {  
+    			"txDigest": "8b3byDuRojHXqmSz16PsyzfdXJEY5nZBGTM23gMsMAY8",  
+    			"eventSeq": "0"  
+    		},  
+    		"hasNextPage": true  
+    	},  
+    	"id": 1  
+    }  
+    
+[/code]
+
+You can use the `getTransaction` method with `include: { events: true }` to retrieve events for a specific transaction:
+[code] 
+    import { SuiGrpcClient } from '@mysten/sui/grpc';  
+      
+    const client = new SuiGrpcClient({  
+      baseUrl: 'https://fullnode.mainnet.sui.io:443',  
+      network: 'mainnet',  
+    });  
+      
+    async function getEventsForTransaction(digest: string) {  
+      const result = await client.getTransaction({  
+        digest,  
+        include: { events: true },  
+      });  
+      
+      if (result.$kind === 'Transaction') {  
+        return result.Transaction.events ?? [];  
+      }  
+      return [];  
+    }  
+    
+[/code]
+
+### Querying events with GraphQL​
+
+You can use GraphQL to query events instead of JSON RPC.
+
+Click to open
+
+Event connection
+[code]
+    {  
+      events(  
+        filter: {type: "0x3164fcf73eb6b41ff3d2129346141bd68469964c2d95a5b1533e8d16e6ea6e13::Market::ChangePriceEvent<0x2::sui::SUI>"}  
+      ) {  
+        nodes {  
+          transactionModule {  
+            name  
+            package {  
+              digest  
+            }  
+          }  
+          sender {  
+            address  
+          }  
+          timestamp  
+          contents {  
+            type {  
+              repr  
+            }  
+            json  
+          }  
+          eventBcs  
+        }  
+      }  
+    }  
+    
+[/code]
+
+### Querying events in Rust​
+
+The [Sui by Example](<https://github.com/gdanezis/sui-by-example/blob/main/src/05_reading_events/bin/main.rs>) repo on GitHub contains a code sample that demonstrates how to query events using the `query_events` function. The package that `PACKAGE_ID_CONST` points to exists on Mainnet, so you can test this code using Cargo. To do so, clone the `sui-by-example` repo locally and follow the [Example 05 directions](<https://github.com/gdanezis/sui-by-example/tree/main/src/05_reading_events>).
+
+info
+
+The `sui_sdk::SuiClientBuilder` JSON-RPC client is deprecated. Use the `sui-rust-sdk` crate with `SuiGrpcClient` for new integrations.
+[code] 
+    use sui_rust_sdk::SuiGrpcClient;  
+      
+    const PACKAGE_ID_CONST: &str = "0x279525274aa623ef31a25ad90e3b99f27c8dbbad636a6454918855c81d625abc";  
+      
+    #[tokio::main]  
+    async fn main() -> Result<(), anyhow::Error> {  
+        let client = SuiGrpcClient::new("https://fullnode.mainnet.sui.io:443")?;  
+      
+        let events = client  
+            .query_events(  
+                sui_rust_sdk::types::EventFilter::MoveModule {  
+                    package: PACKAGE_ID_CONST.parse()?,  
+                    module: "dev_trophy".to_string(),  
+                },  
+                None,  
+                None,  
+                false,  
+            )  
+            .await?;  
+      
+        for event in events.data {  
+            println!("Event: {:?}", event.parsed_json);  
+        }  
+      
+        Ok(())  
+    }  
+    
+[/code]
+
+## Filtering event queries​
+
+To filter the events returned from your queries, use the following data structures.
+
+### RPC​
+
+**Query**| **Description**| **JSON-RPC parameter example**  
+---|---|---  
+`All`| All events| `{"All": []}`  
+`Any`| Events emitted from any of the given filter| `{"Any": SuiEventFilter[]}`  
+`Transaction`| Events emitted from the specified transaction| `{"Transaction":"DGUe2TXiJdN3FI6MH1FwghYbiHw+NKu8Nh579zdFtUk="}`  
+`MoveModule`| Events emitted from the specified Move module| `{"MoveModule":{"package":"<PACKAGE-ID>", "module":"nft"}}`  
+`MoveEventModule`| Events emitted, defined on the specified Move module| `{"MoveEventModule": {"package": "<DEFINING-PACKAGE-ID>", "module": "nft"}}`  
+`MoveEventType`| Move struct name of the event| `{"MoveEventType":"::nft::MintNFTEvent"}`  
+`Sender`| Query by sender address| `{"Sender":"0x008e9c621f4fdb210b873aab59a1e5bf32ddb1d33ee85eb069b348c234465106"}`  
+`TimeRange`| Return events emitted in [start_time, end_time] interval| `{"TimeRange":{"startTime":1669039504014, "endTime":1669039604014}}`  
+  
+### GraphQL​
+
+To filter events queried using GraphQL, use one of the following workflows.
+
+Click to open
+
+Filter events by sender using a GraphQL query
+[code]
+    query ByTxSender {  
+      events(  
+        first: 1  
+        filter: {  
+          sender: "0xdff57c401e125a7e0e06606380560b459a179aacd08ed396d0162d57dbbdadfb"  
+        }  
+      ) {  
+        pageInfo {  
+          hasNextPage  
+          endCursor  
+        }  
+        nodes {  
+          transactionModule {  
+            name  
+          }  
+          contents {  
+            type {  
+              repr  
+            }  
+            json  
+          }  
+          sender {  
+            address  
+          }  
+          timestamp  
+          eventBcs  
+        }  
+      }  
+    }  
+    
+[/code]
+
+The [TypeScript SDK](<https://sdk.mystenlabs.com/typedoc/modules/_mysten_sui.graphql>) also can be used to interact with the Sui GraphQL service and filter events.
+
+Click to open
+
+Filter events using the TypeScript SDK
+[code]
+    import { SuiGraphQLClient } from '@mysten/sui/graphql';  
+    import { graphql } from '@mysten/sui/graphql/schema';  
+      
+    const gqlClient = new SuiGraphQLClient({  
+      url: 'https://graphql.mainnet.sui.io/graphql',  
+      network: 'mainnet',  
+    });  
+      
+    const queryEventsByType = graphql(`  
+      query EventsByType($eventType: String!, $first: Int) {  
+        events(filter: { eventType: $eventType }, first: $first) {  
+          nodes {  
+            sendingModule {  
+              name  
+              package { address }  
+            }  
+            type { repr }  
+            sender { address }  
+            contents { json }  
+            timestamp  
+          }  
+          pageInfo {  
+            hasNextPage  
+            endCursor  
+          }  
+        }  
+      }  
+    `);  
+      
+    async function getEventsByType(eventType: string, first: number = 10) {  
+      const result = await gqlClient.query({  
+        query: queryEventsByType,  
+        variables: { eventType, first },  
+      });  
+      
+      return result.data?.events?.nodes ?? [];  
+    }  
+    
+[/code]
+
+### Filtering events​
+
+Use the GraphQL `EventFilter` to narrow event queries. The available filter fields are `type`, `module`, `sender`, `afterCheckpoint`, `atCheckpoint`, and `beforeCheckpoint`. Note that you cannot combine `module` and `type` in the same filter.
+[code] 
+    {  
+      events(  
+        filter: {  
+          type: "0xPACKAGE::swap::SwapEvent"  
+        }  
+        after: null  
+        first: 50  
+      ) {  
+        nodes {  
+          contents { json }  
+          timestamp  
+          sender { address }  
+        }  
+        pageInfo {  
+          hasNextPage  
+          endCursor  
+        }  
+      }  
+    }  
+    
+[/code]
+
+## Event limits​
+
+A single transaction can emit a maximum of 1,024 events (set by the `max_num_event_emit` protocol config). If your Move code exceeds this limit, the transaction aborts.
+
+## Pagination​
+
+Event queries return paginated results. In GraphQL, use the `after` parameter with the `endCursor` value from the previous response. The `first` field sets the page size (maximum items per response):
+[code] 
+    import { SuiGraphQLClient } from '@mysten/sui/graphql';  
+    import { graphql } from '@mysten/sui/graphql/schema';  
+      
+    const gqlClient = new SuiGraphQLClient({  
+      url: 'https://graphql.mainnet.sui.io/graphql',  
+      network: 'mainnet',  
+    });  
+      
+    const eventsQuery = graphql(`  
+      query PaginatedEvents($eventType: String!, $first: Int, $after: String) {  
+        events(filter: { eventType: $eventType }, first: $first, after: $after) {  
+          nodes {  
+            contents { json }  
+            timestamp  
+          }  
+          pageInfo {  
+            hasNextPage  
+            endCursor  
+          }  
+        }  
+      }  
+    `);  
+      
+    let cursor = null;  
+    let allEvents = [];  
+      
+    do {  
+      const result = await gqlClient.query({  
+        query: eventsQuery,  
+        variables: { eventType: '0x...::module::EventType', first: 50, after: cursor },  
+      });  
+      const page = result.data?.events;  
+      allEvents.push(...(page?.nodes ?? []));  
+      cursor = page?.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;  
+    } while (cursor);  
+    
+[/code]
+
+## Troubleshooting​
+
+### Events emitted but not returned by query​
+
+  * **Wrong package ID:** Verify you query the correct package address (not the upgrade cap or transaction digest).
+  * **Indexer lag:** The indexer might not have processed the transaction yet. Add a short delay or use `waitForTransaction` before querying.
+  * **Filter mismatch:** Event type strings are case-sensitive and must match exactly, including the full `package::module::EventStruct` format.
+
+
+## RPC endpoints​
+
+Query events from the following public RPC URLs:
+
+Network| URL  
+---|---  
+Mainnet| `https://fullnode.mainnet.sui.io:443`  
+Testnet| `https://fullnode.testnet.sui.io:443`  
+Devnet| `https://fullnode.devnet.sui.io:443`  
+  
+For archival data beyond the recent window, see [Archival Store and Service](</develop/accessing-data/archival-store>).
+
+[Edit this page](<https://github.com/MystenLabs/sui/tree/main/docs/docs/../content/develop/accessing-data/using-events.mdx>)
+
+[PreviousQuerying Historical Data with Archival Service](</develop/accessing-data/archival-store/using-archival-store>)[NextAuthenticated Events](</develop/accessing-data/authenticated-events>)
+
+  * Defining event struct
+  * Using the `emit` function
+  * Processing events
+    * Event object structure
+    * Querying events with RPC
+    * Querying events with GraphQL
+    * Querying events in Rust
+  * Filtering event queries
+    * RPC
+    * GraphQL
+    * Filtering events
+  * Event limits
+  * Pagination
+  * Troubleshooting
+    * Events emitted but not returned by query
+  * RPC endpoints

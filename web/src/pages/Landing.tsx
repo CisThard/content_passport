@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 
 interface LandingProps {
@@ -7,24 +7,132 @@ interface LandingProps {
   systemTime: string
 }
 
+// Particle class for the Galaxy Vortex
+interface Star {
+  x: number
+  y: number
+  z: number
+  color: string
+}
+
 export default function Landing({ passportsCount, walrusStatus, systemTime }: LandingProps) {
   const [activePortal, setActivePortal] = useState<number | null>(null)
+  const [showIntro, setShowIntro] = useState<boolean>(false)
+  
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  // Star Wars/Galaxy Vortex animation logic
+  useEffect(() => {
+    if (!showIntro) return
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    let animationFrameId: number
+    let width = (canvas.width = window.innerWidth)
+    let height = (canvas.height = window.innerHeight)
+
+    const handleResize = () => {
+      width = canvas.width = window.innerWidth
+      height = canvas.height = window.innerHeight
+    }
+    window.addEventListener('resize', handleResize)
+
+    // Generate stars for vortex
+    const stars: Star[] = []
+    const colors = ['#6366f1', '#06b6d4', '#f59e0b', '#ec4899', '#ffffff']
+    for (let i = 0; i < 400; i++) {
+      stars.push({
+        x: Math.random() * width - width / 2,
+        y: Math.random() * height - height / 2,
+        z: Math.random() * width,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      })
+    }
+
+    const speed = 2.5 // Speed of flying into the center
+
+    const draw = () => {
+      // Create a fading black trail for travel illusion
+      ctx.fillStyle = 'rgba(4, 5, 13, 0.15)'
+      ctx.fillRect(0, 0, width, height)
+
+      const cx = width / 2
+      const cy = height / 2
+
+      stars.forEach((star) => {
+        // Move stars closer (simulating moving forward through space)
+        star.z -= speed
+
+        // If star passes the camera, reset it to the back
+        if (star.z <= 0) {
+          star.z = width
+          star.x = Math.random() * width - width / 2
+          star.y = Math.random() * height - height / 2
+        }
+
+        // Perspective projection
+        const px = (star.x / star.z) * width + cx
+        const py = (star.y / star.z) * height + cy
+        const size = ((width - star.z) / width) * 4
+
+        // Draw star with spiral rotation effect
+        const angle = star.z * 0.002 // Rotation angle based on depth
+        const rotatedX = (px - cx) * Math.cos(angle) - (py - cy) * Math.sin(angle) + cx
+        const rotatedY = (px - cx) * Math.sin(angle) + (py - cy) * Math.cos(angle) + cy
+
+        if (rotatedX >= 0 && rotatedX <= width && rotatedY >= 0 && rotatedY <= height) {
+          ctx.beginPath()
+          ctx.arc(rotatedX, rotatedY, Math.max(0.5, size), 0, Math.PI * 2)
+          ctx.fillStyle = star.color
+          ctx.shadowBlur = size * 2
+          ctx.shadowColor = star.color
+          ctx.fill()
+        }
+      })
+
+      // Draw faint center nebula glow
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, width * 0.3)
+      grad.addColorStop(0, 'rgba(99, 102, 241, 0.15)')
+      grad.addColorStop(0.5, 'rgba(6, 182, 212, 0.05)')
+      grad.addColorStop(1, 'rgba(4, 5, 13, 0)')
+      ctx.fillStyle = grad
+      ctx.beginPath()
+      ctx.arc(cx, cy, width * 0.3, 0, Math.PI * 2)
+      ctx.fill()
+
+      animationFrameId = requestAnimationFrame(draw)
+    }
+
+    draw()
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      cancelAnimationFrame(animationFrameId)
+    }
+  }, [showIntro])
+
+  const handleEnterDashboard = () => {
+    sessionStorage.setItem('cp_intro_seen', 'true')
+    setShowIntro(false)
+  }
 
   const PORTALS = [
     {
       id: 0,
-      title: '2.7 Gate Chamber',
-      badge: 'On-chain Identity',
+      title: 'Platform 9 ¾ Chamber',
+      badge: 'Identity Registry',
       desc: 'Declare your sovereign SuiNS identity, establish ephemeral cryptographic session keys, and mint an immutable, tamper-proof creator passport NFT.',
       icon: '🎫',
       path: '/register',
-      colorClass: 'cyber-card-glow-indigo',
-      badgeColor: ''
+      colorClass: 'cyber-card-glow-indigo'
     },
     {
       id: 1,
-      title: 'Aurelius Forensic Lab',
-      badge: 'AI Detection & EXIF Audit',
+      title: 'Gryffindor Forensic Lab',
+      badge: 'Forensics & EXIF Audit',
       desc: 'Execute multi-agent forensics check including Error Level Analysis (ELA) pixel compression metrics, EXIF header consistency, and Gemini AISniffer verification.',
       icon: '🦁',
       path: '/verify',
@@ -43,21 +151,172 @@ export default function Landing({ passportsCount, walrusStatus, systemTime }: La
     },
     {
       id: 3,
-      title: 'Escrow Stamp Junction',
-      badge: 'Move Smart Escrow',
+      title: 'Co-Creation Model',
+      badge: 'Sui Move Smart Escrow',
       desc: 'Deploy co_creation_policy.move smart contracts to automatically route and atomic-split royalties among contributors as works are remixed and stamped.',
       icon: '🚂',
-      path: '/remix',
+      path: '/blueprint',
       colorClass: 'cyber-card-glow-rose',
       badgeColor: 'badge-rose'
     }
   ]
 
+  if (showIntro) {
+    return (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: '#04050d',
+        zIndex: 9999,
+        overflow: 'hidden',
+        fontFamily: 'var(--sans)',
+        color: '#fff',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        {/* Particle Canvas */}
+        <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none' }} />
+
+        {/* Ambient Dark Stars Vignette Overlay */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(circle, transparent 20%, #04050d 80%)',
+          zIndex: 2,
+          pointerEvents: 'none'
+        }} />
+
+        {/* 3D Scrolling Text Crawl */}
+        <div style={{
+          position: 'relative',
+          zIndex: 3,
+          width: '90%',
+          maxWidth: '800px',
+          height: '60%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          perspective: '400px', // Creates the 3D depth perspective
+          overflow: 'hidden',
+          maskImage: 'linear-gradient(to bottom, transparent 0%, #000 30%, #000 80%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 30%, #000 80%, transparent 100%)'
+        }}>
+          <div style={{
+            position: 'absolute',
+            width: '100%',
+            textAlign: 'center',
+            fontSize: '18px',
+            lineHeight: '2',
+            fontWeight: 500,
+            transform: 'rotateX(25deg)', // Tilt backward for Star Wars look
+            transformOrigin: '50% 100%',
+            animation: 'crawl 35s linear infinite',
+            color: '#f59e0b', // Classic gold Star Wars text color
+            fontFamily: 'var(--sans)',
+            letterSpacing: '1px'
+          }}>
+            <p style={{ fontSize: '13px', color: 'var(--neon-cyan)', marginBottom: '40px', letterSpacing: '4px' }}>
+              🌌 CONTENT PASSPORT // THE ODYSSEY 🌌
+            </p>
+            
+            <h4 style={{ fontSize: '28px', color: '#fff', fontWeight: 800, marginBottom: '40px' }}>
+              CHAPTER I: THE CREATIVE CHAOS
+            </h4>
+            
+            <p style={{ marginBottom: '30px' }}>
+              A long time ago in a digital galaxy far, far away...
+            </p>
+
+            <p style={{ marginBottom: '30px' }}>
+              The creative realm fell into dark silence. Plagiarists, copy-bots, and synthetic neural networks stole the souls of masterworks, stripping artists of their sovereign identities.
+            </p>
+
+            <p style={{ marginBottom: '30px' }}>
+              But a hidden pathway arose at the edge of the terminal: Platform 9 ¾. An anonymous platform leading straight into the stars, invisible to the eyes of normal travelers.
+            </p>
+
+            <p style={{ marginBottom: '30px' }}>
+              Through this portal, creators receive a blank traveler passport. They enter the visual guild of Gryffindor, where lens sprites and the robotic K-9 audit their work to stamp it in silver.
+            </p>
+
+            <p style={{ marginBottom: '30px' }}>
+              For their deepest secrets, they shard their keys into five shooting stars hidden with guardian faes, unlocking the SEAL only on their command.
+            </p>
+
+            <p style={{ marginBottom: '30px' }}>
+              Now, they board the cosmic express across Ravenclaw and Slytherin railroads, stamping their visa and sharing bounty treasures atomically.
+            </p>
+
+            <p style={{ marginBottom: '50px' }}>
+              Step forth, traveler. The galaxy awaits your signature...
+            </p>
+          </div>
+        </div>
+
+        {/* Action Controls */}
+        <div style={{ position: 'relative', zIndex: 4, marginTop: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+          <button
+            onClick={handleEnterDashboard}
+            className="cyber-btn cyber-btn-gold"
+            style={{
+              padding: '16px 36px',
+              fontSize: '14px',
+              borderRadius: '30px',
+              fontWeight: 800,
+              boxShadow: '0 0 25px var(--neon-gold-glow)',
+              letterSpacing: '2px',
+              textTransform: 'uppercase'
+            }}
+          >
+            🚀 Enter Basecamp Cockpit
+          </button>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '1px' }}>
+            Establishing gasless SessionKey tunnel to Sui network...
+          </span>
+        </div>
+
+        {/* Global Star Wars Crawl CSS Injection */}
+        <style>{`
+          @keyframes crawl {
+            0% {
+              top: 100%;
+              opacity: 0;
+            }
+            3% {
+              opacity: 1;
+            }
+            90% {
+              opacity: 1;
+            }
+            100% {
+              top: -120%;
+              opacity: 0;
+            }
+          }
+        `}</style>
+      </div>
+    )
+  }
+
   return (
     <div className="dashboard-container">
       {/* Premium Hero Intro Header */}
       <div style={{ textAlign: 'center', margin: '40px auto 60px', maxWidth: '820px' }}>
-        <span className="header-badge">Magical Border Control Ecosystem</span>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+          <span className="header-badge">Magical Border Control Ecosystem</span>
+          <Link to="/about" className="header-badge badge-gold" style={{ textDecoration: 'none', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+            📖 Read Odyssey Story
+          </Link>
+          <button 
+            onClick={() => setShowIntro(true)} 
+            className="header-badge" 
+            style={{ border: '1px solid rgba(255, 255, 255, 0.15)', cursor: 'pointer', background: 'rgba(255,255,255,0.03)' }}
+          >
+            🎬 Watch Trailer
+          </button>
+        </div>
         <h2 className="cyber-title" style={{ fontSize: '52px' }}>
           Sovereign Media Verification <br />
           <span style={{ background: 'linear-gradient(135deg, var(--neon-indigo), var(--neon-cyan))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
