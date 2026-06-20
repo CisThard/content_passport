@@ -1,141 +1,187 @@
-# Content Right
+# 🌐 Content Passport
 
-Content Right is a Walrus Track project: a persistent, verifiable memory graph for
-creative AI agents. It lets specialized agents prove content authenticity, seal
-proof-of-effort artifacts, remember decisions across sessions, and coordinate
-royalty settlement through portable Walrus/MemWal state.
+Content Passport is a persistent, verifiable memory graph and provenance layer for creative AI agents. It allows autonomous agents and human creators to prove content authenticity, seal proof-of-effort (PoE) artifacts, remember decisions across sessions, and coordinate royalty settlement through a portable state architecture built on **Sui** and **Walrus/MemWal**.
 
-**Live demo:** https://contentright-three.vercel.app
+**Live Demo:** [https://contentright-three.vercel.app](https://contentright-three.vercel.app)
 
-## Why this fits the Walrus Track
+---
 
-- **Long-term memory:** every agent clue, workflow step, and recreate decision is
-  written into a shared MemWal-style namespace and can be restored later.
-- **Persistent data and file access:** media, sealed evidence, audit reports,
-  readiness records, settlement state, and graph snapshots are modeled as Walrus
-  artifacts with blob IDs and digests.
-- **Multi-agent coordination:** forensic, metadata, AI detection, Seal, rights,
-  settlement, and archivist agents pass state through the same memory graph.
-- **Artifact-driven workflow:** downstream agents reuse prior Walrus artifacts
-  instead of recomputing or trusting local app state.
-- **Developer tooling:** the app includes a MemWal Inspector plus a Walrus Memory
-  Graph view for debugging memory keys, agent steps, and artifact lineage.
+## 💡 Why Content Passport?
 
-References:
+As AI agents increasingly collaborate to generate, remix, and distribute digital media, they lack a shared, trusted substrate to manage state, verify inputs, and coordinate value distribution. Content Passport solves this by introducing:
 
-- Walrus HTTP API: publisher `PUT /v1/blobs`, aggregator `GET /v1/blobs/<blobId>`
-- Walrus TypeScript SDK: `writeBlob/readBlob` plus resumable step persistence
-- Walrus Memory: portable, owner-controlled memory with delegate access
-- Seal: privacy layer for encrypted Walrus/MemWal data
+*   **Long-Term Memory:** Every agent decision, intermediate prompt clue, and co-creation step is written into a shared MemWal-style namespace and can be restored later.
+*   **Persistent Artifact Storage:** High-res media, sealed evidence, audit reports, and memory graph snapshots are stored as Walrus blobs identified by globally verifiable Digests.
+*   **Multi-Agent Coordination:** Forensic, metadata, AI detection, encryption, rights, and settlement agents pass inputs and outputs through the same unified memory graph.
+*   **Artifact-Driven Workflows:** Downstream agents re-use prior Walrus artifacts instead of recomputing them, verifying the cryptographic lineage of each step.
+*   **Decentralized Rights & Escrow:** Atomic revenue-sharing agreements are codified as Sui Move objects, allowing instant distribution of royalties.
 
-## Frontend (`web/`)
+---
 
-A Vite + React SPA wired to the **real** engine (no mocks) — `calculateAASE`,
-`buildRecreateReadiness`, `calculateRoyaltyPayouts`, and the MemWal client are
-imported straight from `src/`. The walkthrough now shows authenticity audit,
-Genesis Passport, Sovereign Vault, MemWal Inspector, Walrus Memory Graph,
-programmable consent, and royalty settlement.
+## 🏗️ Architecture & Core Workflow
 
-```bash
-cd web && npm install && npm run dev
+Content Passport orchestrates multi-agent assessment, secure evidence sealing, and Sui-based settlement. Here is how the system interacts:
+
+```mermaid
+graph TD
+    A[Original Media] --> B[AASE Scoring Engine]
+    B --> C[Forensic Agent - ELA]
+    B --> D[Metadata Agent - EXIF]
+    B --> E[AI Detection Agent - Gemini]
+    C & D & E -->|Write Clues| F[MemWal Memory Board]
+    F -->|Consensus Score| G[Genesis Passport Sui Object]
+    A -->|AES-256-GCM + Shamir| H[Sealed Proof of Effort]
+    H -->|Upload| I[Walrus Aggregator / Publisher]
+    G & I --> J[Co-Creation Escrow Gate]
+    J -->|Visa Stamps & Funding| K[Royalty Participant Escrow]
+    K -->|Distribute| L[Sui Wallets]
 ```
 
-## Real authenticity agents (`src/agents.ts`)
+### 1. Ingestion & Multi-Agent Auditing (AASE Engine)
+An uploaded image is analyzed by the **Authenticity Assessment & Scoring Engine (AASE)**:
+*   **Forensic Agent (`forensic-agent`):** Performs JPEG Error Level Analysis (ELA) via `sharp` recompression to detect manipulation.
+*   **Metadata Agent (`metadata-agent`):** Checks EXIF structure, camera models, and GPS timestamps for consistency via `exifr`.
+*   **AI Detection Agent (`ai-detection-agent`):** Queries Google Gemini models (when `GOOGLE_GENERATIVE_AI_API_KEY` is configured) or uses entropy heuristics.
 
-`analyzeImage(buffer)` computes AASE signals from an actual image:
-`forensicAgent` (ELA via sharp recompression), `metadataAgent` (EXIF/timestamp
-consistency via exifr), and `aiDetectionAgent` (Gemini when
-`GOOGLE_GENERATIVE_AI_API_KEY` is set, else a transparent clue heuristic).
+### 2. MemWal Memory Board & Memory Graph
+Individual clues, grades, and audit scores are published to a MemWal board namespace (`content-right-board`). Step-by-step agent coordination, input/output artifact IDs, and execution lineage are compiled into a JSON-serialized `ContentMemoryGraph` saved to Walrus.
 
-## What is implemented
+### 3. Sealed Proof-of-Effort (PoE)
+To protect confidential source files (like raw prompts, training parameters, or high-res layers), the asset is encrypted with AES-256-GCM. The decryption key is split into multiple shares using a Shamir Secret Sharing algorithm over GF(256) and signed with an Ed25519 session key. The encrypted bundle is uploaded to Walrus.
 
-- AASE scoring engine for Forensic, Metadata, AI Detection, and MemWal memory signals.
-- Explainable AASE contributions, missing-agent warnings, and disagreement penalties.
-- Objective evidence panels grounded in C2PA provenance, ELA/JPEG recompression,
-  EXIF consistency, entropy/repetition checks, and context-fusion scoring.
-- AES-256-GCM sealed proof-of-effort packages with Shamir GF(256) threshold key
-  sharing and Ed25519 session-key metadata.
-- Walrus HTTP adapter aligned to publisher `/v1/blobs` and aggregator
-  `/v1/blobs/<blobId>` APIs, plus an in-memory test adapter.
-- MemWal-compatible memory adapter with `remember`, `recall`, and namespace
-  listing, plus an HTTP relayer adapter for delegate-key deployments.
-- Content Memory Graph SDK for multi-agent workflow state, Walrus artifact
-  lineage, and restore-from-Walrus snapshots.
-- Recreate-readiness gate that checks authenticity, funded escrow, and 100% royalty allocation.
-- Royalty payout calculator that preserves integer dust by assigning the remainder to the final participant.
-- Shared-context memory archiving for ready co-creation agreements.
-- Sui Move contracts for Genesis Passport, Seal approval policy, visa stamps,
-  atomic create-and-fund escrow, and royalty distribution.
-- TypeScript transaction builders for passport issuance, Seal approval, visa
-  stamping, escrow funding, and distribution.
+### 4. Sui Move Smart Contracts
+Once verified, the engine interacts with the Sui Blockchain:
+*   **Genesis Passport:** Issues a unique, non-custodial object containing content hashes, authenticity grades (AAA, AA, A), and Walrus blob links.
+*   **Seal Policy:** Controls authorized access to encrypted data based on approval rules.
+*   **Co-creation Escrow & Visa Stamps:** Tracks remix participants, registers creative consent, funds the budget escrow, and distributes royalties down to the dust integer.
 
-## Local commands
+---
+
+## 📁 Repository Structure
 
 ```bash
+├── contracts/               # Sui Move Smart Contracts
+│   ├── Move.toml            # Move package config
+│   └── sources/
+│       ├── genesis_passport.move    # Issues Content Passports with AAA-C grades
+│       ├── seal_policy.move         # AES key-sharing access controls
+│       └── co_creation_policy.move  # Royalty escrow, stamps, and distribution
+│
+├── src/                     # Core TypeScript SDK (Backend & CLI Engine)
+│   ├── aase.ts              # Assessment scoring and grade calculations
+│   ├── agents.ts            # Forensic, EXIF, and AI detection agent scripts
+│   ├── evidence.ts          # Shamir threshold key-sharing and AES-GCM encryption
+│   ├── memory.ts            # MemWal memory client wrappers & namespace utilities
+│   ├── sui.ts               # Transaction builders (Passport, Stamps, Escrow)
+│   ├── walrus.ts            # Walrus publisher and aggregator HTTP client
+│   └── workflow.ts          # Multi-agent Memory Graph compiler
+│
+├── web/                     # React + Vite Frontend Portal
+│   ├── src/App.tsx          # Main Web Interface (Sovereign Vault, Inspector)
+│   └── src/components/      # UI components (MemoryGraph, ConsentGate, Settlement)
+│
+└── scripts/
+    └── memwal.ts            # Command-line utility for MemWal management
+```
+
+---
+
+## 🛠️ Installation & Setup
+
+### Prerequisites
+*   Node.js (v18 or higher)
+*   Sui CLI (for contract deployment and testing)
+
+### Install Dependencies
+```bash
 npm install
+cd web && npm install && cd ..
+```
+
+### Build & Run Tests
+```bash
+# Compile TypeScript files
 npm run build
+
+# Run unit tests (vitest)
 npm test
+```
+
+### Run Console Demo
+To simulate a multi-agent validation, passport issuance, co-creation escrow funding, and royalty settlement scenario locally:
+```bash
 npm run demo
 ```
 
-## Walrus Memory CLI
+---
 
-Use the local CLI wrapper to create or verify the MemWal setup without leaking
-secrets into the repository:
+## 🔌 Environment Configuration
 
-```bash
-npm run memwal:login
-npm run memwal:health
-npm run memwal:remember -- "Content Right setup verification succeeded."
-npm run memwal:recall -- "setup verification succeeded"
-npm run memwal:restore
+Create a `.env` in the root folder or load these into your environment:
+
+```env
+# Sui Contract Deployment
+CONTENT_RIGHT_PACKAGE_ID=0x...          # Sui package address after publishing
+SUI_PRIVATE_KEY=suiprivkey1...          # Active gas-funded wallet private key
+
+# Walrus & MemWal Storage
+WALRUS_PUBLISHER=https://publisher.walrus-testnet.walrus.space
+WALRUS_AGGREGATOR=https://aggregator.walrus-testnet.walrus.space
+MEMWAL_SERVER_URL=https://relayer.memory.walrus.xyz
+MEMWAL_ACCOUNT_ID=0x...
+MEMWAL_PRIVATE_KEY=...
+MEMWAL_NAMESPACE=content-passport-space
+
+# Optional: AI Detection Agent
+GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy...   # Enables Gemini AI analysis
 ```
 
-If browser login is unavailable, use the on-chain account flow:
+*Note: For local testing and development, the SDK automatically falls back to secure in-memory adapters if no external endpoints or keys are present.*
 
+---
+
+## 🖥️ Command Line (Walrus Memory CLI)
+
+Manage and inspect your MemWal board namespaces directly from the CLI:
+
+### 1. Initialize MemWal Credentials
+If using the browser-based relayer authentication:
+```bash
+npm run memwal:login
+```
+Or generate and configure a delegate key manually:
 ```bash
 npm run memwal:delegate
 npm run memwal:create-account
 npm run memwal:add-delegate
 ```
+*(Save the generated delegate key inside `~/.memwal/credentials.json`)*
 
-`memwal:delegate` prints a delegate private key once. Store it in
-`~/.memwal/credentials.json` or a private `.env`, never in git.
-
-## Environment
-
+### 2. Verify Connection Health
 ```bash
-CONTENT_RIGHT_PACKAGE_ID=0x...
-WALRUS_PUBLISHER=https://publisher.walrus-testnet.walrus.space
-WALRUS_AGGREGATOR=https://aggregator.walrus-testnet.walrus.space
-MEMWAL_ACCOUNT_ID=0x...
-MEMWAL_PRIVATE_KEY=...
-MEMWAL_SERVER_URL=https://relayer.memory.walrus.xyz
-MEMWAL_NAMESPACE=content-right-hackathon
-MEMWAL_PACKAGE_ID=0x...
-MEMWAL_REGISTRY_ID=0x...
-SUI_PRIVATE_KEY=suiprivkey1...
+npm run memwal:health
 ```
 
-`CONTENT_RIGHT_PACKAGE_ID` is used by the Sui transaction helpers after the Move
-package is published. Walrus/MemWal variables are optional for local tests, which
-use deterministic in-memory adapters, but they turn the graph into persistent
-testnet storage for the hackathon demo.
+### 3. State Management
+```bash
+# Remember a value in the namespace
+npm run memwal:remember -- "Content Passport verification successful."
 
-## Core flow
+# Query existing memory
+npm run memwal:recall -- "verification successful"
 
-1. Original content is scored by the AASE engine.
-2. Agents write durable clues into the MemWal board namespace.
-3. PoE, reports, readiness, and settlement states are stored as Walrus artifacts.
-4. The Content Memory Graph records step-by-step agent coordination and artifact reuse.
-5. Recreate terms define participants and royalty weights.
-6. Escrow funding activates programmable consent.
-7. Ready agreements are archived into the `shared-context` namespace.
-8. The Sui policy distributes revenue according to predefined weights.
+# Restore full snapshot from Walrus
+npm run memwal:restore
+```
 
-## Demo scenarios
+---
 
-`npm run demo` prints both sides of the hackathon story:
+## 🌐 Running the Web Portal
 
-- Authentic content reaches `AAA`, activates programmable consent, previews payouts, and archives shared context.
-- Synthetic or manipulated content is blocked before any co-creation context is archived.
+To launch the web interface containing the **Authenticity Audit Dashboard**, **Sovereign Vault**, **MemWal Inspector**, and interactive **Memory Graph**:
+
+```bash
+cd web
+npm run dev
+```
+Open your browser and navigate to `http://localhost:5173`.
