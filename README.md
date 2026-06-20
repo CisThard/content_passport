@@ -1,130 +1,154 @@
 # 🌐 Content Passport
 
-Content Passport is a persistent, verifiable memory graph and provenance layer for creative AI agents. It allows autonomous agents and human creators to prove content authenticity, seal proof-of-effort (PoE) artifacts, remember decisions across sessions, and coordinate royalty settlement through a portable state architecture built on **Sui** and **Walrus/MemWal**.
-
-**Live Demo:** [https://contentright-three.vercel.app](https://contentright-three.vercel.app)
+Content Passport is an ultra-premium, verifiable decentralized border control and persistent memory ecosystem for creators and autonomous AI agents. Built on the **Sui blockchain** and **Walrus sharded blob storage**, it establishes on-chain identity, audits digital media authenticity, splits co-creation royalties, and secures raw evidence blobs using threshold cryptography.
 
 ---
 
-## 💡 Why Content Passport?
+## ⚡ Core Pillars & Capabilities
 
-As AI agents increasingly collaborate to generate, remix, and distribute digital media, they lack a shared, trusted substrate to manage state, verify inputs, and coordinate value distribution. Content Passport solves this by introducing:
+The ecosystem is divided into four distinct cryptographic chambers:
 
-*   **Long-Term Memory:** Every agent decision, intermediate prompt clue, and co-creation step is written into a shared MemWal-style namespace and can be restored later.
-*   **Persistent Artifact Storage:** High-res media, sealed evidence, audit reports, and memory graph snapshots are stored as Walrus blobs identified by globally verifiable Digests.
-*   **Multi-Agent Coordination:** Forensic, metadata, AI detection, encryption, rights, and settlement agents pass inputs and outputs through the same unified memory graph.
-*   **Artifact-Driven Workflows:** Downstream agents re-use prior Walrus artifacts instead of recomputing them, verifying the cryptographic lineage of each step.
-*   **Decentralized Rights & Escrow:** Atomic revenue-sharing agreements are codified as Sui Move objects, allowing instant distribution of royalties.
+### 1. 🎫 2.7 Gate Chamber (On-chain Identity)
+*   **Sovereign Namespaces:** Claim unique subdomains via SuiNS (Sui Name Service) directly written into Move identity objects.
+*   **Sponsored Session Keys:** Generate local, ephemeral Ed25519 SessionKeys with 10-minute TTLs, enabling gasless, pop-up-free sponsored transaction block (PTB) pipelines.
+
+### 2. 🦁 Aurelius Forensic Lab (AASE Checkpoint)
+*   **Error Level Analysis (ELA):** Detect local pixel manipulation by re-compressing images at 90% quality using `sharp` modules and measuring error metrics.
+*   **EXIF Metadata Audit:** Read hardware profiles and sensor pattern timestamps via `exifr` parsers to check for modification consistency.
+*   **AI Sniffer (Gemini 3.5 Flash):** Pipeline parsed forensic clues as strict context to Gemini cognitive visual models to audit synthetic lights, Light Refractions, and neural net artifact patterns.
+
+### 3. 🔐 Sharded Secret Vault (SEAL Cryptography)
+*   **Shamir Secret Sharing:** AES-256 symmetric keys encrypting raw drafts are sharded into 5 shares $(k=3, n=5)$ over GF(256).
+*   **Decentralized Custody:** Shards are stored across 5 global node guardians. Any 3 shards aggregate to reconstruct the decryption key in-memory on the client-side.
+*   **Walrus Aggregator Blobs:** Sealed file packages are uploaded as secure, decentralized blobs locked under global digest registries.
+
+### 4. 🚂 Escrow Stamp Junction (Odyssey Ledger)
+*   **Sui Move Smart Contract:** Declares creative weights on-chain using `co_creation_policy.move` registers.
+*   **Atomic Royalty Splits:** Routes royalties directly into participants' wallets in a single transaction block when downstream remixed works are stamped, ensuring zero custodial risk.
 
 ---
 
-## 🏗️ Architecture & Core Workflow
-
-Content Passport orchestrates multi-agent assessment, secure evidence sealing, and Sui-based settlement. Here is how the system interacts:
+## 🏗️ Technical Architecture & Protocol Workflow
 
 ```mermaid
 graph TD
-    A[Original Media] --> B[AASE Scoring Engine]
-    B --> C[Forensic Agent - ELA]
-    B --> D[Metadata Agent - EXIF]
-    B --> E[AI Detection Agent - Gemini]
-    C & D & E -->|Write Clues| F[MemWal Memory Board]
-    F -->|Consensus Score| G[Genesis Passport Sui Object]
-    A -->|AES-256-GCM + Shamir| H[Sealed Proof of Effort]
-    H -->|Upload| I[Walrus Aggregator / Publisher]
-    G & I --> J[Co-Creation Escrow Gate]
-    J -->|Visa Stamps & Funding| K[Royalty Participant Escrow]
-    K -->|Distribute| L[Sui Wallets]
+    A[Original Masterpiece] --> B[AASE Auditing Lab]
+    B --> C[ForensicAgent - JPEG ELA]
+    B --> D[MetadataAgent - EXIF]
+    B --> E[AI Sniffer - Gemini Vision]
+    C & D & E -->|Verification Clues| F[MemWal Memory Namespace]
+    F -->|Consensus Verdict| G[Genesis Passport Sui Object]
+    A -->|AES-256-GCM + Shamir| H[Sealed Sharded Key Shards]
+    H -->|Upload Blobs| I[Walrus Aggregator / Publisher]
+    G & I --> J[Royalty Escrow Stamp Route]
+    J -->|Co-creation Policy Weights| K[Move Atomic Split Escrow]
+    K -->|Proportional Royalty Split| L[Sui Wallets]
 ```
 
-### 1. Ingestion & Multi-Agent Auditing (AASE Engine)
-An uploaded image is analyzed by the **Authenticity Assessment & Scoring Engine (AASE)**:
-*   **Forensic Agent (`forensic-agent`):** Performs JPEG Error Level Analysis (ELA) via `sharp` recompression to detect manipulation.
-*   **Metadata Agent (`metadata-agent`):** Checks EXIF structure, camera models, and GPS timestamps for consistency via `exifr`.
-*   **AI Detection Agent (`ai-detection-agent`):** Queries Google Gemini models (when `GOOGLE_GENERATIVE_AI_API_KEY` is configured) or uses entropy heuristics.
+### 1. AASE Forensic Scoring Formula
+Authenticity grades are computed dynamically by weighting individual forensic agents against standard deviation anomalies:
 
-### 2. MemWal Memory Board & Memory Graph
-Individual clues, grades, and audit scores are published to a MemWal board namespace (`content-right-board`). Step-by-step agent coordination, input/output artifact IDs, and execution lineage are compiled into a JSON-serialized `ContentMemoryGraph` saved to Walrus.
+$$w_{\text{final}} = (0.35 \times C_{\text{forensic}}) + (0.30 \times C_{\text{metadata}}) + (0.25 \times C_{\text{ai}}) + (0.10 \times C_{\text{memory}})$$
 
-### 3. Sealed Proof-of-Effort (PoE)
-To protect confidential source files (like raw prompts, training parameters, or high-res layers), the asset is encrypted with AES-256-GCM. The decryption key is split into multiple shares using a Shamir Secret Sharing algorithm over GF(256) and signed with an Ed25519 session key. The encrypted bundle is uploaded to Walrus.
+If the standard deviation of noise distribution across segments exceeds threshold tolerances $(\sigma > 20)$, a strict synthetic penalty is applied:
 
-### 4. Sui Move Smart Contracts
-Once verified, the engine interacts with the Sui Blockchain:
-*   **Genesis Passport:** Issues a unique, non-custodial object containing content hashes, authenticity grades (AAA, AA, A), and Walrus blob links.
-*   **Seal Policy:** Controls authorized access to encrypted data based on approval rules.
-*   **Co-creation Escrow & Visa Stamps:** Tracks remix participants, registers creative consent, funds the budget escrow, and distributes royalties down to the dust integer.
+$$Score_{\text{final}} = w_{\text{final}} - (\sigma - 20) \times 1.5$$
+
+### 2. Shamir Key Reconstruction Protocol
+A symmetric encryption key $S$ is hidden in a random polynomial $f(x)$ of degree $k-1$:
+
+$$f(x) = S + a_1x + a_2x^2 + \dots + a_{k-1}x^{k-1} \pmod{p}$$
+
+Any subset of $k$ nodes can aggregate their key shares $(x_i, y_i)$ to reconstruct the secret key $S$ via Lagrange Interpolation:
+
+$$S = f(0) = \sum_{i=1}^{k} y_i \prod_{j \neq i} \frac{-x_j}{x_i - x_j} \pmod{p}$$
 
 ---
 
-## 📁 Repository Structure
+## 📁 Repository Directory Structure
 
 ```bash
 ├── contracts/               # Sui Move Smart Contracts
-│   ├── Move.toml            # Move package config
+│   ├── Move.toml            # Package configuration
 │   └── sources/
 │       ├── genesis_passport.move    # Issues Content Passports with AAA-C grades
-│       ├── seal_policy.move         # AES key-sharing access controls
-│       └── co_creation_policy.move  # Royalty escrow, stamps, and distribution
+│       ├── seal_policy.move         # Shamir key-sharing access controls
+│       └── co_creation_policy.move  # Royalty escrow split and visa stamp registry
 │
 ├── src/                     # Core TypeScript SDK (Backend & CLI Engine)
-│   ├── aase.ts              # Assessment scoring and grade calculations
+│   ├── aase.ts              # AASE grade formulas & scoring nodes
 │   ├── agents.ts            # Forensic, EXIF, and AI detection agent scripts
-│   ├── evidence.ts          # Shamir threshold key-sharing and AES-GCM encryption
-│   ├── memory.ts            # MemWal memory client wrappers & namespace utilities
-│   ├── sui.ts               # Transaction builders (Passport, Stamps, Escrow)
-│   ├── walrus.ts            # Walrus publisher and aggregator HTTP client
+│   ├── evidence.ts          # Shamir threshold cryptography & AES envelope seal
+│   ├── memory.ts            # MemWal namespace storage client wrappers
+│   ├── sui.ts               # Move contract transaction package builders
+│   ├── walrus.ts            # Walrus aggregator/publisher HTTP wrappers
 │   └── workflow.ts          # Multi-agent Memory Graph compiler
 │
-├── web/                     # React + Vite Frontend Portal
-│   ├── src/App.tsx          # Main Web Interface (Sovereign Vault, Inspector)
-│   └── src/components/      # UI components (MemoryGraph, ConsentGate, Settlement)
+├── web/                     # React + Vite Premium Frontend Portal
+│   ├── src/App.tsx          # Main HUD shell, navigation routes & backdrop nebulae
+│   ├── src/styles.css       # Core design tokens, aurora glows & 3D card matrices
+│   ├── src/samples.ts       # Test specimens for DSLR raw & SD generated data
+│   ├── src/engine.ts        # Progress reporting simulator engine for ELA scans
+│   └── src/pages/           # Chamber UI Modules
+│       ├── Landing.tsx      # Unified cockpit dashboard & Basecamp metrics
+│       ├── Register.tsx     # Session key log console & holographic passport
+│       ├── Verify.tsx       # Forensic scanner laser & AASE verdict report
+│       ├── Vault.tsx        # File drag-and-drop dropzone & key shards orbit
+│       ├── Remix.tsx        # Escrow weights sliders & active stamp ledger
+│       └── Chat.tsx         # AI K-9 Sniffer assistant chatbot terminal
 │
 └── scripts/
-    └── memwal.ts            # Command-line utility for MemWal management
+    └── memwal.ts            # CLI utility for command-line MemWal operations
 ```
 
 ---
 
-## 🛠️ Installation & Setup
+## 🛠️ Installation & Execution Guide
 
 ### Prerequisites
 *   Node.js (v18 or higher)
-*   Sui CLI (for contract deployment and testing)
+*   Sui CLI (for on-chain package deployment)
 
 ### Install Dependencies
+Set up the backend SDK and the Web portal dependencies:
 ```bash
 npm install
 cd web && npm install && cd ..
 ```
 
-### Build & Run Tests
+### Build Verification & Compilation
+Confirm the TypeScript SDK and the Web portal compile without any linter or type errors:
 ```bash
-# Compile TypeScript files
+# Compile and build typescript packages
 npm run build
-
-# Run unit tests (vitest)
-npm test
 ```
 
-### Run Console Demo
-To simulate a multi-agent validation, passport issuance, co-creation escrow funding, and royalty settlement scenario locally:
+### Run Multi-Agent CLI Demo
+To run a local terminal simulation of forensics verification, Sui Move passport minting, sharded key sealing, and atomic escrow split settlement:
 ```bash
 npm run demo
 ```
 
+### Launch the Premium Web Portal
+To boot up the cockpit dashboard with glow backdrops, scan lasers, sharding orbits, and K-9 chatbot:
+```bash
+cd web
+npm run dev
+```
+Open your browser and navigate to `http://localhost:5173`.
+
 ---
 
-## 🔌 Environment Configuration
+## 🔌 Environment Parameters
 
-Create a `.env` in the root folder or load these into your environment:
+Configure a `.env` file in the project root directory or supply these in your shell environment:
 
 ```env
-# Sui Contract Deployment
-CONTENT_RIGHT_PACKAGE_ID=0x...          # Sui package address after publishing
-SUI_PRIVATE_KEY=suiprivkey1...          # Active gas-funded wallet private key
+# Sui Smart Contracts
+CONTENT_RIGHT_PACKAGE_ID=0x...          # Deployed package object ID
+SUI_PRIVATE_KEY=suiprivkey1...          # Funding wallet key for sponsored gas
 
-# Walrus & MemWal Storage
+# Walrus & MemWal Relayers
 WALRUS_PUBLISHER=https://publisher.walrus-testnet.walrus.space
 WALRUS_AGGREGATOR=https://aggregator.walrus-testnet.walrus.space
 MEMWAL_SERVER_URL=https://relayer.memory.walrus.xyz
@@ -132,56 +156,8 @@ MEMWAL_ACCOUNT_ID=0x...
 MEMWAL_PRIVATE_KEY=...
 MEMWAL_NAMESPACE=content-passport-space
 
-# Optional: AI Detection Agent
-GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy...   # Enables Gemini AI analysis
+# AI Verification
+GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy...   # Gemini Flash cognitive API key
 ```
 
-*Note: For local testing and development, the SDK automatically falls back to secure in-memory adapters if no external endpoints or keys are present.*
-
----
-
-## 🖥️ Command Line (Walrus Memory CLI)
-
-Manage and inspect your MemWal board namespaces directly from the CLI:
-
-### 1. Initialize MemWal Credentials
-If using the browser-based relayer authentication:
-```bash
-npm run memwal:login
-```
-Or generate and configure a delegate key manually:
-```bash
-npm run memwal:delegate
-npm run memwal:create-account
-npm run memwal:add-delegate
-```
-*(Save the generated delegate key inside `~/.memwal/credentials.json`)*
-
-### 2. Verify Connection Health
-```bash
-npm run memwal:health
-```
-
-### 3. State Management
-```bash
-# Remember a value in the namespace
-npm run memwal:remember -- "Content Passport verification successful."
-
-# Query existing memory
-npm run memwal:recall -- "verification successful"
-
-# Restore full snapshot from Walrus
-npm run memwal:restore
-```
-
----
-
-## 🌐 Running the Web Portal
-
-To launch the web interface containing the **Authenticity Audit Dashboard**, **Sovereign Vault**, **MemWal Inspector**, and interactive **Memory Graph**:
-
-```bash
-cd web
-npm run dev
-```
-Open your browser and navigate to `http://localhost:5173`.
+*Note: The local SDK is equipped with high-fidelity in-memory mock adapters that automatically boot up if external RPC credentials or Gemini keys are missing, allowing offline pilot tests.*
