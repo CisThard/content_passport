@@ -111,7 +111,7 @@ export default function Verify() {
   return (
     <div className="dashboard-container" style={{ maxWidth: '1200px' }}>
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <span className="header-badge badge-rose">Gryffindor Lab</span>
+        <span className="header-badge badge-rose">Aurelius Lab</span>
         <h2 className="cyber-title">AI Media Authenticity Checkpoint</h2>
         <p className="cyber-subtitle" style={{ margin: '10px auto 0' }}>
           Evaluate media artifacts using Error Level Analysis (ELA) pixel compression metrics, EXIF hardware consistency verification, and Gemini 3.5 Flash Vision cognitive sniffer audits.
@@ -122,7 +122,7 @@ export default function Verify() {
       <div className="linear-card-recessed" style={{ marginBottom: '35px', padding: '16px 20px', background: 'rgba(99, 102, 241, 0.02)', borderColor: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', gap: '15px', borderRadius: '4px' }}>
         <span style={{ fontSize: '20px' }}>🚧</span>
         <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
-          <strong style={{ color: 'var(--neon-indigo)' }}>Active Roadmap Phase:</strong> Gryffindor Lab is currently optimized for <strong style={{ color: '#fff' }}>Visual Media (Images)</strong>. Forensic verification suites for Ravenclaw (Audio), Slytherin (Video), and Hufflepuff (Text/Code) are scheduled for development and will be deployed sequentially in upcoming protocol upgrades.
+          <strong style={{ color: 'var(--neon-indigo)' }}>Active Roadmap Phase:</strong> Aurelius Lab is currently optimized for <strong style={{ color: '#fff' }}>Visual Media (Images)</strong>. Forensic verification suites for Audio, Video, and Text Text (Text/Code) Code are scheduled for development and will be deployed sequentially in upcoming protocol upgrades.
         </div>
       </div>
 
@@ -356,6 +356,31 @@ export default function Verify() {
                   </div>
                 </div>
               </div>
+
+              {/* Content Credentials (C2PA) — real signature verification */}
+              {(() => {
+                const p = verdictResult?.provenance
+                if (!p) return null
+                const map: Record<string, { color: string; label: string }> = {
+                  verified:    { color: 'var(--neon-emerald)', label: '✓ Verified provenance' },
+                  present:     { color: 'var(--neon-gold)',    label: '⚠ Manifest present (signature unverified)' },
+                  absent:      { color: 'var(--text-muted)',   label: '— No Content Credentials embedded' },
+                  unavailable: { color: 'var(--text-muted)',   label: '— C2PA check unavailable' },
+                }
+                const s = map[p.status] ?? map.unavailable
+                return (
+                  <div className="linear-card-recessed" style={{ padding: '20px', marginBottom: '24px' }}>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--neon-cyan)', display: 'block', marginBottom: '10px', letterSpacing: '1px' }}>
+                      [CONTENT CREDENTIALS · C2PA]
+                    </span>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: s.color }}>{s.label}</div>
+                    {p.signer && <div style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: 'var(--text-secondary)', marginTop: '6px' }}>Signed by: {p.signer}</div>}
+                    {p.claimGenerator && <div style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: 'var(--text-muted)', marginTop: '2px' }}>Generator: {p.claimGenerator}</div>}
+                    {p.validationErrors?.length ? <div style={{ fontSize: '10.5px', color: 'var(--neon-rose)', marginTop: '4px' }}>Issues: {p.validationErrors.join(', ')}</div> : null}
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '8px' }}>Standard: C2PA / Content Credentials (c2pa.org)</div>
+                  </div>
+                )
+              })()}
 
               {/* Hardware Stamp Header Specs */}
               <div className="linear-card-recessed" style={{ padding: '20px', marginBottom: '24px' }}>

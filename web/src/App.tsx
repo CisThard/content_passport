@@ -40,7 +40,7 @@ function Navigation() {
 
 function MainAppShell() {
   const [systemTime, setSystemTime] = useState('00:00:00')
-  const [passportsCount, setPassportsCount] = useState(12480)
+  const [passportsCount, setPassportsCount] = useState(0)
   const [walrusStatus, setWalrusStatus] = useState<{ healthy: boolean; latencyMs: number } | null>(null)
 
   // 1. Ticking System Clock
@@ -53,16 +53,18 @@ function MainAppShell() {
     return () => clearInterval(interval)
   }, [])
 
-  // 2. Count-Up Passport Effect
+  // 2. Real passport count — passports issued/verified on this device (localStorage).
   useEffect(() => {
-    const target = 12480 + Math.floor(Math.random() * 20)
+    let target = 0
+    try { target = (JSON.parse(localStorage.getItem('cr:hashes') ?? '[]') as string[]).length } catch { target = 0 }
+    if (target === 0) { setPassportsCount(0); return }
     const start = performance.now()
-    const duration = 1500
+    const duration = 900
     let raf: number
     const step = (now: number) => {
       const t = Math.min((now - start) / duration, 1)
       const eased = 1 - Math.pow(1 - t, 3)
-      setPassportsCount(Math.round(12450 + (target - 12450) * eased))
+      setPassportsCount(Math.round(target * eased))
       if (t < 1) {
         raf = requestAnimationFrame(step)
       }

@@ -122,7 +122,7 @@ export default function Landing({ passportsCount, walrusStatus, systemTime }: La
   const PORTALS = [
     {
       id: 0,
-      title: 'Platform 9 ¾ Chamber',
+      title: 'Gate 2.7 Chamber',
       badge: 'Identity Registry',
       desc: 'Declare your sovereign SuiNS identity, establish ephemeral cryptographic session keys, and mint an immutable, tamper-proof creator passport NFT.',
       icon: '🎫',
@@ -131,7 +131,7 @@ export default function Landing({ passportsCount, walrusStatus, systemTime }: La
     },
     {
       id: 1,
-      title: 'Gryffindor Forensic Lab',
+      title: 'Aurelius Forensic Lab',
       badge: 'Forensics & EXIF Audit',
       desc: 'Execute multi-agent forensics check including Error Level Analysis (ELA) pixel compression metrics, EXIF header consistency, and Gemini AISniffer verification.',
       icon: '🦁',
@@ -188,71 +188,18 @@ export default function Landing({ passportsCount, walrusStatus, systemTime }: La
           pointerEvents: 'none'
         }} />
 
-        {/* 3D Scrolling Text Crawl */}
-        <div style={{
-          position: 'relative',
-          zIndex: 3,
-          width: '90%',
-          maxWidth: '800px',
-          height: '60%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          perspective: '400px', // Creates the 3D depth perspective
-          overflow: 'hidden',
-          maskImage: 'linear-gradient(to bottom, transparent 0%, #000 30%, #000 80%, transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 30%, #000 80%, transparent 100%)'
-        }}>
-          <div style={{
-            position: 'absolute',
-            width: '100%',
-            textAlign: 'center',
-            fontSize: '18px',
-            lineHeight: '2',
-            fontWeight: 500,
-            transform: 'rotateX(25deg)', // Tilt backward for Star Wars look
-            transformOrigin: '50% 100%',
-            animation: 'crawl 35s linear infinite',
-            color: '#f59e0b', // Classic gold Star Wars text color
-            fontFamily: 'var(--sans)',
-            letterSpacing: '1px'
-          }}>
-            <p style={{ fontSize: '13px', color: 'var(--neon-cyan)', marginBottom: '40px', letterSpacing: '4px' }}>
-              🌌 CONTENT PASSPORT // THE ODYSSEY 🌌
-            </p>
-            
-            <h4 style={{ fontSize: '28px', color: '#fff', fontWeight: 800, marginBottom: '40px' }}>
-              CHAPTER I: THE CREATIVE CHAOS
-            </h4>
-            
-            <p style={{ marginBottom: '30px' }}>
-              A long time ago in a digital galaxy far, far away...
-            </p>
-
-            <p style={{ marginBottom: '30px' }}>
-              The creative realm fell into dark silence. Plagiarists, copy-bots, and synthetic neural networks stole the souls of masterworks, stripping artists of their sovereign identities.
-            </p>
-
-            <p style={{ marginBottom: '30px' }}>
-              But a hidden pathway arose at the edge of the terminal: Platform 9 ¾. An anonymous platform leading straight into the stars, invisible to the eyes of normal travelers.
-            </p>
-
-            <p style={{ marginBottom: '30px' }}>
-              Through this portal, creators receive a blank traveler passport. They enter the visual guild of Gryffindor, where lens sprites and the robotic K-9 audit their work to stamp it in silver.
-            </p>
-
-            <p style={{ marginBottom: '30px' }}>
-              For their deepest secrets, they shard their keys into five shooting stars hidden with guardian faes, unlocking the SEAL only on their command.
-            </p>
-
-            <p style={{ marginBottom: '30px' }}>
-              Now, they board the cosmic express across Ravenclaw and Slytherin railroads, stamping their visa and sharing bounty treasures atomically.
-            </p>
-
-            <p style={{ marginBottom: '50px' }}>
-              Step forth, traveler. The galaxy awaits your signature...
-            </p>
-          </div>
+        {/* Concise static intro */}
+        <div style={{ position: 'relative', zIndex: 3, width: '90%', maxWidth: '760px', textAlign: 'center' }}>
+          <p style={{ fontSize: '12px', color: 'var(--neon-cyan)', marginBottom: '18px', letterSpacing: '4px' }}>
+            CONTENT PASSPORT
+          </p>
+          <h4 style={{ fontSize: '34px', color: '#fff', fontWeight: 800, lineHeight: 1.2, marginBottom: '18px' }}>
+            Prove your work. License it on autopilot.
+          </h4>
+          <p style={{ fontSize: '15px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            Verify authenticity with open forensic standards, seal your drafts, and let approved
+            recreations split royalties automatically — all on Sui &amp; Walrus.
+          </p>
         </div>
 
         {/* Action Controls */}
@@ -389,7 +336,7 @@ export default function Landing({ passportsCount, walrusStatus, systemTime }: La
           
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             <div className="indicator-card" style={{ minWidth: '180px' }}>
-              <span className="indicator-card-label">ISSUED PASSPORTS</span>
+              <span className="indicator-card-label">PASSPORTS (THIS DEVICE)</span>
               <span className="indicator-card-value">{passportsCount.toLocaleString()}</span>
             </div>
             <div className="indicator-card" style={{ minWidth: '180px' }}>

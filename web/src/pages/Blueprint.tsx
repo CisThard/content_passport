@@ -37,7 +37,7 @@ export default function Blueprint() {
           Explore the business workflows powered by Content Passport's smart contracts, threshold cryptography, and decentralized file registry.
         </p>
         <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', display: 'block', marginTop: '8px' }}>
-          [CURRENT DEVELOPMENT FOCUS: Gryffindor Visual Media // Support for Ravenclaw Audio, Slytherin Video, and Hufflepuff Text to roll out sequentially]
+          [CURRENT DEVELOPMENT FOCUS: Visual Media // Support for Audio, Video, and Text to roll out sequentially]
         </span>
       </div>
 
@@ -387,7 +387,7 @@ export default function Blueprint() {
             <div className="linear-card-recessed" style={{ padding: '18px' }}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
                 <span style={{ fontSize: '18px' }}>🦁</span>
-                <h5 style={{ fontSize: '13px', color: '#fff', fontWeight: 700 }}>Gryffindor Forensic Lab</h5>
+                <h5 style={{ fontSize: '13px', color: '#fff', fontWeight: 700 }}>Aurelius Forensic Lab</h5>
               </div>
               <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
                 Automates ELA, EXIF, and AI Sniffer checks on submissions, protecting the network from plagiarized content or duplicate file hacks.

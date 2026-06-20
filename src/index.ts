@@ -1,5 +1,6 @@
 export * from "./aase.js";
 export * from "./agents.js";
+export * from "./c2pa.js";
 export * from "./co-creation.js";
 export * from "./evidence.js";
 export * from "./escrow.js";

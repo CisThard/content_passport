@@ -4,6 +4,7 @@ import multer from "multer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { analyzeImageWithMemWal } from "./agents.js";
+import { verifyC2PA } from "./c2pa.js";
 import { calculateAASE } from "./aase.js";
 import { loadMemWalConfig, MemWalSemanticMemoryClient } from "./memwal.js";
 import { InMemoryAuthenticityMemoryClient } from "./memory.js";
@@ -73,8 +74,11 @@ app.post("/api/verify", upload.single("file"), async (req, res) => {
 
     console.log(`[Server] Running multi-agent AASE audit on file: ${req.file.originalname} (${req.file.size} bytes)...`);
     
-    // Run the real AASE analysis
-    const result = await analyzeImageWithMemWal(fileBuffer, memoryClient);
+    // Run the real AASE analysis + real C2PA provenance verification (in parallel)
+    const [result, provenance] = await Promise.all([
+      analyzeImageWithMemWal(fileBuffer, memoryClient),
+      verifyC2PA(fileBuffer, req.file.mimetype).catch(() => ({ status: "unavailable" as const })),
+    ]);
     const assessment = calculateAASE(result.scores, "A");
 
     res.json({
@@ -83,6 +87,7 @@ app.post("/api/verify", upload.single("file"), async (req, res) => {
       size: req.file.size,
       assessment,
       scores: result.scores,
+      provenance,
       clueIds: result.clueIds,
       inspector: result.inspector,
     });

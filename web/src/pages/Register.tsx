@@ -48,7 +48,7 @@ export default function Register() {
   return (
     <div className="dashboard-container" style={{ maxWidth: '1000px' }}>
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <span className="header-badge">Platform 9 ¾</span>
+        <span className="header-badge">Gate 2.7</span>
         <h2 className="cyber-title">On-chain Identity Registry</h2>
         <p className="cyber-subtitle" style={{ margin: '10px auto 0' }}>
           Declare your sovereign SuiNS (Sui Name Service) identity and generate local ephemeral session keys to mint your tamper-proof creator passport NFT.

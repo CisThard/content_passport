@@ -85,46 +85,46 @@ export default function About() {
 
   const CHAPTERS = [
     {
-      id: 'platform934',
-      title: 'Prologue: Platform 9 ¾',
-      subtitle: 'The Secret Platform // Acceptance Letter',
+      id: 'gate',
+      title: 'Prologue: Gate 2.7',
+      subtitle: 'Hidden gate · blank passport',
       icon: '🎫',
-      story: 'Platform 9 ¾ is a magical brick barrier hidden at the terminal of the digital world. Creators who run through the wall with their creative wands instantly receive their Hogwarts Acceptance Letter—a blank, transparent SUI Passport NFT. Here, you declare your sovereign wizarding name (SuiNS) and ignite sponsored session keys to cast spells gaslessly.',
-      tech: 'Deploys Sui Move Smart Contracts (genesis_passport.move) to issue dynamic Passport NFTs. Connects SuiNS domains (e.g., harry.sui) and sets ephemeral Ed25519 SessionKeys for gasless transactions.',
-      linkText: 'Enter Platform 9 ¾',
+      story: 'Step through the hidden gate and you’re issued a blank Content Passport — claim your sovereign name and start signing gaslessly.',
+      tech: 'genesis_passport.move mints the Passport NFT; SuiNS + ephemeral Ed25519 session keys enable gasless transactions.',
+      linkText: 'Enter Gate 2.7',
       linkPath: '/register',
       glowClass: 'cyber-card-glow-indigo'
     },
     {
-      id: 'sortinghat',
-      title: 'Chapter I: The Houses & The Marauder\'s Map',
-      subtitle: 'Sorting Hat & Marauder\'s Map // The Creative Houses',
-      icon: '🦁',
-      story: 'Hogwarts sorts creators into specialized houses based on content types: Gryffindor (🦁 Visual Media) for bold graphic sorcerers, Ravenclaw (🦅 Audio/Sound) for wise acoustic composers, Slytherin (🐍 Video/Motion) for ambitious video designers, and Hufflepuff (🦡 Text/Code) for dedicated builders. To ensure no visual dark magic (AI deepfakes or image forgery) passes, the Gryffindor Dormitory deploys the "Marauder\'s Map"—revealing every hidden pixel manipulation, metadata anomaly, and synthetic footprint.',
-      tech: 'Mapped to the AASE (Agentic Authenticity Scoring Engine) where the ForensicAgent checks pixel compression (ELA), the MetadataAgent checks EXIF headers, and the K-9 AI Sniffer (Gemini 3.5 Flash) audits synthetic lighting. (Roadmap Note: Gryffindor/Visual Media checks are currently active. Audit workflows for Ravenclaw/Audio, Slytherin/Video, and Hufflepuff/Text content domains are being researched and will roll out sequentially.)',
-      linkText: 'Cast Forensics Scan',
+      id: 'audit',
+      title: 'Chapter I: Authenticity Audit',
+      subtitle: 'Forensics before issuance',
+      icon: '🔬',
+      story: 'Every upload is checked for manipulation before it earns a passport.',
+      tech: 'AASE combines ELA (forensics), EXIF (metadata) and a Gemini AI-sniffer. Visual media is live; audio/video/text domains are on the roadmap.',
+      linkText: 'Run forensics',
       linkPath: '/verify',
       glowClass: 'cyber-card-glow-gold'
     },
     {
-      id: 'horcruxes',
-      title: 'Chapter II: The Sharded Horcruxes',
-      subtitle: 'Horcrux Splitting & Seal // Gringotts Lock',
+      id: 'vault',
+      title: 'Chapter II: Sealed Vault',
+      subtitle: 'Threshold-encrypted drafts',
       icon: '🔐',
-      story: 'For your raw sketches and secrets not yet ready to be revealed, you can seal them inside the Gringotts vaults. Using the "Horcrux" spell, the secret decryption key is shattered into five distinct star fragments (Shards) and distributed to five Gringotts Node Guardians. No Dark Wizard can steal your secret; the Horcruxes will merge client-side and decrypt only when the true owner casts the unlocking spell.',
-      tech: 'Secured via Shamir\'s Secret Sharing (3/5 threshold scheme) client-side key reconstruction. Raw evidence packages are encrypted and locked on Walrus sharded blob storage.',
-      linkText: 'Seal Secret Vault',
+      story: 'Seal raw drafts so only you can reopen them — the key is split into 5 shards and recombined in your browser.',
+      tech: 'Shamir 3-of-5 secret sharing + AES-256; sealed blobs stored on Walrus.',
+      linkText: 'Open vault',
       linkPath: '/vault',
       glowClass: 'cyber-card-glow-emerald'
     },
     {
-      id: 'gringotts',
-      title: 'Chapter III: Gringotts Automated Escrow',
-      subtitle: 'Hogwarts Stamp Book // Dual-Mode Escrow Splits',
+      id: 'royalties',
+      title: 'Chapter III: Automated Royalties',
+      subtitle: 'Set the split once',
       icon: '🚂',
-      story: 'Under Gringotts Automated Escrow, co-creation runs in two directions. In the Paid Remix Chain (Supply-Side), creators stamp their license fees in the Hogwarts Stamp Book to aggregate a final purchase price. In the Co-Creation Quest (Demand-Side), a buyer locks SUI Galleons in escrow as a bounty pool, and contributors modularly claim milestone shares. In both cases, the Gringotts vault splits and releases the coins atomically to all recorded contributors.',
-      tech: 'Executed via co_creation_policy.move smart contracts. Integrates create_stamp_book and stamp_visa to register proportional contribution weights for Remix Chains, and create_and_fund_policy to hold Reverse Quest bounties, finalized by distribute_royalties atomic payouts.',
-      linkText: 'View Escrow Blueprint',
+      story: 'Set your royalty split once; when a remix earns, revenue routes to every contributor in a single transaction.',
+      tech: 'co_creation_policy.move records weights and runs atomic distribute_royalties payouts.',
+      linkText: 'View blueprint',
       linkPath: '/blueprint',
       glowClass: 'cyber-card-glow-rose'
     }
@@ -141,15 +141,15 @@ export default function About() {
         <div style={{ textAlign: 'center', marginBottom: '60px' }}>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '14px' }}>
             <span className="header-badge badge-gold" style={{ background: 'rgba(245, 158, 11, 0.1)', borderColor: 'var(--neon-gold)', color: 'var(--neon-gold)' }}>
-              🧙‍♂️ HOGWARTS CREATIVE ACADEMY
+              🛡️ AURELIUS CREATIVE ACADEMY
             </span>
             <span className="header-badge" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }}>
-              Web3 Tribute &amp; Parody
+              A magical-realism Web3 world
             </span>
           </div>
-          <h2 className="cyber-title" style={{ fontSize: '42px', marginTop: '10px' }}>The Hogwarts Odyssey</h2>
+          <h2 className="cyber-title" style={{ fontSize: '42px', marginTop: '10px' }}>The Content Passport Odyssey</h2>
           <p className="cyber-subtitle" style={{ margin: '15px auto 0', fontSize: '15px', maxWidth: '700px', lineHeight: 1.6 }}>
-            An interactive Web3 parody mapping Harry Potter lore (Platform 9 ¾, Gringotts vaults, Horcrux shards, Marauder's Map) directly to Sui blockchain smart contracts, cryptographical algorithms, and Walrus storage.
+            A four-chapter journey that maps creative provenance — issuance, forensic audit, sealed vaults, and automated royalties — directly to Sui smart contracts, threshold cryptography, and Walrus storage.
           </p>
         </div>
 
@@ -185,7 +185,7 @@ export default function About() {
               {/* Tech Underpinnings Box */}
               <div className="linear-card-recessed" style={{ padding: '15px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '4px', marginBottom: '20px' }}>
                 <span style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '5px' }}>
-                  ⚡ Hogwarts Web3 Technical Matrix
+                  ⚡ Web3 Technical Matrix
                 </span>
                 <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
                   {chap.tech}
@@ -214,25 +214,25 @@ export default function About() {
             borderStyle: 'dashed' 
           }}
         >
-          <span style={{ fontSize: '36px', display: 'block', marginBottom: '16px' }}>🏰</span>
-          <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', marginBottom: '10px' }}>Epilogue: The Sovereign Wand</h3>
+          <span style={{ fontSize: '36px', display: 'block', marginBottom: '16px' }}>🛡️</span>
+          <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', marginBottom: '10px' }}>Epilogue: Sovereign by Default</h3>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '650px', margin: '0 auto 24px', fontStyle: 'italic' }}>
-            "The magic of Hogwarts is now bound to the immutable Sui blockchain ledger. Run through Platform 9 ¾, sorting your visual creation, and secure your wizarding sovereignty forever."
+            "Creative provenance, bound to the immutable Sui ledger. Pass through Gate 2.7, prove your work, and own your sovereignty forever."
           </p>
-          
+
           <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
             <Link to="/" className="cyber-btn cyber-btn-gold" style={{ padding: '10px 30px', fontSize: '12px', fontWeight: 700 }}>
-              🚀 Open Gringotts Cockpit
+              🚀 Open Cockpit
             </Link>
             <Link to="/register" className="cyber-btn" style={{ padding: '10px 30px', fontSize: '12px' }}>
-              🎫 Get Acceptance Letter
+              🎫 Get your passport
             </Link>
           </div>
         </div>
 
-        {/* Parody Declaration Footer */}
+        {/* Inspiration note */}
         <div style={{ textAlign: 'center', marginTop: '40px', fontSize: '10.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-          ⚠️ <strong>Parody Disclaimer:</strong> This application is a creative non-commercial fan homage and parody submitted for the Sui Overflow 2026 Hackathon. All trademarks and characters related to "Harry Potter", "Gringotts", "Hogwarts", and "Marauder's Map" belong to their respective owners (J.K. Rowling and Warner Bros. Entertainment Inc.).
+          A magical-realism world built for the Sui Overflow 2026 Hackathon. Names, places, and characters are original to this project.
         </div>
       </div>
     </div>
