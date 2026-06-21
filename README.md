@@ -177,7 +177,18 @@ Create your local `.env` configuration file by copying the template file:
 ```bash
 cp .env.example .env
 ```
-Open `.env` and fill in the values for Sui nodes, MemWal, and Google Generative AI API keys. (See [[.env.example](file:///Users/charles/Projects/content_passport/.env.example)] for detailed parameter guidelines).
+Open `.env` and configure the required keys. (See [[.env.example](file:///Users/charles/Projects/content_passport/.env.example)] for detailed parameter guidelines).
+
+#### 🛡️ Pure Web2.5 (Enoki-Free zkLogin & Sponsor) Setup:
+To enable Google social login and gas-sponsored minting without subscribing to third-party SaaS (like Mysten Labs Enoki), configure the following variables in your `.env` file:
+*   `AUTH_GOOGLE_ID`: Your Google Cloud Console OAuth 2.0 Client ID (Web Application type).
+*   `AUTH_GOOGLE_SECRET`: Your Google Cloud Console OAuth 2.0 Client Secret.
+*   `SUI_SPONSOR_SECRET_KEY` (or `SPONSOR_SECRET`): The 32-byte hex private key of the backend Sponsor Wallet. This wallet must be funded with SUI on the target network to pay transaction gas fees for users.
+*   `SUI_RPC_URL`: The Sui JSON-RPC node endpoint (defaults to `https://fullnode.testnet.sui.io:443`).
+
+> [!TIP]
+> **Mock Developer Sandbox Mode:**
+> If `SUI_SPONSOR_SECRET_KEY` is left blank, the backend automatically operates in **Mock Sponsor Mode**. The system will simulate address derivation and sponsored execution, allowing developers to test the full E2E flow without configuring live Google OAuth keys or funding a sponsor wallet.
 
 ### 4. Build Verification & Compilation
 Verify that the TypeScript server SDK and the Vite frontend compile without any type errors:
