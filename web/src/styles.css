@@ -1330,6 +1330,34 @@ html, body, #root {
   .hud-nav-item { padding: 6px 9px; font-size: 11px; }
 }
 
+/* Custom HUD and Journey Graph Animations */
+.journey-node.active {
+  border-color: var(--neon-gold);
+  box-shadow: 0 0 15px var(--neon-gold-glow);
+  animation: activeNodeBreathe 2s infinite alternate ease-in-out;
+}
+
+.journey-node.ready {
+  border-color: var(--neon-emerald);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.05);
+}
+
+.journey-node.missing {
+  border-color: var(--border-light);
+  opacity: 0.5;
+}
+
+@keyframes activeNodeBreathe {
+  0% {
+    box-shadow: 0 0 5px var(--neon-gold-glow);
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+    border-color: rgba(245, 158, 11, 0.9);
+  }
+}
+
 /* Accessibility + perf: honor reduced-motion (disables aurora/particle/spin animations) */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

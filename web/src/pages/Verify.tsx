@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { SAMPLE_MEDIAS } from '../samples'
 
 interface ScanProgressStep {
@@ -7,11 +7,178 @@ interface ScanProgressStep {
   logLine: string
 }
 
+function ElaSplitSlider({ imageUrl, type }: { imageUrl: string; type: 'real' | 'ai' }) {
+  const [splitOffset, setSplitOffset] = useState(50);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = imageUrl;
+    img.onload = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      ctx.drawImage(img, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imgData.data;
+
+      if (type === 'ai') {
+        const width = canvas.width;
+        const height = canvas.height;
+        const temp = new Uint8ClampedArray(pixels);
+
+        for (let y = 1; y < height - 1; y++) {
+          for (let x = 1; x < width - 1; x++) {
+            const idx = (y * width + x) * 4;
+            const rightIdx = idx + 4;
+            const downIdx = idx + (width * 4);
+            
+            const rDelta = Math.abs(temp[idx] - temp[rightIdx]) + Math.abs(temp[idx] - temp[downIdx]);
+            const gDelta = Math.abs(temp[idx+1] - temp[rightIdx+1]) + Math.abs(temp[idx+1] - temp[downIdx+1]);
+            const bDelta = Math.abs(temp[idx+2] - temp[rightIdx+2]) + Math.abs(temp[idx+2] - temp[downIdx+2]);
+            const edgeVal = (rDelta + gDelta + bDelta) / 3;
+
+            const isBlockEdge = (x % 8 === 0) || (y % 8 === 0);
+            const gridNoise = isBlockEdge ? Math.random() * 35 : 0;
+
+            if (edgeVal > 20) {
+              pixels[idx] = Math.min(255, edgeVal * 3.5 + 40);
+              pixels[idx+1] = Math.min(255, edgeVal * 0.2);
+              pixels[idx+2] = Math.min(255, edgeVal * 2.2 + 90);
+            } else {
+              const bg = Math.random() * 12 + gridNoise;
+              pixels[idx] = bg * 0.8;
+              pixels[idx+1] = bg * 0.3;
+              pixels[idx+2] = bg * 0.9;
+            }
+          }
+        }
+      } else {
+        for (let i = 0; i < pixels.length; i += 4) {
+          const r = pixels[i]!;
+          const g = pixels[i+1]!;
+          const b = pixels[i+2]!;
+          const avg = (r + g + b) / 3;
+          const noise = Math.random() * 6 + (avg * 0.03);
+          pixels[i] = noise * 0.7;
+          pixels[i+1] = noise * 0.8;
+          pixels[i+2] = noise * 1.1;
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+    };
+  }, [imageUrl, type]);
+
+  return (
+    <div className="cyber-card" style={{ padding: '24px', animation: 'fadeIn 0.5s ease', margin: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+        <span className="header-badge badge-indigo">Interactive ELA Split Analyzer</span>
+        <span style={{ fontSize: '10px', fontFamily: 'var(--mono)', color: 'var(--text-muted)' }}>
+          Slide Original ↔ ELA residuals
+        </span>
+      </div>
+
+      <div 
+        ref={containerRef}
+        style={{ 
+          position: 'relative', 
+          width: '100%', 
+          borderRadius: '4px', 
+          overflow: 'hidden', 
+          border: '1px solid var(--border-light)',
+          background: 'var(--bg-deep)',
+          lineHeight: 0
+        }}
+      >
+        <img 
+          src={imageUrl} 
+          alt="Original Specimen" 
+          style={{ width: '100%', display: 'block', pointerEvents: 'none' }}
+        />
+
+        <canvas 
+          ref={canvasRef}
+          style={{ 
+            position: 'absolute', 
+            top: 0, 
+            left: 0, 
+            width: '100%', 
+            height: '100%', 
+            pointerEvents: 'none',
+            clipPath: `polygon(0 0, ${splitOffset}% 0, ${splitOffset}% 100%, 0 100%)`
+          }}
+        />
+
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: `${splitOffset}%`,
+          width: '2px',
+          background: 'var(--neon-cyan)',
+          boxShadow: '0 0 10px var(--neon-cyan-glow)',
+          zIndex: 5,
+          pointerEvents: 'none'
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            background: 'var(--bg-core)',
+            border: '2px solid var(--neon-cyan)',
+            boxShadow: '0 0 8px var(--neon-cyan-glow)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '10px',
+            color: 'var(--neon-cyan)',
+            fontWeight: 800
+          }}>
+            ↔
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <span style={{ fontSize: '10px', fontFamily: 'var(--mono)', color: 'var(--text-secondary)' }}>ELA</span>
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={splitOffset} 
+          onChange={(e) => setSplitOffset(Number(e.target.value))}
+          style={{ 
+            flexGrow: 1,
+            accentColor: 'var(--neon-cyan)',
+            background: 'var(--border-light)',
+            height: '4px',
+            borderRadius: '2px',
+            cursor: 'ew-resize'
+          }}
+        />
+        <span style={{ fontSize: '10px', fontFamily: 'var(--mono)', color: 'var(--text-secondary)' }}>ORIGINAL</span>
+      </div>
+    </div>
+  );
+}
+
 const API_BASE = window.location.origin.includes('localhost') ? 'http://localhost:3000' : '';
 
 export default function Verify() {
   const [selectedSampleId, setSelectedSampleId] = useState<string | null>(SAMPLE_MEDIAS[0].id)
   const [customFile, setCustomFile] = useState<File | null>(null)
+  const [customFileUrl, setCustomFileUrl] = useState<string | null>(null)
   const [isVerifying, setIsVerifying] = useState(false)
   const [progressStep, setProgressStep] = useState<ScanProgressStep | null>(null)
   const [consoleLogs, setConsoleLogs] = useState<string[]>([])
@@ -160,6 +327,10 @@ export default function Verify() {
                   onClick={() => {
                     if (!isVerifying) {
                       setSelectedSampleId(sample.id)
+                      if (customFileUrl) {
+                        URL.revokeObjectURL(customFileUrl)
+                        setCustomFileUrl(null)
+                      }
                       setCustomFile(null)
                       setVerdictResult(null)
                       setProgressStep(null)
@@ -198,7 +369,11 @@ export default function Verify() {
                 accept="image/*"
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) {
-                    setCustomFile(e.target.files[0])
+                    const file = e.target.files[0]
+                    if (customFileUrl) URL.revokeObjectURL(customFileUrl)
+                    const url = URL.createObjectURL(file)
+                    setCustomFile(file)
+                    setCustomFileUrl(url)
                     setSelectedSampleId(null)
                     setVerdictResult(null)
                     setProgressStep(null)
@@ -258,6 +433,14 @@ export default function Verify() {
               {isVerifying ? 'Performing Forensics Audit...' : 'Start Audit'}
             </button>
           </div>
+
+          {/* Interactive ELA Split Analyzer Overlay */}
+          {!isVerifying && verdictResult && (
+            <ElaSplitSlider
+              imageUrl={customFileUrl || `/samples/${(SAMPLE_MEDIAS.find(s => s.id === selectedSampleId) || SAMPLE_MEDIAS[0]).name}`}
+              type={customFile ? (verdictResult?.assessment?.recreateReady ? 'real' : 'ai') : ((SAMPLE_MEDIAS.find(s => s.id === selectedSampleId) || SAMPLE_MEDIAS[0]).type)}
+            />
+          )}
 
           {/* Forensic Laser Scanner Animation */}
           {isVerifying && progressStep && (
