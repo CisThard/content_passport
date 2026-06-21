@@ -183,7 +183,8 @@ Open `.env` and configure the required keys. (See [[.env.example](file:///Users/
 To enable Google social login and gas-sponsored minting without subscribing to third-party SaaS (like Mysten Labs Enoki), configure the following variables in your `.env` file:
 *   `AUTH_GOOGLE_ID`: Your Google Cloud Console OAuth 2.0 Client ID (Web Application type).
 *   `AUTH_GOOGLE_SECRET`: Your Google Cloud Console OAuth 2.0 Client Secret.
-*   `ZKLOGIN_USER_SALT` (or `ZKLOGIN_SALT`): Numeric zkLogin user salt used to derive the Sui zkLogin address and address seed. For production, replace this static value with a private salt service that returns stable per-user salts.
+*   `ZKLOGIN_SALT_MASTER_SEED`: Private master seed for the built-in zkLogin salt service. The server derives a stable per-user 16-byte salt from `iss/aud/sub` using HKDF, matching Sui's recommended salt-service pattern. Generate with `openssl rand -hex 32`, back it up, and keep Testnet/Mainnet seeds separate.
+*   `ZKLOGIN_USER_SALT` (or `ZKLOGIN_SALT`): Legacy numeric static salt for testnet-only experiments. Prefer `ZKLOGIN_SALT_MASTER_SEED` so every OAuth subject receives a distinct stable salt.
 *   `ZKLOGIN_PROVER_URL` (optional): Sui zkLogin prover endpoint. Defaults to `https://prover-dev.zklogin.sui.io/v1`.
 *   `ZKLOGIN_PROVER_TIMEOUT_MS` (optional): Prover request timeout in milliseconds. Defaults to `15000`.
 *   `SUI_SPONSOR_SECRET_KEY` (or `SPONSOR_SECRET`): The 32-byte hex private key of the backend Sponsor Wallet. This wallet must be funded with SUI on the target network to pay transaction gas fees for users.
@@ -197,7 +198,7 @@ To enable Google social login and gas-sponsored minting without subscribing to t
 
 > [!TIP]
 > **Testnet Sponsor Sandbox Mode:**
-> If `SUI_SPONSOR_SECRET_KEY` is left blank, only the final sponsored transaction broadcast operates in **Mock Sponsor Mode**. Google OAuth and zkLogin proof generation remain real and will fail if `AUTH_GOOGLE_ID`, redirect URIs, `ZKLOGIN_USER_SALT`, or the Sui prover are not configured correctly.
+> If `SUI_SPONSOR_SECRET_KEY` is left blank, only the final sponsored transaction broadcast operates in **Mock Sponsor Mode**. Google OAuth, per-user salt derivation, zkLogin proof generation, and privacy-safe MemWal auth receipts remain real and will fail if `AUTH_GOOGLE_ID`, redirect URIs, `ZKLOGIN_SALT_MASTER_SEED`, or the Sui prover are not configured correctly.
 
 ### 4. Build Verification & Compilation
 Verify that the TypeScript server SDK and the Vite frontend compile without any type errors:
@@ -207,7 +208,7 @@ npm --prefix web run build
 ```
 
 ### 5. Running the Test Suite
-Ensure that the entire test suite (26 units covering escrow, forensics, memory, and blockchain contracts) runs and passes:
+Ensure that the entire test suite (32 units covering escrow, forensics, memory, zkLogin salt-service, and blockchain contracts) runs and passes:
 ```bash
 npm test
 ```

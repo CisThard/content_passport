@@ -13,6 +13,11 @@ import { HttpWalrusClient, InMemoryWalrusClient, WalrusClient } from "./walrus.j
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { getContentRightConfig, buildIssueGenesisPassportTx } from "./sui.js";
+import {
+  buildZkLoginMemoryReceipt,
+  describeZkLoginSaltStrategy,
+  getZkLoginSaltForClaims,
+} from "./zklogin-salt.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -343,15 +348,6 @@ function getSponsorKeypair(): Ed25519Keypair | undefined {
   }
 }
 
-function getZkLoginSalt(): string {
-  const salt = process.env.ZKLOGIN_USER_SALT || process.env.ZKLOGIN_SALT;
-  if (!salt) {
-    throw new Error("ZKLOGIN_USER_SALT is required for real zkLogin. Configure a per-app or salt-service derived user salt.");
-  }
-  BigInt(salt);
-  return salt;
-}
-
 function decodeJwtPayload(jwt: string): Record<string, any> {
   const payload = jwt.split(".")[1];
   if (!payload) throw new Error("Invalid JWT: missing payload");
@@ -390,6 +386,7 @@ app.get("/api/auth/config", async (req, res) => {
     googleClientId: process.env.AUTH_GOOGLE_ID || "",
     packageId: process.env.CONTENT_RIGHT_PACKAGE_ID || process.env.SUI_PACKAGE_ID || "",
     epoch,
+    zkLoginSaltStrategy: describeZkLoginSaltStrategy(),
   };
   authConfigCache = { value, expiresAt: Date.now() + AUTH_CONFIG_CACHE_MS };
   res.json(value);
@@ -408,9 +405,6 @@ app.post("/api/auth/zklogin", async (req, res) => {
       return;
     }
 
-    const salt = getZkLoginSalt();
-    const proverUrl = process.env.ZKLOGIN_PROVER_URL || "https://prover-dev.zklogin.sui.io/v1";
-    const { jwtToAddress, genAddressSeed } = await import("@mysten/sui/zklogin");
     let decodedJwt: Record<string, any>;
     try {
       decodedJwt = decodeJwtPayload(jwt);
@@ -423,6 +417,17 @@ app.post("/api/auth/zklogin", async (req, res) => {
       return;
     }
 
+    let saltResult: ReturnType<typeof getZkLoginSaltForClaims>;
+    try {
+      saltResult = getZkLoginSaltForClaims(decodedJwt);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message || String(error) });
+      return;
+    }
+
+    const proverUrl = process.env.ZKLOGIN_PROVER_URL || "https://prover-dev.zklogin.sui.io/v1";
+    const { jwtToAddress, genAddressSeed } = await import("@mysten/sui/zklogin");
+
     let response: Response;
     try {
       response = await fetch(proverUrl, {
@@ -434,7 +439,7 @@ app.post("/api/auth/zklogin", async (req, res) => {
           extendedEphemeralPublicKey: ephemeralPublicKeyB64,
           maxEpoch: Number(maxEpoch),
           jwtRandomness: randomness,
-          salt,
+          salt: saltResult.salt,
           keyClaimName: "sub",
         }),
       });
@@ -466,8 +471,20 @@ app.post("/api/auth/zklogin", async (req, res) => {
       });
       return;
     }
-    const zkAddress = jwtToAddress(jwt, salt, false);
-    const addressSeed = genAddressSeed(salt, "sub", decodedJwt.sub, decodedJwt.aud).toString();
+    const zkAddress = jwtToAddress(jwt, saltResult.salt, false);
+    const addressSeed = genAddressSeed(saltResult.salt, "sub", decodedJwt.sub, saltResult.audience).toString();
+
+    rememberZkLoginReceipt({
+      address: zkAddress,
+      claims: {
+        iss: decodedJwt.iss,
+        aud: saltResult.audience,
+        sub: decodedJwt.sub,
+      },
+      maxEpoch: Number(maxEpoch),
+      saltStrategy: saltResult.strategy,
+      proverUrl,
+    }).catch((error: any) => console.warn("[Server] Failed to persist zkLogin receipt:", error.message || String(error)));
 
     res.json({
       success: true,
@@ -475,12 +492,26 @@ app.post("/api/auth/zklogin", async (req, res) => {
       proof: zkProof,
       addressSeed,
       issuer: decodedJwt.iss,
+      saltStrategy: saltResult.strategy,
     });
   } catch (error: any) {
     console.error("[Server] zkLogin setup failed:", error);
     res.status(500).json({ success: false, error: error.message || String(error) });
   }
 });
+
+async function rememberZkLoginReceipt(input: {
+  address: string;
+  claims: { iss: string; aud: string; sub: string };
+  maxEpoch: number;
+  saltStrategy: "static-env" | "hkdf-master-seed";
+  proverUrl: string;
+}) {
+  const config = await loadMemWalConfig();
+  const memory = getAuthenticityMemoryClient(config);
+  const receipt = buildZkLoginMemoryReceipt(input);
+  await memory.remember("zklogin-auth-receipts", `${input.address}:${receipt.createdAt}`, receipt);
+}
 
 // POST /api/gas/build-mint
 app.post("/api/gas/build-mint", async (req, res) => {

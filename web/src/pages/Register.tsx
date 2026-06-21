@@ -7,7 +7,7 @@ import {
   clearEphemeralSession,
 } from '../lib/zklogin'
 import { clearZkLoginSessionStorage, emitZkLoginSessionChanged } from '../lib/authSession'
-import { getZkLoginSignature, generateNonce } from '@mysten/sui/zklogin'
+import { getZkLoginSignature, generateNonce, getExtendedEphemeralPublicKey } from '@mysten/sui/zklogin'
 import {
   CONTENT_RIGHT_PACKAGE_ID,
   firstCreatedObjectId,
@@ -44,6 +44,7 @@ export default function Register() {
 
   const [googleClientId, setGoogleClientId] = useState('')
   const [serverPackageId, setServerPackageId] = useState('')
+  const [zkLoginSaltStrategy, setZkLoginSaltStrategy] = useState('not-configured')
   const [currentEpoch, setCurrentEpoch] = useState(100)
   const [zkUserAddress, setZkUserAddress] = useState<string | null>(null)
   const [zkProof, setZkProof] = useState<any | null>(null)
@@ -61,6 +62,7 @@ export default function Register() {
         if (data.googleClientId) setGoogleClientId(data.googleClientId)
         if (data.packageId) setServerPackageId(data.packageId)
         if (data.epoch) setCurrentEpoch(data.epoch)
+        if (data.zkLoginSaltStrategy) setZkLoginSaltStrategy(data.zkLoginSaltStrategy)
       })
       .catch((err) => console.error('Failed to load auth config:', err))
   }, [])
@@ -102,7 +104,7 @@ export default function Register() {
     setMintLogs((prev) => [...prev, 'OIDC Token captured. Deriving zkLogin address seed...'])
     try {
       const session = getOrSetEphemeralSession(currentEpoch)
-      const ephemeralPublicKeyB64 = session.keypair.getPublicKey().toBase64()
+      const ephemeralPublicKeyB64 = getExtendedEphemeralPublicKey(session.keypair.getPublicKey())
 
       const response = await fetch('/api/auth/zklogin', {
         method: 'POST',
@@ -132,7 +134,8 @@ export default function Register() {
       setMintLogs((prev) => [
         ...prev,
         `Derived zkLogin address: ${shortId(data.address)}`,
-        'zkLogin validation complete (ZK Proof validated by Sui prover).'
+        `Salt service strategy: ${data.saltStrategy || zkLoginSaltStrategy}`,
+        'zkLogin validation complete. Privacy-safe auth receipt queued for MemWal memory.'
       ])
     } catch (err: any) {
       setMintLogs((prev) => [...prev, `[ERROR] zkLogin Address derivation failed: ${err.message || String(err)}`])
@@ -345,6 +348,8 @@ export default function Register() {
                 </strong>
                 <div style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '4px' }}>
                   {zkUserAddress ? 'Gas sponsored by Content Passport ($0.00 Gas fee)' : 'Mint sponsored passports with zero wallet or gas friction'}
+                  <br />
+                  Salt service: {zkLoginSaltStrategy === 'hkdf-master-seed' ? 'per-user HKDF' : zkLoginSaltStrategy}
                 </div>
               </div>
               {zkUserAddress ? (
