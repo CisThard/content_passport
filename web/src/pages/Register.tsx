@@ -5,7 +5,7 @@ import {
   getJwtFromUrlHash,
   clearEphemeralSession,
 } from '../lib/zklogin'
-import { genAddressSeed, getZkLoginSignature } from '@mysten/sui/zklogin'
+import { genAddressSeed, getZkLoginSignature, generateNonce } from '@mysten/sui/zklogin'
 import {
   CONTENT_RIGHT_PACKAGE_ID,
   firstCreatedObjectId,

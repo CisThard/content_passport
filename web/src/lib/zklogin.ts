@@ -23,8 +23,7 @@ export function getOrSetEphemeralSession(currentEpoch = 100): EphemeralSession {
 
   if (storedKey && storedRandomness && storedMaxEpoch) {
     try {
-      const privateKeyBytes = new Uint8Array(JSON.parse(storedKey))
-      const keypair = Ed25519Keypair.fromSecretKey(privateKeyBytes)
+      const keypair = Ed25519Keypair.fromSecretKey(storedKey)
       return {
         keypair,
         randomness: storedRandomness,
@@ -40,8 +39,7 @@ export function getOrSetEphemeralSession(currentEpoch = 100): EphemeralSession {
   const randomness = generateRandomness()
   const maxEpoch = currentEpoch + 10
 
-  const privateKeyBytesArray = Array.from(keypair.getSecretKey())
-  sessionStorage.setItem(EPHEMERAL_KEY_KEY, JSON.stringify(privateKeyBytesArray))
+  sessionStorage.setItem(EPHEMERAL_KEY_KEY, keypair.getSecretKey())
   sessionStorage.setItem(RANDOMNESS_KEY, randomness)
   sessionStorage.setItem(MAX_EPOCH_KEY, maxEpoch.toString())
 
