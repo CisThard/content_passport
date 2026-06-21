@@ -1,4 +1,5 @@
 import { AgentId, CoCreationMemoryRecord, MemWalClue, RecreateReadiness } from "./types.js";
+import { MemWalSemanticMemoryClient } from "./memwal.js";
 
 export const SHARED_CONTEXT_NAMESPACE = "shared-context";
 export const MEMWAL_BOARD_NAMESPACE = "memwal-board";
@@ -114,6 +115,65 @@ export class HttpAuthenticityMemoryClient implements AuthenticityMemoryClient {
   }
 }
 
+export class FirestoreAuthenticityMemoryClient implements AuthenticityMemoryClient {
+  private db: any;
+  private readonly collectionName: string;
+
+  constructor(options: { collectionName?: string } = {}) {
+    this.collectionName = options.collectionName || "authenticity_memories";
+  }
+
+  private async getDb() {
+    if (!this.db) {
+      const { Firestore } = await import("@google-cloud/firestore");
+      this.db = new Firestore({
+        projectId: process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT,
+      });
+    }
+    return this.db;
+  }
+
+  async remember(namespace: string, key: string, value: unknown): Promise<void> {
+    const db = await this.getDb();
+    const docRef = db.collection(this.collectionName).doc(this.hashKey(namespace, key));
+    await docRef.set({
+      namespace,
+      key,
+      value,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  async recall<T = unknown>(namespace: string, key: string): Promise<T | undefined> {
+    const db = await this.getDb();
+    const docRef = db.collection(this.collectionName).doc(this.hashKey(namespace, key));
+    const doc = await docRef.get();
+    if (!doc.exists) return undefined;
+    return doc.data()?.value as T;
+  }
+
+  async list<T = unknown>(namespace: string): Promise<Array<{ key: string; value: T }>> {
+    const db = await this.getDb();
+    const snapshot = await db.collection(this.collectionName)
+      .where("namespace", "==", namespace)
+      .get();
+    
+    const results: Array<{ key: string; value: T }> = [];
+    snapshot.forEach((doc: any) => {
+      const data = doc.data();
+      if (data) {
+        results.push({ key: data.key, value: data.value as T });
+      }
+    });
+    return results;
+  }
+
+  private hashKey(namespace: string, key: string): string {
+    return Buffer.from(`${namespace}:${key}`).toString("base64url");
+  }
+}
+
+
 export async function writeAgentClue(
   client: AuthenticityMemoryClient,
   clue: Omit<MemWalClue, "id" | "createdAt"> & { id?: string; createdAt?: string },
@@ -223,3 +283,19 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
     if (timer) clearTimeout(timer);
   }
 }
+
+export function getAuthenticityMemoryClient(config?: any): AuthenticityMemoryClient {
+  const useFirestore = process.env.GCP_FIRESTORE_ENABLED === "true";
+  const fallback = useFirestore
+    ? new FirestoreAuthenticityMemoryClient()
+    : new InMemoryAuthenticityMemoryClient();
+
+  if (config) {
+    return new TimedAuthenticityMemoryClient(
+      new MemWalSemanticMemoryClient(config),
+      fallback instanceof InMemoryAuthenticityMemoryClient ? fallback : new InMemoryAuthenticityMemoryClient()
+    );
+  }
+  return fallback;
+}
+

@@ -36,24 +36,54 @@ jobs:
         run: npm --prefix web run build
 
   deploy:
-    name: Deploy to Vercel (production)
+    name: Deploy to Google Cloud Run
     needs: verify
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: production
     env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      GCP_REGION: ${{ secrets.GCP_REGION || 'asia-northeast3' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          node-version: 20
-      - name: Install Vercel CLI
-        run: npm i -g vercel@latest
-      - name: Pull Vercel environment
-        run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
-      - name: Build (Vercel)
-        run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
-      - name: Deploy prebuilt to production
-        run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and Push Container Image
+        run: |
+          IMAGE_TAG="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/content-passport-repo/app:${{ github.sha }}"
+          docker build -t "$IMAGE_TAG" .
+          docker push "$IMAGE_TAG"
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: content-passport
+          region: ${{ env.GCP_REGION }}
+          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/content-passport-repo/app:${{ github.sha }}
+          env_vars: |
+            NODE_ENV=production
+            SUI_NETWORK=testnet
+            WALRUS_PUBLISHER=https://publisher.walrus-testnet.walrus.space
+            WALRUS_AGGREGATOR=https://aggregator.walrus-testnet.walrus.space
+            MEMWAL_SERVER_URL=https://relayer.memory.walrus.xyz
+            MEMWAL_NAMESPACE=content-right-hackathon
+            GCP_VERTEX_AI_ENABLED=${{ secrets.GCP_VERTEX_AI_ENABLED || 'false' }}
+            GCP_FIRESTORE_ENABLED=${{ secrets.GCP_FIRESTORE_ENABLED || 'false' }}
+            GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
+            GCP_REGION=${{ env.GCP_REGION }}
+          secrets: |
+            SUI_PRIVATE_KEY=SUI_PRIVATE_KEY:latest
+            MEMWAL_PRIVATE_KEY=MEMWAL_PRIVATE_KEY:latest
+            GOOGLE_GENERATIVE_AI_API_KEY=GOOGLE_GENERATIVE_AI_API_KEY:latest

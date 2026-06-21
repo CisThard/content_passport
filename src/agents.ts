@@ -84,19 +84,22 @@ export async function metadataAgent(media: Uint8Array): Promise<AgentScore> {
   }
 }
 
-/** AI detection: Gemini if keyed, else a transparent heuristic from prior clues. */
+/** AI detection: Gemini if keyed or Vertex AI if enabled, else a transparent heuristic from prior clues. */
 export async function aiDetectionAgent(
   media: Uint8Array,
   clues: AgentScore[] = [],
 ): Promise<AgentScore> {
-  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+  const useVertex = process.env.GCP_VERTEX_AI_ENABLED === "true";
+  const useGeminiKey = !!process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+
+  if (useGeminiKey || useVertex) {
     try {
-      return await geminiDetect(media, clues);
+      return await geminiDetect(media, clues, useVertex);
     } catch (e) {
-      return heuristicDetect(clues, `Gemini failed: ${msg(e)}`);
+      return heuristicDetect(clues, `Gemini/Vertex failed: ${msg(e)}`);
     }
   }
-  return heuristicDetect(clues, "Heuristic (no GOOGLE_GENERATIVE_AI_API_KEY)");
+  return heuristicDetect(clues, "Heuristic (no GOOGLE_GENERATIVE_AI_API_KEY or GCP_VERTEX_AI_ENABLED)");
 }
 
 function heuristicDetect(clues: AgentScore[], note: string): AgentScore {
@@ -107,14 +110,34 @@ function heuristicDetect(clues: AgentScore[], note: string): AgentScore {
   return { agentId: "ai-detection-agent", score, confidence: 0.6, evidence: [note] };
 }
 
-async function geminiDetect(media: Uint8Array, clues: AgentScore[]): Promise<AgentScore> {
-  // Optional deps — resolved at runtime only when a key is configured. The
+async function geminiDetect(
+  media: Uint8Array,
+  clues: AgentScore[],
+  useVertex = false,
+): Promise<AgentScore> {
+  // Optional deps — resolved at runtime only when configured. The
   // `as string` specifier keeps tsc from requiring them in the lean library build.
-  const { google } = (await import("@ai-sdk/google" as string)) as any;
   const { generateObject } = (await import("ai" as string)) as any;
   const { z } = (await import("zod" as string)) as any;
+
+  let model: any;
+  let providerName = "Gemini";
+
+  if (useVertex) {
+    const { createVertex } = (await import("@ai-sdk/google-vertex" as string)) as any;
+    const vertex = createVertex({
+      project: process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT,
+      location: process.env.GCP_REGION || "us-central1",
+    });
+    model = vertex("gemini-3.5-flash");
+    providerName = "Vertex AI (Keyless)";
+  } else {
+    const { google } = (await import("@ai-sdk/google" as string)) as any;
+    model = google("gemini-3.5-flash");
+  }
+
   const { object } = await generateObject({
-    model: google("gemini-3.5-flash"),
+    model,
     schema: z.object({
       authenticity_score: z.number().min(0).max(100),
       confidence: z.number().min(0).max(100),
@@ -135,7 +158,7 @@ async function geminiDetect(media: Uint8Array, clues: AgentScore[]): Promise<Age
     agentId: "ai-detection-agent",
     score: Math.round(object.authenticity_score),
     confidence: object.confidence / 100,
-    evidence: [`Gemini: ${object.reason}`],
+    evidence: [`${providerName}: ${object.reason}`],
   };
 }
 

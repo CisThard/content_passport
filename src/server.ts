@@ -7,7 +7,7 @@ import { analyzeImageWithMemWal } from "./agents.js";
 import { verifyC2PA } from "./c2pa.js";
 import { calculateAASE } from "./aase.js";
 import { loadMemWalConfig, MemWalSemanticMemoryClient } from "./memwal.js";
-import { InMemoryAuthenticityMemoryClient, TimedAuthenticityMemoryClient } from "./memory.js";
+import { getAuthenticityMemoryClient } from "./memory.js";
 import { objectiveForensics } from "./forensics.js";
 import { HttpWalrusClient, WalrusClient } from "./walrus.js";
 
@@ -86,9 +86,7 @@ async function verifyUploadedFile(file: Express.Multer.File, emit?: VerifyEvent)
   });
 
   const config = await loadMemWalConfig();
-  const memoryClient = config
-    ? new TimedAuthenticityMemoryClient(new MemWalSemanticMemoryClient(config))
-    : new InMemoryAuthenticityMemoryClient();
+  const memoryClient = getAuthenticityMemoryClient(config);
 
   console.log(`[Server] Running multi-agent AASE audit on file: ${file.originalname} (${file.size} bytes)...`);
 
