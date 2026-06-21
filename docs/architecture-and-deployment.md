@@ -16,7 +16,7 @@ graph TD
     GCPSecret["GCP Secret Manager"]
     MemWalRelayer["MemWal Relayer (Walrus Memory)"]
     SuiTestnet["Sui Testnet Ledger (Smart Contracts)"]
-    Gemini["Google Gemini 3.5 Flash Vision API"]
+    Gemini["Google Gemini 2.5 Flash Vision API"]
 
     Client -->|HTTP / FormData| Express
     Express -->|Static Asset Serving| Client
@@ -46,6 +46,14 @@ graph TD
    * 구글 제미나이 플래시 모델(`gemini-2.5-flash`)을 연동하여 이미지 내의 미세한 구조적 아티팩트와 광원 왜곡을 실시간으로 추론하고 진위 감정 지수(0~100)를 Zod 스키마 구조로 획득합니다. 추론 깊이 향상을 위해 사고 프로세스(Thinking Config)가 적용되어 있습니다.
 4. **Memory Bonus Agent (MemWal 레저 대조):**
    * 해당 이미지 해시와 매칭되는 단서가 MemWal 분산 원장에 이미 등록되어 있는지 확인하고 신뢰도를 가산합니다.
+
+### 2.1 AI Detection Agent 모델 선정 및 설계 경위 (Model Selection Rationale)
+
+포렌식 분석 성능 및 프로덕션 환경의 안정성을 보장하기 위해 `gemini-3.1-pro-preview` 대신 **`gemini-2.5-flash`** 모델을 채택하고 **사고 프로세스(Thinking Budget)** 설정을 적용했습니다.
+
+* **초저지연 시간 (Low Latency):** 이미지 포렌식 검증은 멀티모달 파일(바이너리 데이터) 및 텍스트 프롬프트를 함께 전송해야 하므로 추론 지연이 발생할 수 있습니다. `Flash` 계열 모델은 대용량 파일 입력 시에도 `Pro` 대비 압도적으로 빠른 실시간 응답 속도를 보여주며 원활한 웹2.5 사용자 경험을 지원합니다.
+* **프로덕션 가용성 및 Quota 안정성 (GA vs Preview):** `gemini-3.1-pro-preview`는 미리보기 버전으로 배포되어 리전별 API 호출 할당량(Rate Limits/Quotas)이 불안정할 수 있는 반면, 정식 출시(GA) 상태인 `gemini-2.5-flash`는 GCP Cloud Run 인프라상에서 대규모 동시 심사 및 트래픽 요청 시에도 무정지 환경을 제공합니다.
+* **추론 역량 강화 (Thinking Config):** AI 이미지 변조 판단 작업의 논리적 한계를 해결하고자 Vercel AI SDK를 통해 2048 토큰 용량의 사고 프로세스(`thinkingBudget`)를 주입했습니다. 이로써 `Pro`급 모델의 추론 논리 깊이를 확보하면서도 `Flash` 모델의 신속함과 비용 강점을 동시에 획득했습니다.
 
 ---
 
