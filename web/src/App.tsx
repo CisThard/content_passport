@@ -134,6 +134,7 @@ function MainAppShell() {
             <Route path="/" element={<Landing passportsCount={passportsCount} walrusStatus={walrusStatus} />} />
             <Route path="/journey" element={<Journey />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/api/auth/callback/google" element={<Register />} />
             <Route path="/verify" element={<Verify />} />
             <Route path="/vault" element={<Vault />} />
             <Route path="/blueprint" element={<Blueprint />} />

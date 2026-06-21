@@ -75,8 +75,8 @@ export default function Register() {
 
     const urlJwt = getJwtFromUrlHash()
     if (urlJwt) {
-      // Clean hash
-      window.location.hash = ''
+      // Clean hash and rewrite path to /register
+      window.history.replaceState({}, document.title, '/register')
       setJwt(urlJwt)
       sessionStorage.setItem('cp_zk_jwt', urlJwt)
       handleZkLogin(urlJwt)
