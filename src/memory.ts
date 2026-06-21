@@ -28,6 +28,40 @@ export class InMemoryAuthenticityMemoryClient implements AuthenticityMemoryClien
   }
 }
 
+export class TimedAuthenticityMemoryClient implements AuthenticityMemoryClient {
+  constructor(
+    private readonly primary: AuthenticityMemoryClient,
+    private readonly fallback: InMemoryAuthenticityMemoryClient = new InMemoryAuthenticityMemoryClient(),
+    private readonly timeoutMs = 7_000,
+  ) {}
+
+  async remember(namespace: string, key: string, value: unknown): Promise<void> {
+    await this.fallback.remember(namespace, key, value);
+    const primaryWrite = this.primary.remember(namespace, key, value);
+    primaryWrite.catch(() => undefined);
+    await withTimeout(primaryWrite, this.timeoutMs).catch(() => undefined);
+  }
+
+  async recall<T = unknown>(namespace: string, key: string): Promise<T | undefined> {
+    const fallbackValue = await this.fallback.recall<T>(namespace, key);
+    if (fallbackValue !== undefined) return fallbackValue;
+
+    const primaryRead = this.primary.recall<T>(namespace, key);
+    primaryRead.catch(() => undefined);
+    return withTimeout(primaryRead, this.timeoutMs).catch(() => undefined);
+  }
+
+  async list<T = unknown>(namespace: string): Promise<Array<{ key: string; value: T }>> {
+    const fallbackEntries = await this.fallback.list<T>(namespace);
+    if (fallbackEntries.length > 0) return fallbackEntries;
+    if (!this.primary.list) return fallbackEntries;
+
+    const primaryList = this.primary.list<T>(namespace);
+    primaryList.catch(() => undefined);
+    return withTimeout(primaryList, this.timeoutMs).catch(() => fallbackEntries);
+  }
+}
+
 export class HttpAuthenticityMemoryClient implements AuthenticityMemoryClient {
   private readonly endpoint: string;
   private readonly delegateKey?: string;
@@ -174,4 +208,18 @@ export async function recallCoCreationContext(
 
 function memoryKey(namespace: string, key: string): string {
   return `${namespace}:${key}`;
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`Memory operation timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }

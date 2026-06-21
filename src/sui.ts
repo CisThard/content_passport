@@ -6,7 +6,7 @@ export interface ContentRightConfig {
   packageId: string;
 }
 
-export function getContentRightConfig(env: NodeJS.ProcessEnv = process.env): ContentRightConfig {
+export function getContentRightConfig(env: Record<string, string | undefined> = process.env): ContentRightConfig {
   const packageId = env.CONTENT_RIGHT_PACKAGE_ID || env.SUI_PACKAGE_ID || "";
   return { packageId };
 }
@@ -236,5 +236,5 @@ function assertWeight(value: number, name: string): void {
 
 function bytes(value: string): number[] {
   if (!value.trim()) throw new Error("Byte string value is required.");
-  return Array.from(Buffer.from(value, "utf8"));
+  return Array.from(new TextEncoder().encode(value));
 }

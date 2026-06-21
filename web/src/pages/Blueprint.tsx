@@ -1,4 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { ConnectButton, useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
+import { buildCreateAndFundPolicyTx, buildDistributeRoyaltiesTx } from '../../../src/sui'
+import {
+  CONTENT_RIGHT_PACKAGE_ID,
+  SUI_CHAIN,
+  firstCreatedObjectId,
+  readOnchainState,
+  rememberOnchainState,
+  shortId,
+  suiscanTxUrl,
+} from '../lib/suiNetwork'
 
 export default function Blueprint() {
   // State for Remix Chain Simulator
@@ -11,6 +22,28 @@ export default function Blueprint() {
   const [anyaClaim, setAnyaClaim] = useState<number>(40)
   const [benClaim, setBenClaim] = useState<number>(50)
   const [chloeClaim, setChloeClaim] = useState<number>(30)
+  const [passportId, setPassportId] = useState('')
+  const [policyId, setPolicyId] = useState('')
+  const [participantA, setParticipantA] = useState('')
+  const [participantB, setParticipantB] = useState('')
+  const [participantC, setParticipantC] = useState('')
+  const [chainLogs, setChainLogs] = useState<string[]>([])
+  const [chainBusy, setChainBusy] = useState(false)
+  const [lastDigest, setLastDigest] = useState('')
+  const currentAccount = useCurrentAccount()
+  const suiClient = useSuiClient()
+  const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction({
+    execute: async ({ bytes, signature }) =>
+      suiClient.executeTransactionBlock({
+        transactionBlock: bytes,
+        signature,
+        options: {
+          showRawEffects: true,
+          showObjectChanges: true,
+          showEvents: true,
+        },
+      }),
+  })
 
   // Calculations for Remix Chain
   const totalRemixCost = anyaFee + benFee + chloeFee
@@ -26,6 +59,75 @@ export default function Blueprint() {
   const anyaBountyWeight = totalBounty > 0 ? Math.round((anyaClaim / totalBounty) * 100) : 0
   const benBountyWeight = totalBounty > 0 ? Math.round((benClaim / totalBounty) * 100) : 0
   const chloeBountyWeight = totalBounty > 0 ? 100 - anyaBountyWeight - benBountyWeight : 0
+
+  useEffect(() => {
+    const state = readOnchainState()
+    setPassportId(state.passportId || '')
+    setPolicyId(state.policyId || '')
+    setLastDigest(state.policyTxDigest || state.settlementTxDigest || '')
+  }, [])
+
+  useEffect(() => {
+    if (currentAccount && !participantA) setParticipantA(currentAccount.address)
+  }, [currentAccount, participantA])
+
+  const liveParticipants = [
+    { address: participantA.trim(), weight: anyaRemixWeight },
+    { address: participantB.trim(), weight: benRemixWeight },
+    { address: participantC.trim(), weight: chloeRemixWeight },
+  ].filter((participant) => participant.address)
+
+  const participantTotal = liveParticipants.reduce((sum, participant) => sum + participant.weight, 0)
+  const canCreatePolicy =
+    Boolean(currentAccount && CONTENT_RIGHT_PACKAGE_ID && passportId.trim() && liveParticipants.length > 0 && participantTotal === 100)
+
+  const appendChainLog = (message: string) => setChainLogs((prev) => [...prev, message])
+
+  const handleCreatePolicy = async () => {
+    if (!canCreatePolicy) return
+    setChainBusy(true)
+    try {
+      appendChainLog(`Building create_and_fund_policy for passport ${shortId(passportId)}.`)
+      const tx = buildCreateAndFundPolicyTx({
+        packageId: CONTENT_RIGHT_PACKAGE_ID,
+        passportId,
+        participants: liveParticipants,
+        amountMist: BigInt(totalRemixCost) * 1_000_000_000n,
+      })
+      appendChainLog(`Requesting wallet signature for ${totalRemixCost} SUI escrow split.`)
+      const result = await signAndExecuteTransaction({ transaction: tx, chain: SUI_CHAIN })
+      const createdPolicyId = firstCreatedObjectId(result) || policyId
+      if (createdPolicyId) setPolicyId(createdPolicyId)
+      setLastDigest(result.digest)
+      rememberOnchainState({ policyId: createdPolicyId, policyTxDigest: result.digest })
+      appendChainLog(`Policy transaction confirmed: ${shortId(result.digest, 12, 8)}`)
+      if (createdPolicyId) appendChainLog(`CoCreationPolicy object: ${shortId(createdPolicyId)}`)
+    } catch (error: any) {
+      appendChainLog(`[ERROR] ${error.message || String(error)}`)
+    } finally {
+      setChainBusy(false)
+    }
+  }
+
+  const handleDistributeRoyalties = async () => {
+    if (!currentAccount || !CONTENT_RIGHT_PACKAGE_ID || !policyId.trim()) return
+    setChainBusy(true)
+    try {
+      appendChainLog(`Building distribute_royalties for policy ${shortId(policyId)}.`)
+      const tx = buildDistributeRoyaltiesTx({
+        packageId: CONTENT_RIGHT_PACKAGE_ID,
+        policyId,
+      })
+      const result = await signAndExecuteTransaction({ transaction: tx, chain: SUI_CHAIN })
+      setLastDigest(result.digest)
+      rememberOnchainState({ settlementTxDigest: result.digest })
+      appendChainLog(`Royalty distribution confirmed: ${shortId(result.digest, 12, 8)}`)
+    } catch (error: any) {
+      appendChainLog(`[ERROR] ${error.message || String(error)}`)
+    } finally {
+      setChainBusy(false)
+    }
+  }
 
   return (
     <div className="dashboard-container" style={{ maxWidth: '1200px', display: 'flex', flexDirection: 'column', gap: '60px' }}>
@@ -200,6 +302,64 @@ export default function Blueprint() {
                   [{anyaRemixWeight}%, {benRemixWeight}%, {chloeRemixWeight}%]
                 </span>
               </div>
+            </div>
+
+            <div className="linear-card-recessed" style={{ padding: '18px', marginTop: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
+                <div>
+                  <span className="header-badge" style={{ fontSize: '9px' }}>LIVE ON-CHAIN CONTROL</span>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.4, margin: '8px 0 0' }}>
+                    Executes real Sui PTBs: create/fund co-creation policy and distribute escrow royalties.
+                  </p>
+                </div>
+                <ConnectButton />
+              </div>
+
+              <div className="cyber-input-wrap">
+                <label>GenesisPassport Object ID</label>
+                <input value={passportId} onChange={(e) => setPassportId(e.target.value)} placeholder="Mint on Register, or paste object id" />
+              </div>
+              <div className="cyber-input-wrap">
+                <label>CoCreationPolicy Object ID</label>
+                <input value={policyId} onChange={(e) => setPolicyId(e.target.value)} placeholder="Created policy id appears here" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                <input value={participantA} onChange={(e) => setParticipantA(e.target.value)} placeholder={`Anya recipient (${anyaRemixWeight}%)`} />
+                <input value={participantB} onChange={(e) => setParticipantB(e.target.value)} placeholder={`Ben recipient (${benRemixWeight}%)`} />
+                <input value={participantC} onChange={(e) => setParticipantC(e.target.value)} placeholder={`Chloe recipient (${chloeRemixWeight}%)`} />
+              </div>
+              <div style={{ fontSize: '10px', color: participantTotal === 100 ? 'var(--neon-emerald)' : 'var(--neon-gold)', fontFamily: 'var(--mono)' }}>
+                Active participant weight total: {participantTotal}% {liveParticipants.length === 0 ? '(paste at least one address)' : ''}
+              </div>
+              {!CONTENT_RIGHT_PACKAGE_ID && (
+                <div style={{ fontSize: '10px', color: 'var(--neon-gold)' }}>Set VITE_CONTENT_RIGHT_PACKAGE_ID before live package calls.</div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <button className="cyber-btn cyber-btn-indigo" disabled={!canCreatePolicy || chainBusy} onClick={handleCreatePolicy}>
+                  {chainBusy ? 'Executing...' : 'Create + Fund Policy'}
+                </button>
+                <button className="cyber-btn cyber-btn-rose" disabled={!currentAccount || !CONTENT_RIGHT_PACKAGE_ID || !policyId.trim() || chainBusy} onClick={handleDistributeRoyalties}>
+                  Distribute Royalties
+                </button>
+              </div>
+              {lastDigest && (
+                <a href={suiscanTxUrl(lastDigest)} target="_blank" rel="noreferrer" style={{ color: 'var(--neon-cyan)', fontSize: '11px', fontFamily: 'var(--mono)' }}>
+                  Latest Suiscan transaction: {shortId(lastDigest, 12, 8)}
+                </a>
+              )}
+              {chainLogs.length > 0 && (
+                <div className="console-container" style={{ height: '150px' }}>
+                  {chainLogs.map((log, idx) => (
+                    <div key={idx} className="console-line">
+                      <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
+                      <span className={`console-tag ${log.startsWith('[ERROR]') ? 'tag-rose' : log.includes('confirmed') ? 'tag-success' : 'tag-system'}`}>
+                        {log.startsWith('[ERROR]') ? '[FAIL]' : log.includes('confirmed') ? '[TX]' : '[PTB]'}
+                      </span>
+                      <span>{log}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

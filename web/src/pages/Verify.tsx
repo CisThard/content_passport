@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { SAMPLE_MEDIAS } from '../samples'
 
 interface ScanProgressStep {
-  status: 'idle' | 'forensic_ela' | 'exifr_audit' | 'k9_sniffer' | 'complete'
+  status: 'idle' | 'received' | 'hashing' | 'forensic_ela' | 'exifr_audit' | 'k9_sniffer' | 'complete'
   progress: number
   logLine: string
 }
@@ -18,8 +18,6 @@ export default function Verify() {
   const [verdictResult, setVerdictResult] = useState<any | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
   const handleStartAudit = async () => {
     setIsVerifying(true)
@@ -46,44 +44,23 @@ export default function Verify() {
         fileName = sample.name
       }
 
-      // Step 1: Forensic Error Level Analysis (ELA)
-      setProgressStep({ status: 'forensic_ela', progress: 25, logLine: 'ForensicAgent initialized. Accessing image pixel arrays...' })
-      setConsoleLogs((prev) => [...prev, 'ForensicAgent initialized. Accessing image pixel arrays...'])
-      await delay(500)
-      
-      setProgressStep({ status: 'forensic_ela', progress: 40, logLine: 'Re-compressing image at 90% JPEG density quality...' })
-      setConsoleLogs((prev) => [...prev, 'Re-compressing image at 90% JPEG density quality...'])
-      await delay(400)
-
-      // Step 2: Metadata Audit
-      setProgressStep({ status: 'exifr_audit', progress: 60, logLine: 'MetadataAgent parsing EXIF headers. Accessing manufacturers metadata...' })
-      setConsoleLogs((prev) => [...prev, 'MetadataAgent parsing EXIF headers. Accessing manufacturers metadata...'])
-      await delay(500)
-
-      // Step 3: Send request to the live backend api
-      setProgressStep({ status: 'k9_sniffer', progress: 80, logLine: 'K-9 Sniffer invoking Gemini cognitive verification and MemWal relayer...' })
-      setConsoleLogs((prev) => [...prev, 'K-9 Sniffer invoking Gemini cognitive verification and MemWal relayer...'])
-
       const formData = new FormData()
       formData.append('file', fileToUpload, fileName)
 
-      const apiResponse = await fetch(`${API_BASE}/api/verify`, {
+      const apiResponse = await fetch(`${API_BASE}/api/verify/stream`, {
         method: 'POST',
         body: formData,
       })
 
       if (!apiResponse.ok) {
-        const errPayload = await apiResponse.json().catch(() => ({}))
-        throw new Error(errPayload.error || `Server verification failed with status: ${apiResponse.status}`)
+        throw new Error(`Server verification failed with status: ${apiResponse.status}`)
       }
 
-      const data = await apiResponse.json()
-      
-      // Step 4: Complete
-      setProgressStep({ status: 'complete', progress: 100, logLine: `AASE Verification completed. Verdict: ${data.assessment.recreateReady ? 'APPROVED' : 'REJECTED'}` })
-      setConsoleLogs((prev) => [...prev, `AASE Verification completed. Verdict: ${data.assessment.recreateReady ? 'APPROVED' : 'REJECTED'}`])
+      if (!apiResponse.body) {
+        throw new Error('This browser cannot stream verification events.')
+      }
 
-      setVerdictResult(data)
+      await readVerificationStream(apiResponse.body)
     } catch (err: any) {
       console.error(err)
       setProgressStep({ status: 'complete', progress: 100, logLine: `Error during verification: ${err.message || String(err)}` })
@@ -107,6 +84,48 @@ export default function Verify() {
   const cameraSpec = metadataAgent?.evidence?.find((e: string) => e.startsWith('Camera'))?.replace('Camera ', '') || 'Camera Hardware Undefined';
   const softwareSpec = metadataAgent?.evidence?.find((e: string) => e.startsWith('Editing/AI software')) || 'No modification signature';
   const stampSpec = metadataAgent?.evidence?.find((e: string) => e.includes('timestamp') || e.includes('capture')) || 'Original timestamp present';
+  const objective = verdictResult?.objective;
+  const syntheticArtifactScore = objective?.frequency?.syntheticArtifactScore ?? 0;
+  const duplicateRisk = objective?.perceptualHash?.duplicateRisk || 'low';
+
+  const readVerificationStream = async (body: ReadableStream<Uint8Array>) => {
+    const reader = body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const packets = buffer.split('\n\n')
+      buffer = packets.pop() || ''
+
+      for (const packet of packets) {
+        const event = packet.match(/^event:\s*(.+)$/m)?.[1]
+        const dataRaw = packet.match(/^data:\s*(.+)$/m)?.[1]
+        if (!event || !dataRaw) continue
+        const payload = JSON.parse(dataRaw)
+
+        if (event === 'progress') {
+          setProgressStep(payload)
+          if (payload.logLine) setConsoleLogs((prev) => [...prev, payload.logLine])
+        }
+
+        if (event === 'result') {
+          localStorage.setItem('cr:lastVerification', JSON.stringify(payload))
+          if (payload.objective?.sha256) {
+            const hashes = JSON.parse(localStorage.getItem('cr:hashes') || '[]') as string[]
+            localStorage.setItem('cr:hashes', JSON.stringify(Array.from(new Set([payload.objective.sha256, ...hashes])).slice(0, 50)))
+          }
+          setVerdictResult(payload)
+        }
+
+        if (event === 'error') {
+          throw new Error(payload.error || 'Verification stream failed')
+        }
+      }
+    }
+  }
 
   return (
     <div className="dashboard-container" style={{ maxWidth: '1200px' }}>
@@ -246,8 +265,10 @@ export default function Verify() {
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--neon-emerald)' }}>
                   {progressStep.status === 'forensic_ela' && ' SCANNING PIXEL MATRIX (ELA)...'}
+                  {(progressStep.status === 'received' || progressStep.status === 'hashing') && ' HASHING OBJECTIVE SIGNALS...'}
                   {progressStep.status === 'exifr_audit' && ' AUDITING EXIF METADATA HEADERS...'}
                   {progressStep.status === 'k9_sniffer' && ' SNIFFING SYNTHETIC ARTIFACTS...'}
+                  {progressStep.status === 'complete' && ' VERIFICATION COMPLETE'}
                 </span>
                 <span style={{ fontFamily: 'var(--mono)', fontSize: '11px' }}>{progressStep.progress}%</span>
               </div>
@@ -258,6 +279,7 @@ export default function Verify() {
                 <div style={{ zIndex: 10, textAlign: 'center' }}>
                   <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>
                     {progressStep.status === 'forensic_ela' && ''}
+                    {(progressStep.status === 'received' || progressStep.status === 'hashing') && ''}
                     {progressStep.status === 'exifr_audit' && ''}
                     {progressStep.status === 'k9_sniffer' && ''}
                   </span>
@@ -265,7 +287,51 @@ export default function Verify() {
                     REAL-TIME MULTI-AGENT INQUEST IN PROGRESS
                   </span>
                 </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', fontFamily: 'var(--mono)' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>DCT Frequency Synthetic Artifact Score</span>
+                    <span style={{ color: syntheticArtifactScore > 55 ? 'var(--neon-rose)' : 'var(--neon-emerald)' }}>{syntheticArtifactScore}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${syntheticArtifactScore}%`,
+                      height: '100%',
+                      background: syntheticArtifactScore > 55 ? 'var(--neon-rose)' : 'var(--neon-emerald)',
+                      borderRadius: '3px'
+                    }} />
+                  </div>
+                </div>
               </div>
+
+              {objective && (
+                <div className="linear-card-recessed" style={{ padding: '20px', marginBottom: '24px' }}>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--neon-indigo)', display: 'block', marginBottom: '10px', letterSpacing: '1px' }}>
+                    [OBJECTIVE ORIGINALITY SIGNALS]
+                  </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '11px', fontFamily: 'var(--mono)' }}>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)' }}>SHA-256</div>
+                      <div style={{ color: '#fff', fontWeight: 600 }}>{objective.sha256.slice(0, 18)}...</div>
+                    </div>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)' }}>pHash Risk</div>
+                      <div style={{ color: duplicateRisk === 'high' ? 'var(--neon-rose)' : duplicateRisk === 'medium' ? 'var(--neon-gold)' : 'var(--neon-emerald)', fontWeight: 600 }}>{duplicateRisk.toUpperCase()}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)' }}>DCT pHash</div>
+                      <div style={{ color: '#fff', fontWeight: 600 }}>{objective.perceptualHash.hash}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)' }}>HF Ratio / Grid</div>
+                      <div style={{ color: '#fff', fontWeight: 600 }}>{objective.frequency.highFrequencyRatio} / {objective.frequency.gridAnisotropy}</div>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', lineHeight: 1.5, marginTop: '12px' }}>
+                    {objective.methodology?.[0]}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -429,7 +495,7 @@ export default function Verify() {
                         </p>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', marginTop: '6px' }}>
                           <span>Impact: {clue.scoreImpact > 0 ? `+${clue.scoreImpact}` : clue.scoreImpact}</span>
-                          <span>Timestamp: {new Date(clue.timestamp).toLocaleTimeString()}</span>
+                          <span>Timestamp: {new Date(clue.createdAt).toLocaleTimeString()}</span>
                         </div>
                       </div>
                     ))}

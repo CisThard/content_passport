@@ -1,5 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { ConnectButton } from '@mysten/dapp-kit'
 import Landing from './pages/Landing'
 // Route-level code splitting: non-home pages load on demand (smaller initial bundle).
 const Register = lazy(() => import('./pages/Register'))
@@ -115,6 +116,7 @@ function MainAppShell() {
 
         {/* Global status panels */}
         <div className="hud-status-node">
+          <ConnectButton />
           <div className="hud-terminal-pill">
             <span className="status-dot"></span>
             <span>BASECAMP_ACTIVE</span>

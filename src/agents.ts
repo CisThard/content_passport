@@ -154,10 +154,11 @@ export async function analyzeImageWithMemWal(
   inspector: Awaited<ReturnType<typeof buildMemWalInspectorSnapshot>>;
 }> {
   const [forensic, metadata] = await Promise.all([forensicAgent(media), metadataAgent(media)]);
-  const clueIds = [
-    (await writeAgentClue(memory, clueFromScore(forensic, forensic.score < 60 ? "critical" : "info"))).id,
-    (await writeAgentClue(memory, clueFromScore(metadata, metadata.score < 60 ? "warning" : "info"))).id,
-  ];
+  const [forensicClue, metadataClue] = await Promise.all([
+    writeAgentClue(memory, clueFromScore(forensic, forensic.score < 60 ? "critical" : "info")),
+    writeAgentClue(memory, clueFromScore(metadata, metadata.score < 60 ? "warning" : "info")),
+  ]);
+  const clueIds = [forensicClue.id, metadataClue.id];
 
   const inspectorBeforeAi = await buildMemWalInspectorSnapshot(memory, clueIds);
   const ai = await aiDetectionAgent(media, [forensic, metadata]);
