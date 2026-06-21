@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   getOrSetEphemeralSession,
   buildGoogleAuthUrl,
   getJwtFromUrlHash,
   clearEphemeralSession,
 } from '../lib/zklogin'
+import { clearZkLoginSessionStorage, emitZkLoginSessionChanged } from '../lib/authSession'
 import { getZkLoginSignature, generateNonce } from '@mysten/sui/zklogin'
 import {
   CONTENT_RIGHT_PACKAGE_ID,
@@ -27,6 +29,7 @@ function decodeJwt(token: string) {
 }
 
 export default function Register() {
+  const navigate = useNavigate()
   const [suinsName, setSuinsName] = useState('')
   const [isMinting, setIsMinting] = useState(false)
   const [mintLogs, setMintLogs] = useState<string[]>([])
@@ -80,7 +83,7 @@ export default function Register() {
     const urlJwt = getJwtFromUrlHash()
     if (urlJwt) {
       // Clean hash and rewrite path to /register
-      window.history.replaceState({}, document.title, '/register')
+      navigate('/register', { replace: true })
       setJwt(urlJwt)
       sessionStorage.setItem('cp_zk_jwt', urlJwt)
       try {
@@ -124,6 +127,7 @@ export default function Register() {
       sessionStorage.setItem('cp_zk_address', data.address)
       sessionStorage.setItem('cp_zk_proof', JSON.stringify(data.proof))
       sessionStorage.setItem('cp_zk_address_seed', data.addressSeed)
+      emitZkLoginSessionChanged()
 
       setMintLogs((prev) => [
         ...prev,
@@ -159,12 +163,8 @@ export default function Register() {
 
   const handleLogout = () => {
     clearEphemeralSession()
-    sessionStorage.removeItem('cp_zk_jwt')
-    sessionStorage.removeItem('cp_zk_address')
-    sessionStorage.removeItem('cp_zk_proof')
-    sessionStorage.removeItem('cp_zk_address_seed')
-    sessionStorage.removeItem('cp_zk_picture')
-    sessionStorage.removeItem('cp_zk_name')
+    clearZkLoginSessionStorage()
+    emitZkLoginSessionChanged()
     setZkUserAddress(null)
     setZkProof(null)
     setZkAddressSeed(null)

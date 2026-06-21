@@ -21,17 +21,20 @@ export function getOrSetEphemeralSession(currentEpoch = 100): EphemeralSession {
   const storedRandomness = sessionStorage.getItem(RANDOMNESS_KEY)
   const storedMaxEpoch = sessionStorage.getItem(MAX_EPOCH_KEY)
 
-  if (storedKey && storedRandomness && storedMaxEpoch) {
+  const parsedMaxEpoch = Number.parseInt(storedMaxEpoch || '', 10)
+  if (storedKey && storedRandomness && Number.isSafeInteger(parsedMaxEpoch) && parsedMaxEpoch > currentEpoch) {
     try {
       const keypair = Ed25519Keypair.fromSecretKey(storedKey)
       return {
         keypair,
         randomness: storedRandomness,
-        maxEpoch: parseInt(storedMaxEpoch)
+        maxEpoch: parsedMaxEpoch
       }
     } catch (e) {
       console.warn('Failed to load ephemeral session, recreating...', e)
     }
+  } else if (storedKey || storedRandomness || storedMaxEpoch) {
+    clearEphemeralSession()
   }
 
   // Create new session keypair

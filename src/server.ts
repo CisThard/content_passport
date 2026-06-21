@@ -411,7 +411,13 @@ app.post("/api/auth/zklogin", async (req, res) => {
     const salt = getZkLoginSalt();
     const proverUrl = process.env.ZKLOGIN_PROVER_URL || "https://prover-dev.zklogin.sui.io/v1";
     const { jwtToAddress, genAddressSeed } = await import("@mysten/sui/zklogin");
-    const decodedJwt = decodeJwtPayload(jwt);
+    let decodedJwt: Record<string, any>;
+    try {
+      decodedJwt = decodeJwtPayload(jwt);
+    } catch {
+      res.status(400).json({ success: false, error: "Invalid JWT payload" });
+      return;
+    }
     if (!decodedJwt.sub || !decodedJwt.aud || !decodedJwt.iss) {
       res.status(400).json({ success: false, error: "JWT is missing required zkLogin claims" });
       return;

@@ -23,6 +23,15 @@ interface VisualCoin {
   color: string
 }
 
+function parseRangeValue(value: string, fallback: number): number {
+  const next = Number.parseInt(value, 10)
+  return Number.isFinite(next) ? next : fallback
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
+
 function BlueprintContent() {
   // State for Remix Chain Simulator
   const [anyaFee, setAnyaFee] = useState<number>(30)
@@ -71,11 +80,14 @@ function BlueprintContent() {
   // Calculations for Bounty Quest
   const totalClaimed = anyaClaim + benClaim + chloeClaim
   const remainingBounty = totalBounty - totalClaimed
-  const claimProgressPercent = Math.min((totalClaimed / totalBounty) * 100, 100)
+  const claimProgressPercent = totalBounty > 0 ? Math.min((totalClaimed / totalBounty) * 100, 100) : 0
 
   const anyaBountyWeight = totalBounty > 0 ? Math.round((anyaClaim / totalBounty) * 100) : 0
   const benBountyWeight = totalBounty > 0 ? Math.round((benClaim / totalBounty) * 100) : 0
   const chloeBountyWeight = totalBounty > 0 ? 100 - anyaBountyWeight - benBountyWeight : 0
+  const anyaClaimMax = Math.max(10, totalBounty - 20)
+  const benClaimMax = Math.max(10, totalBounty - anyaClaim - 10)
+  const chloeClaimMax = Math.max(10, totalBounty - anyaClaim - benClaim)
 
   // Canvas visual refs
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -98,6 +110,12 @@ function BlueprintContent() {
   useEffect(() => {
     if (currentAccount && !participantA) setParticipantA(currentAccount.address)
   }, [currentAccount, participantA])
+
+  useEffect(() => {
+    setAnyaClaim((value) => clamp(value, 10, Math.max(10, totalBounty - 20)))
+    setBenClaim((value) => clamp(value, 10, Math.max(10, totalBounty - anyaClaim - 10)))
+    setChloeClaim((value) => clamp(value, 10, Math.max(10, totalBounty - anyaClaim - benClaim)))
+  }, [totalBounty, anyaClaim, benClaim])
 
   const liveParticipants = [
     { address: participantA.trim(), weight: anyaRemixWeight },
@@ -540,7 +558,7 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                     min="10"
                     max="100"
                     value={anyaFee}
-                    onChange={(e) => setAnyaFee(parseInt(e.target.value))}
+                    onChange={(e) => setAnyaFee(parseRangeValue(e.target.value, anyaFee))}
                   />
                 </div>
 
@@ -554,7 +572,7 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                     min="10"
                     max="100"
                     value={benFee}
-                    onChange={(e) => setBenFee(parseInt(e.target.value))}
+                    onChange={(e) => setBenFee(parseRangeValue(e.target.value, benFee))}
                   />
                 </div>
 
@@ -568,7 +586,7 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                     min="10"
                     max="100"
                     value={chloeFee}
-                    onChange={(e) => setChloeFee(parseInt(e.target.value))}
+                    onChange={(e) => setChloeFee(parseRangeValue(e.target.value, chloeFee))}
                   />
                 </div>
               </div>
@@ -808,7 +826,7 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                     min="50"
                     max="200"
                     value={totalBounty}
-                    onChange={(e) => setTotalBounty(parseInt(e.target.value))}
+                    onChange={(e) => setTotalBounty(parseRangeValue(e.target.value, totalBounty))}
                   />
                 </div>
 
@@ -820,9 +838,9 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                   <input
                     type="range"
                     min="10"
-                    max={totalBounty - 20}
+                    max={anyaClaimMax}
                     value={anyaClaim}
-                    onChange={(e) => setAnyaClaim(parseInt(e.target.value))}
+                    onChange={(e) => setAnyaClaim(parseRangeValue(e.target.value, anyaClaim))}
                   />
                 </div>
 
@@ -834,9 +852,9 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                   <input
                     type="range"
                     min="10"
-                    max={totalBounty - anyaClaim - 10}
+                    max={benClaimMax}
                     value={benClaim}
-                    onChange={(e) => setBenClaim(parseInt(e.target.value))}
+                    onChange={(e) => setBenClaim(parseRangeValue(e.target.value, benClaim))}
                   />
                 </div>
 
@@ -848,9 +866,9 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                   <input
                     type="range"
                     min="10"
-                    max={totalBounty - anyaClaim - benClaim}
+                    max={chloeClaimMax}
                     value={chloeClaim}
-                    onChange={(e) => setChloeClaim(parseInt(e.target.value))}
+                    onChange={(e) => setChloeClaim(parseRangeValue(e.target.value, chloeClaim))}
                   />
                 </div>
               </div>

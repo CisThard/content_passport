@@ -1,6 +1,11 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import Landing from './pages/Landing'
+import {
+  ZK_LOGIN_SESSION_EVENT,
+  clearZkLoginSessionStorage,
+  readZkLoginSession,
+} from './lib/authSession'
 // Route-level code splitting: non-home pages load on demand (smaller initial bundle).
 const Register = lazy(() => import('./pages/Register'))
 const Verify = lazy(() => import('./pages/Verify'))
@@ -51,12 +56,20 @@ function MainAppShell() {
   const [currentEpoch, setCurrentEpoch] = useState(100)
 
   useEffect(() => {
-    const savedAddress = sessionStorage.getItem('cp_zk_address')
-    const savedPicture = sessionStorage.getItem('cp_zk_picture')
-    const savedName = sessionStorage.getItem('cp_zk_name')
-    setZkUserAddress(savedAddress)
-    setZkUserPicture(savedPicture)
-    setZkUserName(savedName)
+    const syncSession = () => {
+      const session = readZkLoginSession()
+      setZkUserAddress(session.address)
+      setZkUserPicture(session.picture)
+      setZkUserName(session.name)
+    }
+
+    syncSession()
+    window.addEventListener(ZK_LOGIN_SESSION_EVENT, syncSession)
+    window.addEventListener('storage', syncSession)
+    return () => {
+      window.removeEventListener(ZK_LOGIN_SESSION_EVENT, syncSession)
+      window.removeEventListener('storage', syncSession)
+    }
   }, [location])
 
   useEffect(() => {
@@ -70,12 +83,7 @@ function MainAppShell() {
   }, [])
 
   const handleHeaderLogout = () => {
-    sessionStorage.removeItem('cp_zk_jwt')
-    sessionStorage.removeItem('cp_zk_address')
-    sessionStorage.removeItem('cp_zk_proof')
-    sessionStorage.removeItem('cp_zk_address_seed')
-    sessionStorage.removeItem('cp_zk_picture')
-    sessionStorage.removeItem('cp_zk_name')
+    clearZkLoginSessionStorage()
     setZkUserAddress(null)
     setZkUserPicture(null)
     setZkUserName(null)
