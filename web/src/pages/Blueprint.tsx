@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { ConnectButton, useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
 import { buildCreateAndFundPolicyTx, buildDistributeRoyaltiesTx } from '../../../src/sui'
 import {
@@ -11,6 +11,17 @@ import {
   suiscanTxUrl,
 } from '../lib/suiNetwork'
 
+interface VisualCoin {
+  x: number
+  y: number
+  targetX: number
+  targetY: number
+  speed: number
+  progress: number
+  size: number
+  color: string
+}
+
 export default function Blueprint() {
   // State for Remix Chain Simulator
   const [anyaFee, setAnyaFee] = useState<number>(30)
@@ -22,6 +33,7 @@ export default function Blueprint() {
   const [anyaClaim, setAnyaClaim] = useState<number>(40)
   const [benClaim, setBenClaim] = useState<number>(50)
   const [chloeClaim, setChloeClaim] = useState<number>(30)
+  
   const [passportId, setPassportId] = useState('')
   const [policyId, setPolicyId] = useState('')
   const [participantA, setParticipantA] = useState('')
@@ -30,6 +42,10 @@ export default function Blueprint() {
   const [chainLogs, setChainLogs] = useState<string[]>([])
   const [chainBusy, setChainBusy] = useState(false)
   const [lastDigest, setLastDigest] = useState('')
+  
+  // Tab control for dry-run terminal vs chain logs
+  const [activeTerminalTab, setActiveTerminalTab] = useState<'dryrun' | 'logs'>('dryrun')
+
   const currentAccount = useCurrentAccount()
   const suiClient = useSuiClient()
   const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction({
@@ -60,6 +76,17 @@ export default function Blueprint() {
   const benBountyWeight = totalBounty > 0 ? Math.round((benClaim / totalBounty) * 100) : 0
   const chloeBountyWeight = totalBounty > 0 ? 100 - anyaBountyWeight - benBountyWeight : 0
 
+  // Canvas visual refs
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const animationRef = useRef<number | null>(null)
+  const coinsRef = useRef<VisualCoin[]>([])
+  const [isSimulating, setIsSimulating] = useState(false)
+
+  // Floating feedback values
+  const [floatingAnya, setFloatingAnya] = useState<string | null>(null)
+  const [floatingBen, setFloatingBen] = useState<string | null>(null)
+  const [floatingChloe, setFloatingChloe] = useState<string | null>(null)
+
   useEffect(() => {
     const state = readOnchainState()
     setPassportId(state.passportId || '')
@@ -81,8 +108,240 @@ export default function Blueprint() {
   const canCreatePolicy =
     Boolean(currentAccount && CONTENT_RIGHT_PACKAGE_ID && passportId.trim() && liveParticipants.length > 0 && participantTotal === 100)
 
-  const appendChainLog = (message: string) => setChainLogs((prev) => [...prev, message])
+  const appendChainLog = (message: string) => {
+    setChainLogs((prev) => [...prev, message])
+    setActiveTerminalTab('logs') // auto-switch to logs when new output occurs
+  }
 
+  // ==========================================
+  // 💰 Real-time Creator Stream Graph Renderer
+  // ==========================================
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const width = canvas.width
+    const height = canvas.height
+
+    // Nodes positions mapping
+    const nodeEscrow = { x: width / 2, y: height - 60, name: 'Sui Escrow', color: '#00f5a0' }
+    const nodeAnya = { x: 70, y: 60, name: 'Anya (Origin)', color: '#f59e0b', weight: anyaRemixWeight, val: ((totalRemixCost * anyaRemixWeight) / 100).toFixed(1) }
+    const nodeBen = { x: width / 2, y: 60, name: 'Ben (Remix)', color: '#06b6d4', weight: benRemixWeight, val: ((totalRemixCost * benRemixWeight) / 100).toFixed(1) }
+    const nodeChloe = { x: width - 70, y: 60, name: 'Chloe (Sound)', color: '#ec4899', weight: chloeRemixWeight, val: ((totalRemixCost * chloeRemixWeight) / 100).toFixed(1) }
+
+    const updateFrame = () => {
+      ctx.clearRect(0, 0, width, height)
+
+      // 1. Draw connecting dynamic streams (weight-based thickness)
+      const drawStream = (from: typeof nodeEscrow, to: typeof nodeAnya, weight: number, color: string) => {
+        ctx.beginPath()
+        ctx.moveTo(from.x, from.y)
+        // Draw elegant curve
+        ctx.bezierCurveTo(from.x, from.y - 60, to.x, to.y + 60, to.x, to.y)
+        ctx.lineWidth = Math.max(1, weight * 0.12)
+        ctx.strokeStyle = `rgba(${color === '#f59e0b' ? '245, 158, 11' : color === '#06b6d4' ? '6, 182, 212' : '236, 72, 153'}, ${isSimulating ? 0.35 : 0.15})`
+        ctx.stroke()
+      }
+
+      drawStream(nodeEscrow, nodeAnya, anyaRemixWeight, nodeAnya.color)
+      drawStream(nodeEscrow, nodeBen, benRemixWeight, nodeBen.color)
+      drawStream(nodeEscrow, nodeChloe, chloeRemixWeight, nodeChloe.color)
+
+      // 2. Update and Draw coins particles
+      const coins = coinsRef.current
+      for (let i = coins.length - 1; i >= 0; i--) {
+        const coin = coins[i]
+        coin.progress += coin.speed
+
+        // Quadratic bezier interpolation for fluid curves
+        const t = coin.progress
+        const x1 = nodeEscrow.x
+        const y1 = nodeEscrow.y
+        const x2 = coin.targetX
+        const y2 = coin.targetY
+        
+        // Control point
+        const cx = (x1 + x2) / 2
+        const cy = y1 - 80
+
+        // Bezier formula
+        coin.x = (1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * cx + t * t * x2
+        coin.y = (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * cy + t * t * y2
+
+        // Draw particle glow
+        ctx.beginPath()
+        ctx.arc(coin.x, coin.y, coin.size, 0, 2 * Math.PI)
+        ctx.fillStyle = coin.color
+        ctx.shadowColor = coin.color
+        ctx.shadowBlur = 8
+        ctx.fill()
+        ctx.shadowBlur = 0
+
+        // Handle target arrival
+        if (coin.progress >= 1.0) {
+          if (coin.targetX === nodeAnya.x) setFloatingAnya(`+${nodeAnya.val} SUI`)
+          else if (coin.targetX === nodeBen.x) setFloatingBen(`+${nodeBen.val} SUI`)
+          else if (coin.targetX === nodeChloe.x) setFloatingChloe(`+${nodeChloe.val} SUI`)
+          coins.splice(i, 1)
+        }
+      }
+
+      if (coins.length === 0 && isSimulating) {
+        setIsSimulating(false)
+        // Reset floating amounts after a brief display delay
+        setTimeout(() => {
+          setFloatingAnya(null)
+          setFloatingBen(null)
+          setFloatingChloe(null)
+        }, 1500)
+      }
+
+      // 3. Render Nodes
+      const drawNode = (node: typeof nodeEscrow, isActive = false) => {
+        ctx.beginPath()
+        ctx.arc(node.x, node.y, 16, 0, 2 * Math.PI)
+        ctx.fillStyle = '#0d1026'
+        ctx.strokeStyle = node.color
+        ctx.lineWidth = 3
+        ctx.shadowColor = node.color
+        ctx.shadowBlur = isActive ? 12 : 4
+        ctx.fill()
+        ctx.stroke()
+        ctx.shadowBlur = 0
+
+        // Label name
+        ctx.fillStyle = '#fff'
+        ctx.font = '10px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.fillText(node.name, node.x, node.y - 24)
+
+        // Draw dynamic share percentage inside/below node
+        if ('weight' in node) {
+          ctx.fillStyle = node.color
+          ctx.font = 'bold 9px monospace'
+          ctx.fillText(`${node.weight}%`, node.x, node.y + 4)
+        } else {
+          ctx.fillStyle = 'var(--neon-emerald)'
+          ctx.font = '9px monospace'
+          ctx.fillText('🏛️', node.x, node.y + 3)
+        }
+      }
+
+      drawNode(nodeEscrow, isSimulating)
+      drawNode(nodeAnya, floatingAnya !== null)
+      drawNode(nodeBen, floatingBen !== null)
+      drawNode(nodeChloe, floatingChloe !== null)
+
+      animationRef.current = requestAnimationFrame(updateFrame)
+    }
+
+    updateFrame()
+
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
+    }
+  }, [anyaRemixWeight, benRemixWeight, chloeRemixWeight, totalRemixCost, isSimulating, floatingAnya, floatingBen, floatingChloe])
+
+  const triggerRoyaltySimulation = () => {
+    if (isSimulating) return
+    setIsSimulating(true)
+    coinsRef.current = []
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const width = canvas.width
+
+    // Node locations
+    const nodeAnya = { x: 70, y: 60 }
+    const nodeBen = { x: width / 2, y: 60 }
+    const nodeChloe = { x: width - 70, y: 60 }
+
+    // Generate gold coin particles proportional to weights
+    const totalCoins = 60
+    const countAnya = Math.round((totalCoins * anyaRemixWeight) / 100)
+    const countBen = Math.round((totalCoins * benRemixWeight) / 100)
+    const countChloe = totalCoins - countAnya - countBen
+
+    const addCoins = (count: number, target: typeof nodeAnya, color: string) => {
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          coinsRef.current.push({
+            x: width / 2,
+            y: canvas.height - 60,
+            targetX: target.x,
+            targetY: target.y,
+            speed: 0.015 + Math.random() * 0.015,
+            progress: 0,
+            size: Math.random() * 2 + 2,
+            color,
+          })
+        }, i * 40 + Math.random() * 100)
+      }
+    }
+
+    addCoins(countAnya, nodeAnya, '#f59e0b')
+    addCoins(countBen, nodeBen, '#06b6d4')
+    addCoins(countChloe, nodeChloe, '#ec4899')
+  }
+
+  // ==========================================
+  // ⚙️ Live PTB Builder & Dry Run Inspector
+  // ==========================================
+  const generatePtbDryRun = (): string => {
+    const pkg = CONTENT_RIGHT_PACKAGE_ID || '0x4f3e691238ea0...content_right'
+    const passport = passportId ? shortId(passportId, 16, 16) : '0x_MOCKED_PASSPORT_ID'
+    const policy = policyId ? shortId(policyId, 16, 16) : '0x_MOCKED_POLICY_ID'
+
+    return `>> INITIATING SUI PTB DRY RUN ANALYSIS...
+--------------------------------------------------------------------------------
+[TRANSACTION BLOCK DEFINITION]
+Type: ProgrammableTransactionBlock (Sui Move Escrow Setup)
+Gas Budget: 50,000,000 MIST (0.05 SUI max)
+Sender: ${currentAccount ? shortId(currentAccount.address, 12, 10) : '0x_USER_SUI_WALLET_ADDRESS'}
+
+[COMMANDS & COMPILATION]
+Command 0: SplitCoins(GasCoin, [Amount: ${totalRemixCost * 1_000_000} MIST]) -> Result[0] (Coin Object)
+Command 1: MoveCall(
+  Package: ${pkg}
+  Module: co_creation
+  Function: create_and_fund_policy
+  Arguments: [
+    Arg 0: Object (Passport: ${passport})
+    Arg 1: Coin (Result[0])
+    Arg 2: Vector<address> [
+      anya.sui  -> "${participantA ? shortId(participantA, 8, 6) : '0xanya_address'}",
+      ben.sui   -> "${participantB ? shortId(participantB, 8, 6) : '0xben_address'}",
+      chloe.sui -> "${participantC ? shortId(participantC, 8, 6) : '0xchloe_address'}"
+    ]
+    Arg 3: Vector<u64> [
+      Anya Weight  -> ${anyaRemixWeight} (representing ${((totalRemixCost * anyaRemixWeight) / 100).toFixed(1)} SUI),
+      Ben Weight   -> ${benRemixWeight} (representing ${((totalRemixCost * benRemixWeight) / 100).toFixed(1)} SUI),
+      Chloe Weight -> ${chloeRemixWeight} (representing ${((totalRemixCost * chloeRemixWeight) / 100).toFixed(1)} SUI)
+    ]
+  ]
+) -> Result[1] (CoCreationPolicy Shared Object)
+
+[EXPECTED EXECUTION EFFECTS]
+Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
+- Net Gas Consumption: 1,842,500 MIST
+- Storage Rebate: 990,000 MIST
+- Created Objects: [
+    CoCreationPolicy { Owner: "Shared", Fields: { balance: ${totalRemixCost} SUI } }
+  ]
+- Events Emitted: co_creation::PolicyCreatedEvent {
+    policy_id: "0xpolicy_object_id",
+    passport_id: "${passport}",
+    creator: "${currentAccount ? shortId(currentAccount.address, 8, 6) : '0xsender'}"
+  }
+--------------------------------------------------------------------------------
+>> STATUS: READY FOR BLOCKCHAIN DISPATCH`
+  }
+
+  // ==========================================
+  // ⚙️ Live Chain Logic (Escrow & Distribute)
+  // ==========================================
   const handleCreatePolicy = async () => {
     if (!canCreatePolicy) return
     setChainBusy(true)
@@ -95,13 +354,18 @@ export default function Blueprint() {
         amountMist: BigInt(totalRemixCost) * 1_000_000_000n,
       })
       appendChainLog(`Requesting wallet signature for ${totalRemixCost} SUI escrow split.`)
+      
       const result = await signAndExecuteTransaction({ transaction: tx, chain: SUI_CHAIN })
       const createdPolicyId = firstCreatedObjectId(result) || policyId
       if (createdPolicyId) setPolicyId(createdPolicyId)
       setLastDigest(result.digest)
       rememberOnchainState({ policyId: createdPolicyId, policyTxDigest: result.digest })
+      
       appendChainLog(`Policy transaction confirmed: ${shortId(result.digest, 12, 8)}`)
       if (createdPolicyId) appendChainLog(`CoCreationPolicy object: ${shortId(createdPolicyId)}`)
+      
+      // Trigger visually Dave -> Escrow coin stack flow mock/animation
+      triggerRoyaltySimulation()
     } catch (error: any) {
       appendChainLog(`[ERROR] ${error.message || String(error)}`)
     } finally {
@@ -118,10 +382,15 @@ export default function Blueprint() {
         packageId: CONTENT_RIGHT_PACKAGE_ID,
         policyId,
       })
+      
       const result = await signAndExecuteTransaction({ transaction: tx, chain: SUI_CHAIN })
       setLastDigest(result.digest)
       rememberOnchainState({ settlementTxDigest: result.digest })
+      
       appendChainLog(`Royalty distribution confirmed: ${shortId(result.digest, 12, 8)}`)
+      
+      // Trigger visual Escrow -> Creators dispersal stream
+      triggerRoyaltySimulation()
     } catch (error: any) {
       appendChainLog(`[ERROR] ${error.message || String(error)}`)
     } finally {
@@ -153,89 +422,102 @@ export default function Blueprint() {
         </div>
 
         <div className="grid-layout-2" style={{ gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 0.85fr)', gap: '40px' }}>
-          {/* Left Column: Visual Timeline Card */}
-          <div className="cyber-card" style={{ padding: '30px', position: 'relative' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-              <span className="header-badge" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--neon-gold)' }}>Forward Model Ledger</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>anya.sui → ben.sui → chloe.sui</span>
+          
+          {/* Left Column: Visual Timeline Card & Stream Canvas */}
+          <div className="cyber-card" style={{ padding: '30px', position: 'relative', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="header-badge" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--neon-gold)' }}>
+                Co-Creation Royalties Graph (Stream Map)
+              </span>
+              <button 
+                onClick={triggerRoyaltySimulation} 
+                disabled={isSimulating}
+                className="cyber-btn cyber-btn-secondary"
+                style={{ fontSize: '10px', padding: '4px 8px' }}
+              >
+                {isSimulating ? 'Simulating...' : '⚡ Simulate Royalty Flow'}
+              </button>
             </div>
 
-            <p className="card-subtitle" style={{ marginBottom: '30px', lineHeight: 1.5 }}>
-              Creators set non-negotiable minimum licensing fees. As intermediate remixes are stamped and published, fees aggregate dynamically. The final buyer's purchase triggers instant splits atomically.
-            </p>
-
-            {/* Visual Timeline Flow */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'relative', paddingLeft: '15px' }}>
-              <div style={{ position: 'absolute', left: '19px', top: '15px', bottom: '15px', width: '2px', background: 'linear-gradient(180deg, var(--neon-gold) 0%, var(--neon-cyan) 50%, var(--neon-rose) 100%)', zIndex: 1 }}></div>
-
-              {/* Anya - Origin */}
-              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', zIndex: 2 }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--neon-gold)', boxShadow: '0 0 10px var(--neon-gold-glow)', marginLeft: '-4px' }}></div>
-                <div className="linear-card-recessed" style={{ flex: 1, padding: '12px 18px', borderLeft: '3px solid var(--neon-gold)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)' }}>
-                    <span>ORIGIN CREATOR</span>
-                    <span>anya.sui</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Anya's Photography Template</span>
-                    <span className="header-badge badge-gold" style={{ fontSize: '10px' }}>{anyaFee} SUI Min. License</span>
-                  </div>
+            {/* Interactive Stream Canvas Container */}
+            <div style={{ 
+              position: 'relative', 
+              width: '100%', 
+              height: '260px', 
+              background: 'rgba(0,0,0,0.3)', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(255,255,255,0.05)',
+              overflow: 'hidden'
+            }}>
+              <canvas ref={canvasRef} width={600} height={260} style={{ width: '100%', height: '100%' }} />
+              
+              {/* Floating Money Feedbacks */}
+              {floatingAnya && (
+                <div style={{ position: 'absolute', left: '70px', top: '15px', color: 'var(--neon-gold)', fontWeight: 800, animation: 'floatUp 1.5s forwards', fontFamily: 'var(--mono)', fontSize: '12px' }}>
+                  {floatingAnya}
                 </div>
-              </div>
-
-              {/* Ben - Remix 1 */}
-              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', zIndex: 2 }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--neon-cyan)', boxShadow: '0 0 10px var(--neon-cyan-glow)', marginLeft: '-4px' }}></div>
-                <div className="linear-card-recessed" style={{ flex: 1, padding: '12px 18px', borderLeft: '3px solid var(--neon-cyan)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)' }}>
-                    <span>1ST REMIXER</span>
-                    <span>ben.anya.sui</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Ben's Visual Design Layers</span>
-                    <span className="header-badge" style={{ background: 'rgba(6, 182, 212, 0.1)', color: 'var(--neon-cyan)', fontSize: '10px' }}>+{benFee} SUI Added Value</span>
-                  </div>
+              )}
+              {floatingBen && (
+                <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '15px', color: 'var(--neon-cyan)', fontWeight: 800, animation: 'floatUp 1.5s forwards', fontFamily: 'var(--mono)', fontSize: '12px' }}>
+                  {floatingBen}
                 </div>
-              </div>
-
-              {/* Chloe - Remix 2 */}
-              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', zIndex: 2 }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--neon-rose)', boxShadow: '0 0 10px var(--neon-rose-glow)', marginLeft: '-4px' }}></div>
-                <div className="linear-card-recessed" style={{ flex: 1, padding: '12px 18px', borderLeft: '3px solid var(--neon-rose)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)' }}>
-                    <span>2ND REMIXER</span>
-                    <span>chloe.ben.anya.sui</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Chloe's Soundscape Overlay</span>
-                    <span className="header-badge" style={{ background: 'rgba(236, 72, 153, 0.1)', color: 'var(--neon-rose)', fontSize: '10px' }}>+{chloeFee} SUI Added Value</span>
-                  </div>
+              )}
+              {floatingChloe && (
+                <div style={{ position: 'absolute', right: '70px', top: '15px', color: 'var(--neon-rose)', fontWeight: 800, animation: 'floatUp 1.5s forwards', fontFamily: 'var(--mono)', fontSize: '12px' }}>
+                  {floatingChloe}
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* Atomic Escrow Settlement */}
-            <div className="linear-card-recessed" style={{ marginTop: '30px', padding: '18px', background: 'rgba(16, 185, 129, 0.02)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--neon-emerald)', letterSpacing: '0.5px' }}> ATOMIC ESCROW SETTLEMENT ACTIVE</span>
-                <span className="header-badge" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--neon-emerald)', fontSize: '11px' }}>Total Price: {totalRemixCost} SUI</span>
-              </div>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '15px' }}>
-                Dave (Buyer) buys the final asset for <strong>{totalRemixCost} SUI</strong>. The smart contract triggers, splitting the SUI atomically among collaborators based on relative contributions:
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
-                <div style={{ textAlign: 'center', flex: 1, padding: '10px 8px', background: 'rgba(245, 158, 11, 0.04)', border: '1px solid rgba(245, 158, 11, 0.1)', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '9px', color: 'var(--neon-gold)' }}>Anya ({anyaRemixWeight}%)</div>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff', marginTop: '3px' }}>{((totalRemixCost * anyaRemixWeight) / 100).toFixed(1)} SUI</div>
+            {/* Escrow Contract Status with Embedded Stamp Verification */}
+            <div 
+              className="linear-card-recessed" 
+              style={{ 
+                padding: '18px', 
+                background: 'rgba(16, 185, 129, 0.02)', 
+                border: '1px solid rgba(16, 185, 129, 0.15)',
+                display: 'flex',
+                gap: '20px',
+                alignItems: 'center',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Escrow Stamp Watermark watermark */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%) rotate(15deg)',
+                  width: '90px',
+                  height: '90px',
+                  backgroundImage: 'url("/escrow_stamp.jpg")',
+                  backgroundSize: 'cover',
+                  borderRadius: '50%',
+                  opacity: policyId ? 0.35 : 0.08,
+                  border: policyId ? '2px solid var(--neon-gold)' : '2px dashed rgba(255,255,255,0.2)',
+                  boxShadow: policyId ? '0 0 15px rgba(245, 158, 11, 0.4)' : 'none',
+                  transition: 'all 0.5s ease',
+                  zIndex: 0
+                }}
+              />
+
+              <div style={{ flex: 1, zIndex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--neon-emerald)', letterSpacing: '0.5px' }}>
+                    ATOMIC ESCROW SETTLEMENT ACTIVE
+                  </span>
+                  <span className="header-badge" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--neon-emerald)', fontSize: '11px' }}>
+                    Total: {totalRemixCost} SUI
+                  </span>
                 </div>
-                <div style={{ textAlign: 'center', flex: 1, padding: '10px 8px', background: 'rgba(6, 182, 212, 0.04)', border: '1px solid rgba(6, 182, 212, 0.1)', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '9px', color: 'var(--neon-cyan)' }}>Ben ({benRemixWeight}%)</div>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff', marginTop: '3px' }}>{((totalRemixCost * benRemixWeight) / 100).toFixed(1)} SUI</div>
-                </div>
-                <div style={{ textAlign: 'center', flex: 1, padding: '10px 8px', background: 'rgba(236, 72, 153, 0.04)', border: '1px solid rgba(236, 72, 153, 0.1)', borderRadius: '4px' }}>
-                  <div style={{ fontSize: '9px', color: 'var(--neon-rose)' }}>Chloe ({chloeRemixWeight}%)</div>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff', marginTop: '3px' }}>{((totalRemixCost * chloeRemixWeight) / 100).toFixed(1)} SUI</div>
-                </div>
+                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                  Dave (Buyer) buys the final asset for <strong>{totalRemixCost} SUI</strong>. The smart contract splits SUI atomically:
+                  Anya (<strong style={{color:'#f59e0b'}}>{((totalRemixCost * anyaRemixWeight)/100).toFixed(1)} SUI</strong>), 
+                  Ben (<strong style={{color:'#06b6d4'}}>{((totalRemixCost * benRemixWeight)/100).toFixed(1)} SUI</strong>), 
+                  Chloe (<strong style={{color:'#ec4899'}}>{((totalRemixCost * chloeRemixWeight)/100).toFixed(1)} SUI</strong>).
+                </p>
               </div>
             </div>
           </div>
@@ -291,7 +573,7 @@ export default function Blueprint() {
               </div>
             </div>
 
-            <div className="linear-card-recessed" style={{ padding: '15px', marginTop: '30px', fontSize: '11.5px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="linear-card-recessed" style={{ padding: '15px', marginTop: '20px', fontSize: '11.5px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>Contract Total Value:</span>
                 <strong style={{ color: '#fff' }}>{totalRemixCost} SUI</strong>
@@ -304,6 +586,7 @@ export default function Blueprint() {
               </div>
             </div>
 
+            {/* Live On-Chain Parameters & Dry Run Terminal Container */}
             <div className="linear-card-recessed" style={{ padding: '18px', marginTop: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
                 <div>
@@ -328,12 +611,15 @@ export default function Blueprint() {
                 <input value={participantB} onChange={(e) => setParticipantB(e.target.value)} placeholder={`Ben recipient (${benRemixWeight}%)`} />
                 <input value={participantC} onChange={(e) => setParticipantC(e.target.value)} placeholder={`Chloe recipient (${chloeRemixWeight}%)`} />
               </div>
+              
               <div style={{ fontSize: '10px', color: participantTotal === 100 ? 'var(--neon-emerald)' : 'var(--neon-gold)', fontFamily: 'var(--mono)' }}>
                 Active participant weight total: {participantTotal}% {liveParticipants.length === 0 ? '(paste at least one address)' : ''}
               </div>
+
               {!CONTENT_RIGHT_PACKAGE_ID && (
                 <div style={{ fontSize: '10px', color: 'var(--neon-gold)' }}>Set VITE_CONTENT_RIGHT_PACKAGE_ID before live package calls.</div>
               )}
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <button className="cyber-btn cyber-btn-indigo" disabled={!canCreatePolicy || chainBusy} onClick={handleCreatePolicy}>
                   {chainBusy ? 'Executing...' : 'Create + Fund Policy'}
@@ -342,24 +628,84 @@ export default function Blueprint() {
                   Distribute Royalties
                 </button>
               </div>
+
               {lastDigest && (
                 <a href={suiscanTxUrl(lastDigest)} target="_blank" rel="noreferrer" style={{ color: 'var(--neon-cyan)', fontSize: '11px', fontFamily: 'var(--mono)' }}>
                   Latest Suiscan transaction: {shortId(lastDigest, 12, 8)}
                 </a>
               )}
-              {chainLogs.length > 0 && (
-                <div className="console-container" style={{ height: '150px' }}>
-                  {chainLogs.map((log, idx) => (
-                    <div key={idx} className="console-line">
-                      <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
-                      <span className={`console-tag ${log.startsWith('[ERROR]') ? 'tag-rose' : log.includes('confirmed') ? 'tag-success' : 'tag-system'}`}>
-                        {log.startsWith('[ERROR]') ? '[FAIL]' : log.includes('confirmed') ? '[TX]' : '[PTB]'}
-                      </span>
-                      <span>{log}</span>
+
+              {/* 🛠️ SUI PTB Terminal Inspector Tabs */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '15px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <button 
+                  onClick={() => setActiveTerminalTab('dryrun')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: activeTerminalTab === 'dryrun' ? 'var(--neon-gold)' : 'var(--text-muted)',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    paddingBottom: '6px',
+                    borderBottom: activeTerminalTab === 'dryrun' ? '2px solid var(--neon-gold)' : 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  [Sui PTB Dry Run Inspector]
+                </button>
+                <button 
+                  onClick={() => setActiveTerminalTab('logs')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: activeTerminalTab === 'logs' ? 'var(--neon-emerald)' : 'var(--text-muted)',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    paddingBottom: '6px',
+                    borderBottom: activeTerminalTab === 'logs' ? '2px solid var(--neon-emerald)' : 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  [Chain Console Logs]
+                </button>
+              </div>
+
+              {/* Terminal Viewports */}
+              {activeTerminalTab === 'dryrun' ? (
+                <div 
+                  className="console-container" 
+                  style={{ 
+                    height: '180px', 
+                    whiteSpace: 'pre-wrap', 
+                    fontFamily: 'var(--mono)', 
+                    fontSize: '10px', 
+                    lineHeight: '1.4', 
+                    color: 'rgba(255,255,255,0.85)',
+                    background: 'rgba(5, 5, 12, 0.9)',
+                    padding: '12px'
+                  }}
+                >
+                  {generatePtbDryRun()}
+                </div>
+              ) : (
+                <div className="console-container" style={{ height: '180px' }}>
+                  {chainLogs.length > 0 ? (
+                    chainLogs.map((log, idx) => (
+                      <div key={idx} className="console-line">
+                        <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
+                        <span className={`console-tag ${log.startsWith('[ERROR]') ? 'tag-rose' : log.includes('confirmed') ? 'tag-success' : 'tag-system'}`}>
+                          {log.startsWith('[ERROR]') ? '[FAIL]' : log.includes('confirmed') ? '[TX]' : '[PTB]'}
+                        </span>
+                        <span>{log}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center', marginTop: '60px' }}>
+                      No on-chain events triggered in this session yet.
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
+
             </div>
           </div>
         </div>
@@ -383,7 +729,6 @@ export default function Blueprint() {
             </div>
 
             <div className="linear-card-recessed" style={{ marginBottom: '25px', padding: '12px 16px', background: 'rgba(6, 182, 212, 0.02)', borderColor: 'rgba(6, 182, 212, 0.15)', borderStyle: 'dashed', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              
               <span style={{ fontSize: '11px', color: 'var(--neon-cyan)', fontWeight: 600 }}>Development Status: Scheduled for core protocol upgrade. (Escrow UI coming soon)</span>
             </div>
 
@@ -536,7 +881,6 @@ export default function Blueprint() {
             
             <div className="linear-card-recessed" style={{ padding: '18px' }}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                
                 <h5 style={{ fontSize: '13px', color: '#fff', fontWeight: 700 }}>SuiNS &amp; SessionKeys</h5>
               </div>
               <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
@@ -546,7 +890,6 @@ export default function Blueprint() {
             
             <div className="linear-card-recessed" style={{ padding: '18px' }}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                
                 <h5 style={{ fontSize: '13px', color: '#fff', fontWeight: 700 }}>Authenticity Lab</h5>
               </div>
               <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
@@ -556,7 +899,6 @@ export default function Blueprint() {
 
             <div className="linear-card-recessed" style={{ padding: '18px' }}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                
                 <h5 style={{ fontSize: '13px', color: '#fff', fontWeight: 700 }}>Sharded Secret Vault</h5>
               </div>
               <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
@@ -567,6 +909,23 @@ export default function Blueprint() {
           </div>
         </div>
       </section>
+      
+      {/* Dynamic Keyframe Animation Styles */}
+      <style>{`
+        @keyframes floatUp {
+          0% {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          20% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-40px);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   )
 }

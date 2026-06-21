@@ -9,7 +9,7 @@ import { calculateAASE } from "./aase.js";
 import { loadMemWalConfig, MemWalSemanticMemoryClient } from "./memwal.js";
 import { getAuthenticityMemoryClient } from "./memory.js";
 import { objectiveForensics } from "./forensics.js";
-import { HttpWalrusClient, WalrusClient } from "./walrus.js";
+import { HttpWalrusClient, InMemoryWalrusClient, WalrusClient } from "./walrus.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -253,6 +253,66 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
     if (timer) clearTimeout(timer);
   }
 }
+
+// POST /api/vault/upload
+app.post("/api/vault/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ success: false, error: "No file uploaded under form key 'file'" });
+      return;
+    }
+
+    let walrus = getWalrusClient();
+    if (!walrus) {
+      console.log("[Server] WALRUS_PUBLISHER is not configured. Falling back to InMemoryWalrusClient.");
+      if (!app.get("mockWalrus")) {
+        app.set("mockWalrus", new InMemoryWalrusClient());
+      }
+      walrus = app.get("mockWalrus");
+    }
+
+    const fileBuffer = new Uint8Array(req.file.buffer);
+    const stored = await walrus!.storeBlob(fileBuffer);
+
+    res.json({
+      success: true,
+      blobId: stored.blobId,
+      digest: stored.digest,
+      size: stored.size,
+      storedAt: stored.storedAt,
+      source: stored.source,
+    });
+  } catch (error: any) {
+    console.error("[Server] Vault upload failed:", error);
+    res.status(500).json({ success: false, error: error.message || String(error) });
+  }
+});
+
+// GET /api/vault/download/:blobId
+app.get("/api/vault/download/:blobId", async (req, res) => {
+  try {
+    const { blobId } = req.params;
+    let walrus = getWalrusClient();
+    if (!walrus) {
+      if (!app.get("mockWalrus")) {
+        app.set("mockWalrus", new InMemoryWalrusClient());
+      }
+      walrus = app.get("mockWalrus");
+    }
+
+    const data = await walrus!.readBlob(blobId);
+    if (!data) {
+      res.status(404).json({ success: false, error: "Blob not found" });
+      return;
+    }
+
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.send(Buffer.from(data));
+  } catch (error: any) {
+    console.error("[Server] Vault download failed:", error);
+    res.status(500).json({ success: false, error: error.message || String(error) });
+  }
+});
 
 // Fallback all non-API GET requests to index.html for SPA client-side routing
 app.get("*", (req, res, next) => {
