@@ -73,6 +73,16 @@ export default function Register() {
       return
     }
 
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('mock_login') === 'true') {
+      window.history.replaceState({}, document.title, '/register')
+      const mockJwt = 'mock.jwt.token'
+      sessionStorage.setItem('cp_zk_jwt', mockJwt)
+      setJwt(mockJwt)
+      handleZkLogin(mockJwt)
+      return
+    }
+
     const urlJwt = getJwtFromUrlHash()
     if (urlJwt) {
       // Clean hash and rewrite path to /register

@@ -8,6 +8,8 @@ const Vault = lazy(() => import('./pages/Vault'))
 const Chat = lazy(() => import('./pages/Chat'))
 const Blueprint = lazy(() => import('./pages/Blueprint'))
 const Journey = lazy(() => import('./pages/Journey'))
+import { getOrSetEphemeralSession, buildGoogleAuthUrl } from './lib/zklogin'
+import { generateNonce } from '@mysten/sui/zklogin'
 import './styles.css'
 
 function Navigation() {
@@ -47,6 +49,8 @@ function MainAppShell() {
   const [zkUserPicture, setZkUserPicture] = useState<string | null>(null)
   const [zkUserName, setZkUserName] = useState<string | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [googleClientId, setGoogleClientId] = useState('')
+  const [currentEpoch, setCurrentEpoch] = useState(100)
 
   useEffect(() => {
     const savedAddress = sessionStorage.getItem('cp_zk_address')
@@ -56,6 +60,16 @@ function MainAppShell() {
     setZkUserPicture(savedPicture)
     setZkUserName(savedName)
   }, [location])
+
+  useEffect(() => {
+    fetch('/api/auth/config')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.googleClientId) setGoogleClientId(data.googleClientId)
+        if (data.epoch) setCurrentEpoch(data.epoch)
+      })
+      .catch((err) => console.error('Failed to load auth config in App:', err))
+  }, [])
 
   const handleHeaderLogout = () => {
     sessionStorage.removeItem('cp_zk_jwt')
@@ -68,6 +82,23 @@ function MainAppShell() {
     setZkUserName(null)
     setShowDropdown(false)
     window.location.href = '/'
+  }
+
+  const handleHeaderLogin = () => {
+    if (!googleClientId) {
+      window.location.href = '/register?mock_login=true'
+      return
+    }
+    const session = getOrSetEphemeralSession(currentEpoch)
+    const nonce = generateNonce(session.keypair.getPublicKey(), session.maxEpoch, session.randomness)
+    const redirectUri = window.location.origin + '/login-callback'
+
+    const authUrl = buildGoogleAuthUrl({
+      clientId: googleClientId,
+      redirectUri,
+      nonce,
+    })
+    window.location.href = authUrl
   }
 
   // 2. Real passport count — passports issued/verified on this device (localStorage).
@@ -134,16 +165,20 @@ function MainAppShell() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div 
                 onClick={() => setShowDropdown(!showDropdown)} 
+                title={zkUserName || zkUserAddress || 'User Profile'}
                 style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: '8px', 
+                  justifyContent: 'center',
                   cursor: 'pointer',
-                  padding: '4px 8px',
-                  borderRadius: '20px',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
                   background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  transition: 'all 0.3s ease'
+                  border: '2px solid var(--neon-cyan)',
+                  boxShadow: '0 0 10px rgba(14, 165, 233, 0.2)',
+                  transition: 'all 0.3s ease',
+                  overflow: 'hidden'
                 }}
               >
                 {zkUserPicture ? (
@@ -151,28 +186,25 @@ function MainAppShell() {
                     src={zkUserPicture} 
                     alt="Profile" 
                     referrerPolicy="no-referrer"
-                    style={{ width: '22px', height: '22px', borderRadius: '50%', border: '1px solid var(--neon-cyan)', objectFit: 'cover' }} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                   />
                 ) : (
-                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--neon-indigo)', color: '#fff', fontSize: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--mono)' }}>
-                    U
+                  <div style={{ width: '100%', height: '100%', background: 'var(--neon-indigo)', color: '#fff', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--mono)', fontWeight: 'bold' }}>
+                    {(zkUserName || 'U').slice(0, 1).toUpperCase()}
                   </div>
                 )}
-                <span style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: 'var(--text-secondary)' }}>
-                  {zkUserName || (zkUserAddress ? `${zkUserAddress.slice(0, 6)}...${zkUserAddress.slice(-4)}` : '')}
-                </span>
               </div>
 
               {showDropdown && (
                 <div style={{ 
                   position: 'absolute', 
-                  top: '38px', 
+                  top: '46px', 
                   right: '0', 
                   background: 'rgba(13, 16, 38, 0.95)', 
                   border: '1px solid rgba(255, 255, 255, 0.1)', 
                   borderRadius: '8px', 
                   padding: '12px', 
-                  minWidth: '150px',
+                  minWidth: '200px',
                   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
                   backdropFilter: 'blur(10px)',
                   zIndex: 1000,
@@ -180,9 +212,15 @@ function MainAppShell() {
                   flexDirection: 'column',
                   gap: '8px'
                 }}>
-                  <div style={{ fontSize: '9px', color: 'var(--text-muted)', wordBreak: 'break-all', fontFamily: 'var(--mono)' }}>
-                    {zkUserAddress ? `${zkUserAddress.slice(0, 8)}...${zkUserAddress.slice(-6)}` : ''}
+                  {zkUserName && (
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {zkUserName}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'var(--mono)', wordBreak: 'break-all' }}>
+                    {zkUserAddress}
                   </div>
+                  <hr style={{ border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
                   <button 
                     onClick={handleHeaderLogout} 
                     className="cyber-btn cyber-btn-rose"
@@ -194,9 +232,13 @@ function MainAppShell() {
               )}
             </div>
           ) : (
-            <Link to="/register" className="cyber-btn cyber-btn-indigo" style={{ padding: '6px 12px', fontSize: '11px', textDecoration: 'none', lineHeight: '1.2' }}>
+            <button 
+              onClick={handleHeaderLogin} 
+              className="cyber-btn cyber-btn-indigo" 
+              style={{ padding: '6px 12px', fontSize: '11px', textDecoration: 'none', lineHeight: '1.2', border: 'none', cursor: 'pointer' }}
+            >
               Login
-            </Link>
+            </button>
           )}
         </div>
       </header>

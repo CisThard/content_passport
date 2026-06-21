@@ -184,6 +184,12 @@ To enable Google social login and gas-sponsored minting without subscribing to t
 *   `AUTH_GOOGLE_ID`: Your Google Cloud Console OAuth 2.0 Client ID (Web Application type).
 *   `AUTH_GOOGLE_SECRET`: Your Google Cloud Console OAuth 2.0 Client Secret.
 *   `SUI_SPONSOR_SECRET_KEY` (or `SPONSOR_SECRET`): The 32-byte hex private key of the backend Sponsor Wallet. This wallet must be funded with SUI on the target network to pay transaction gas fees for users.
+
+> [!IMPORTANT]
+> **Google Cloud Console Redirect URIs Configuration:**  
+> To prevent Google OAuth `redirect_uri_mismatch` errors, you **must** configure the **Authorized Redirect URIs** in your Google Cloud Console to match the application's client-side OIDC handlers. The callback URL must end in `/login-callback` (the old path `/api/auth/callback/google` is deprecated):
+> *   **Production:** `https://content-passport.xyz/login-callback`
+> *   **Local Dev:** `http://localhost:3000/login-callback`
 *   `SUI_RPC_URL`: The Sui JSON-RPC node endpoint (defaults to `https://fullnode.testnet.sui.io:443`).
 
 > [!TIP]
