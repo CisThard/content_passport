@@ -5,7 +5,7 @@ import {
   getJwtFromUrlHash,
   clearEphemeralSession,
 } from '../lib/zklogin'
-import { genAddressSeed, getZkLoginSignature, generateNonce } from '@mysten/sui/zklogin'
+import { getZkLoginSignature, generateNonce } from '@mysten/sui/zklogin'
 import {
   CONTENT_RIGHT_PACKAGE_ID,
   firstCreatedObjectId,
@@ -43,6 +43,7 @@ export default function Register() {
   const [currentEpoch, setCurrentEpoch] = useState(100)
   const [zkUserAddress, setZkUserAddress] = useState<string | null>(null)
   const [zkProof, setZkProof] = useState<any | null>(null)
+  const [zkAddressSeed, setZkAddressSeed] = useState<string | null>(null)
   const [jwt, setJwt] = useState<string | null>(null)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
   const [mintProgress, setMintProgress] = useState(0)
@@ -64,22 +65,14 @@ export default function Register() {
   useEffect(() => {
     const savedAddress = sessionStorage.getItem('cp_zk_address')
     const savedProof = sessionStorage.getItem('cp_zk_proof')
+    const savedAddressSeed = sessionStorage.getItem('cp_zk_address_seed')
     const savedJwt = sessionStorage.getItem('cp_zk_jwt')
 
-    if (savedAddress && savedProof && savedJwt) {
+    if (savedAddress && savedProof && savedAddressSeed && savedJwt) {
       setZkUserAddress(savedAddress)
       setZkProof(JSON.parse(savedProof))
+      setZkAddressSeed(savedAddressSeed)
       setJwt(savedJwt)
-      return
-    }
-
-    const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.get('mock_login') === 'true') {
-      window.history.replaceState({}, document.title, '/register')
-      const mockJwt = 'mock.jwt.token'
-      sessionStorage.setItem('cp_zk_jwt', mockJwt)
-      setJwt(mockJwt)
-      handleZkLogin(mockJwt)
       return
     }
 
@@ -125,14 +118,16 @@ export default function Register() {
 
       setZkUserAddress(data.address)
       setZkProof(data.proof)
+      setZkAddressSeed(data.addressSeed)
 
       sessionStorage.setItem('cp_zk_address', data.address)
       sessionStorage.setItem('cp_zk_proof', JSON.stringify(data.proof))
+      sessionStorage.setItem('cp_zk_address_seed', data.addressSeed)
 
       setMintLogs((prev) => [
         ...prev,
         `Derived zkLogin address: ${shortId(data.address)}`,
-        data.proof.mockProof ? '[SANDBOX] Running in Mock zkLogin validation.' : 'zkLogin validation complete (ZK Proof validated).'
+        'zkLogin validation complete (ZK Proof validated by Sui prover).'
       ])
     } catch (err: any) {
       setMintLogs((prev) => [...prev, `[ERROR] zkLogin Address derivation failed: ${err.message || String(err)}`])
@@ -144,11 +139,7 @@ export default function Register() {
 
   const handleGoogleLogin = () => {
     if (!googleClientId) {
-      setMintLogs((prev) => [...prev, '[SANDBOX] Google Client ID not configured. Simulating mock OIDC login...'])
-      const mockJwt = 'mock.jwt.token'
-      sessionStorage.setItem('cp_zk_jwt', mockJwt)
-      setJwt(mockJwt)
-      handleZkLogin(mockJwt)
+      setMintLogs((prev) => [...prev, '[CONFIG] AUTH_GOOGLE_ID is required for real Google zkLogin. Mock login is disabled.'])
       return
     }
     const session = getOrSetEphemeralSession(currentEpoch)
@@ -170,10 +161,12 @@ export default function Register() {
     sessionStorage.removeItem('cp_zk_jwt')
     sessionStorage.removeItem('cp_zk_address')
     sessionStorage.removeItem('cp_zk_proof')
+    sessionStorage.removeItem('cp_zk_address_seed')
     sessionStorage.removeItem('cp_zk_picture')
     sessionStorage.removeItem('cp_zk_name')
     setZkUserAddress(null)
     setZkProof(null)
+    setZkAddressSeed(null)
     setJwt(null)
     setMintLogs([])
     setPassportData(null)
@@ -260,19 +253,14 @@ export default function Register() {
         if (!jwt) {
           throw new Error('OAuth JWT session missing or expired')
         }
-        const decodedJwt = decodeJwt(jwt)
-
-        const addressSeed = genAddressSeed(
-          BigInt("12345678901234567890123456789012"), // static salt
-          'sub',
-          decodedJwt.sub,
-          decodedJwt.aud
-        ).toString()
+        if (!zkAddressSeed) {
+          throw new Error('zkLogin address seed missing. Please login again.')
+        }
 
         const userZkSignature = getZkLoginSignature({
           inputs: {
             ...zkProof,
-            addressSeed,
+            addressSeed: zkAddressSeed,
           },
           maxEpoch: session.maxEpoch,
           userSignature: ephemeralSignature.signature,

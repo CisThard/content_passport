@@ -75,6 +75,7 @@ function MainAppShell() {
     sessionStorage.removeItem('cp_zk_jwt')
     sessionStorage.removeItem('cp_zk_address')
     sessionStorage.removeItem('cp_zk_proof')
+    sessionStorage.removeItem('cp_zk_address_seed')
     sessionStorage.removeItem('cp_zk_picture')
     sessionStorage.removeItem('cp_zk_name')
     setZkUserAddress(null)
@@ -86,7 +87,7 @@ function MainAppShell() {
 
   const handleHeaderLogin = () => {
     if (!googleClientId) {
-      window.location.href = '/register?mock_login=true'
+      window.location.href = '/register'
       return
     }
     const session = getOrSetEphemeralSession(currentEpoch)

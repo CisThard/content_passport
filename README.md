@@ -14,7 +14,7 @@ The ecosystem is divided into four distinct cryptographic chambers:
 *   **Zero-friction Social Onboarding:** General users authenticate via **Google Account (OIDC)**. No browser wallet extensions (like Sui Wallet) or pre-existing token balances are required.
 *   **Decentralized Address Derivation:** Ephemeral session keys (ED25519) are generated in browser memory, bound to the user's Google JWT, and verified via Sui's public ZK Prover to derive a secure zkLogin address.
 *   **Sponsored Transactions ($0.00 Gas Fee):** Transactions are built by the backend, signed locally by the user's ephemeral key, and co-signed by the backend Sponsor Wallet, which pays all gas fees.
-*   **Sandbox Fallback:** Features a mock validation mode that simulates key derivation and transaction execution when RPC networks or sponsor secrets are unavailable.
+*   **Real zkLogin Only:** Google OAuth and Sui ZK prover proof generation must succeed before the app creates a zkLogin session. Mock zkLogin fallback is disabled.
 
 ### 2. 🔍 Authenticity Lab (AASE Checkpoint)
 *   **Error Level Analysis (ELA):** Detect pixel manipulations by re-compressing uploaded images at 90% quality using `sharp` modules and measuring error metrics.
@@ -183,6 +183,8 @@ Open `.env` and configure the required keys. (See [[.env.example](file:///Users/
 To enable Google social login and gas-sponsored minting without subscribing to third-party SaaS (like Mysten Labs Enoki), configure the following variables in your `.env` file:
 *   `AUTH_GOOGLE_ID`: Your Google Cloud Console OAuth 2.0 Client ID (Web Application type).
 *   `AUTH_GOOGLE_SECRET`: Your Google Cloud Console OAuth 2.0 Client Secret.
+*   `ZKLOGIN_USER_SALT` (or `ZKLOGIN_SALT`): Numeric zkLogin user salt used to derive the Sui zkLogin address and address seed. For production, replace this static value with a private salt service that returns stable per-user salts.
+*   `ZKLOGIN_PROVER_URL` (optional): Sui zkLogin prover endpoint. Defaults to `https://prover-dev.zklogin.sui.io/v1`.
 *   `SUI_SPONSOR_SECRET_KEY` (or `SPONSOR_SECRET`): The 32-byte hex private key of the backend Sponsor Wallet. This wallet must be funded with SUI on the target network to pay transaction gas fees for users.
 
 > [!IMPORTANT]
@@ -193,8 +195,8 @@ To enable Google social login and gas-sponsored minting without subscribing to t
 *   `SUI_RPC_URL`: The Sui JSON-RPC node endpoint (defaults to `https://fullnode.testnet.sui.io:443`).
 
 > [!TIP]
-> **Mock Developer Sandbox Mode:**
-> If `SUI_SPONSOR_SECRET_KEY` is left blank, the backend automatically operates in **Mock Sponsor Mode**. The system will simulate address derivation and sponsored execution, allowing developers to test the full E2E flow without configuring live Google OAuth keys or funding a sponsor wallet.
+> **Testnet Sponsor Sandbox Mode:**
+> If `SUI_SPONSOR_SECRET_KEY` is left blank, only the final sponsored transaction broadcast operates in **Mock Sponsor Mode**. Google OAuth and zkLogin proof generation remain real and will fail if `AUTH_GOOGLE_ID`, redirect URIs, `ZKLOGIN_USER_SALT`, or the Sui prover are not configured correctly.
 
 ### 4. Build Verification & Compilation
 Verify that the TypeScript server SDK and the Vite frontend compile without any type errors:

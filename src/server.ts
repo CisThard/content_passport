@@ -10,7 +10,6 @@ import { loadMemWalConfig, MemWalSemanticMemoryClient } from "./memwal.js";
 import { getAuthenticityMemoryClient } from "./memory.js";
 import { objectiveForensics } from "./forensics.js";
 import { HttpWalrusClient, InMemoryWalrusClient, WalrusClient } from "./walrus.js";
-import { sha256 } from "./evidence.js";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { getContentRightConfig, buildIssueGenesisPassportTx } from "./sui.js";
@@ -333,6 +332,15 @@ function getSponsorKeypair(): Ed25519Keypair | undefined {
   }
 }
 
+function getZkLoginSalt(): string {
+  const salt = process.env.ZKLOGIN_USER_SALT || process.env.ZKLOGIN_SALT;
+  if (!salt) {
+    throw new Error("ZKLOGIN_USER_SALT is required for real zkLogin. Configure a per-app or salt-service derived user salt.");
+  }
+  BigInt(salt);
+  return salt;
+}
+
 // GET /api/auth/callback/google
 app.get("/api/auth/callback/google", (req, res) => {
   res.sendFile(path.join(webDistPath, "index.html"));
@@ -372,44 +380,52 @@ app.post("/api/auth/zklogin", async (req, res) => {
       return;
     }
 
-    const proverUrl = "https://prover-dev.zklogin.sui.io/v1";
-    let zkProof: any = null;
-    let zkAddress = "";
-    const salt = "12345678901234567890123456789012";
+    const salt = getZkLoginSalt();
+    const proverUrl = process.env.ZKLOGIN_PROVER_URL || "https://prover-dev.zklogin.sui.io/v1";
+    const { jwtToAddress, genAddressSeed } = await import("@mysten/sui/zklogin");
+    const decodedJwt = JSON.parse(Buffer.from(jwt.split(".")[1] ?? "", "base64url").toString("utf8"));
 
-    try {
-      const response = await fetch(proverUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jwt,
-          extendedEphemeralPublicKey: ephemeralPublicKeyB64,
-          maxEpoch,
-          jwtRandomness: randomness,
-          obfuscatedMobile: "12345",
-          keyClaimName: "sub",
-        }),
+    const response = await fetch(proverUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jwt,
+        extendedEphemeralPublicKey: ephemeralPublicKeyB64,
+        maxEpoch,
+        jwtRandomness: randomness,
+        salt,
+        keyClaimName: "sub",
+      }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      res.status(502).json({
+        success: false,
+        error: `zkLogin prover failed: ${response.status} ${response.statusText}`,
+        detail: text.slice(0, 500),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        zkProof = data.zkProof;
-        const { jwtToAddress } = await import("@mysten/sui/zklogin");
-        zkAddress = jwtToAddress(jwt, salt, false);
-      }
-    } catch (e) {
-      console.warn("[Server] Real zkLogin prover failed, falling back to mock session. Error:", e);
+      return;
     }
 
-    if (!zkAddress) {
-      zkAddress = "0x" + sha256(new TextEncoder().encode(jwt + salt)).slice(0, 40);
-      zkProof = { mockProof: true, seed: Math.random().toString(36).substring(7) };
+    const proverPayload = await response.json();
+    const zkProof = proverPayload.zkProof ?? proverPayload;
+    if (!zkProof?.proofPoints || !zkProof?.issBase64Details || !zkProof?.headerBase64) {
+      res.status(502).json({
+        success: false,
+        error: "zkLogin prover response is missing required proof inputs",
+      });
+      return;
     }
+    const zkAddress = jwtToAddress(jwt, salt, false);
+    const addressSeed = genAddressSeed(salt, "sub", decodedJwt.sub, decodedJwt.aud).toString();
 
     res.json({
       success: true,
       address: zkAddress,
       proof: zkProof,
+      addressSeed,
+      issuer: decodedJwt.iss,
     });
   } catch (error: any) {
     console.error("[Server] zkLogin setup failed:", error);
