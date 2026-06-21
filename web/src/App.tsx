@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import Landing from './pages/Landing'
-import Register from './pages/Register'
-import Verify from './pages/Verify'
-import Vault from './pages/Vault'
-import Chat from './pages/Chat'
-import Blueprint from './pages/Blueprint'
-import About from './pages/About'
+// Route-level code splitting: non-home pages load on demand (smaller initial bundle).
+const Register = lazy(() => import('./pages/Register'))
+const Verify = lazy(() => import('./pages/Verify'))
+const Vault = lazy(() => import('./pages/Vault'))
+const Chat = lazy(() => import('./pages/Chat'))
+const Blueprint = lazy(() => import('./pages/Blueprint'))
+const About = lazy(() => import('./pages/About'))
 import './styles.css'
 
 function Navigation() {
@@ -127,15 +128,17 @@ function MainAppShell() {
 
       {/* Pages Router Chamber */}
       <main className="hud-main">
-        <Routes>
-          <Route path="/" element={<Landing passportsCount={passportsCount} walrusStatus={walrusStatus} systemTime={systemTime} />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify" element={<Verify />} />
-          <Route path="/vault" element={<Vault />} />
-          <Route path="/blueprint" element={<Blueprint />} />
-          <Route path="/chat" element={<Chat />} />
-        </Routes>
+        <Suspense fallback={<div style={{ padding: '80px', textAlign: 'center', color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: '12px' }}>Loading chamber…</div>}>
+          <Routes>
+            <Route path="/" element={<Landing passportsCount={passportsCount} walrusStatus={walrusStatus} />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/verify" element={<Verify />} />
+            <Route path="/vault" element={<Vault />} />
+            <Route path="/blueprint" element={<Blueprint />} />
+            <Route path="/chat" element={<Chat />} />
+          </Routes>
+        </Suspense>
       </main>
     </div>
   )

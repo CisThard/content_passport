@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 interface LandingProps {
   passportsCount: number
   walrusStatus: { healthy: boolean; latencyMs: number } | null
-  systemTime: string
 }
 
 // Particle class for the Galaxy Vortex
@@ -15,7 +14,7 @@ interface Star {
   color: string
 }
 
-export default function Landing({ passportsCount, walrusStatus, systemTime }: LandingProps) {
+export default function Landing({ passportsCount, walrusStatus }: LandingProps) {
   const [activePortal, setActivePortal] = useState<number | null>(null)
   const [showIntro, setShowIntro] = useState<boolean>(false)
   

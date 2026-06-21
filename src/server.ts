@@ -31,7 +31,7 @@ const upload = multer({
 });
 
 // GET /api/health
-app.get("/api/health", async (req, res) => {
+app.get("/api/health", async (_req, res) => {
   try {
     const config = await loadMemWalConfig();
     let memwalStatus = "not_configured";
