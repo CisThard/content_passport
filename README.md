@@ -17,8 +17,8 @@ The ecosystem is divided into four distinct cryptographic chambers:
 ### 2. 🦁 Aurelius Forensic Lab (AASE Checkpoint)
 *   **Error Level Analysis (ELA):** Detect pixel manipulations by re-compressing uploaded images at 90% quality using `sharp` modules and measuring error metrics.
 *   **EXIF Metadata Audit:** Read hardware profiles and sensor pattern timestamps via `exifr` parsers to check for capture-vs-modification consistency.
-*   **AI Sniffer (Gemini 3.5 Flash):** Pipeline forensic clues as context to Gemini cognitive visual models to audit synthetic lights, refractions, and neural net artifacts.
-*   **Decentralized Memory Registry (MemWal):** Save and query forensic logs dynamically across Sui Testnet sharded memory blocks via the Walrus MemWal Relayer.
+*   **AI Sniffer (Gemini & Vertex AI):** Pipelines forensic clues as context to Gemini cognitive visual models to audit synthetic lights, refractions, and neural net artifacts. Seamlessly supports Keyless Vertex AI in GCP production environments.
+*   **Decentralized Memory Registry (MemWal):** Saves and queries forensic logs dynamically across Sui Testnet sharded memory blocks via the Walrus MemWal Relayer.
 
 ### 3. 🔐 Sharded Secret Vault (SEAL Cryptography)
 *   **Shamir Secret Sharing:** AES-256 symmetric keys encrypting raw drafts are sharded into 5 shares $(k=3, n=5)$ over GF(256) and stored across global guardians.
@@ -69,44 +69,33 @@ $$S = f(0) = \sum_{i=1}^{k} y_i \prod_{j \neq i} \frac{-x_j}{x_i - x_j} \pmod{p}
 
 ## 📁 Repository Directory Structure
 
-```bash
-├── docs/                    # Design systems, execution roadmaps, and business model papers
-│   ├── co-creation-business-model.md  # Dynamic royalty splits & bounty quest specs
-│   ├── frontend-upgrade-report.md      # Cybernetic dark-neon theme redesign logs
-│   └── architecture-and-deployment.md  # GCP Cloud Run deployment & API configurations
-│
-├── contracts/               # Sui Move Smart Contracts
-│   ├── Move.toml            # Package configuration
-│   └── sources/
-│       ├── genesis_passport.move    # Issues Content Passports with AAA-C grades
-│       ├── seal_policy.move         # Shamir key-sharing access controls
-│       └── co_creation_policy.move  # Royalty escrow split and visa stamp registry
-│
-├── src/                     # Core TypeScript SDK & Express Server
-│   ├── aase.ts              # AASE grade formulas & scoring nodes
-│   ├── agents.ts            # Forensic, EXIF, and AI detection agent scripts
-│   ├── evidence.ts          # Shamir threshold cryptography & AES envelope seal
-│   ├── memory.ts            # MemWal namespace storage client wrappers
-│   ├── memwal.ts            # MemWal configuration parser & ED25519 flagged key handler
-│   ├── server.ts            # Express server API endpoints & static SPA server
-│   ├── sui.ts               # Move contract transaction package builders
-│   └── workflow.ts          # Multi-agent Memory Graph compiler
-│
-├── web/                     # React + Vite Premium Frontend Portal
-│   ├── src/App.tsx          # Main HUD shell, navigation routes & backdrop nebulae
-│   ├── src/styles.css       # Core design tokens, aurora glows & 3D card matrices
-│   ├── src/samples.ts       # Test specimens for DSLR raw & SD generated data
-│   └── src/pages/           # Chamber UI Modules
-│       ├── Landing.tsx      # Unified cockpit dashboard & Basecamp metrics
-│       ├── Register.tsx     # Session key log console & holographic passport
-│       ├── Verify.tsx       # Real-time forensic scanner, file uploads & MemWal clues feed
-│       ├── Vault.tsx        # File drag-and-drop dropzone & key shards orbit
-│       ├── Blueprint.tsx    # Interactive co-creation economy blueprint & simulator
-│       └── Chat.tsx         # AI K-9 Sniffer assistant chatbot terminal
-│
-└── scripts/
-    └── memwal.ts            # CLI utility for command-line MemWal operations
-```
+*   [docs/](file:///Users/charles/Projects/content_passport/docs): Design systems, execution roadmaps, and business model papers
+    *   [gcp_cicd_proposal.md](file:///Users/charles/Projects/content_passport/docs/gcp_cicd_proposal.md): **[Upgraded]** Detailed GCP architecture, CI/CD, and self-hosting proposal
+    *   [architecture-and-deployment.md](file:///Users/charles/Projects/content_passport/docs/architecture-and-deployment.md): GCP Cloud Run deployment & API configurations
+    *   [co-creation-business-model-ko.md](file:///Users/charles/Projects/content_passport/docs/co-creation-business-model-ko.md): Dynamic royalty splits & bounty quest specs
+*   [contracts/](file:///Users/charles/Projects/content_passport/contracts): Sui Move Smart Contracts
+    *   `Move.toml`: Package configuration
+    *   `sources/genesis_passport.move`: Issues Content Passports with AAA-C grades
+    *   `sources/seal_policy.move`: Shamir key-sharing access controls
+    *   `sources/co_creation_policy.move`: Royalty escrow split and visa stamp registry
+*   [src/](file:///Users/charles/Projects/content_passport/src): Core TypeScript SDK & Express Server
+    *   [aase.ts](file:///Users/charles/Projects/content_passport/src/aase.ts): AASE grade formulas & scoring nodes
+    *   [agents.ts](file:///Users/charles/Projects/content_passport/src/agents.ts): **[Upgraded]** Forensics, EXIF, and Gemini/Vertex AI Sniffer agents
+    *   [evidence.ts](file:///Users/charles/Projects/content_passport/src/evidence.ts): Shamir threshold cryptography & AES envelope seal
+    *   [memory.ts](file:///Users/charles/Projects/content_passport/src/memory.ts): **[Upgraded]** MemWal & GCP Firestore database memory clients
+    *   [memwal.ts](file:///Users/charles/Projects/content_passport/src/memwal.ts): MemWal configuration parser & ED25519 flagged key handler
+    *   [server.ts](file:///Users/charles/Projects/content_passport/src/server.ts): **[Upgraded]** Express server API endpoints & static Vite SPA server
+    *   [sui.ts](file:///Users/charles/Projects/content_passport/src/sui.ts): Move contract transaction package builders
+    *   [workflow.ts](file:///Users/charles/Projects/content_passport/src/workflow.ts): Multi-agent Memory Graph compiler
+*   [web/](file:///Users/charles/Projects/content_passport/web): React + Vite Premium Frontend Portal
+    *   [src/App.tsx](file:///Users/charles/Projects/content_passport/web/src/App.tsx): Main HUD shell, navigation routes & backdrop nebulae
+    *   [src/styles.css](file:///Users/charles/Projects/content_passport/web/src/styles.css): Core design tokens, aurora glows & 3D card matrices
+    *   `src/pages/`: Chamber UI Pages (Landing, Register, Verify, Vault, Blueprint, Chat)
+*   [scripts/](file:///Users/charles/Projects/content_passport/scripts)
+    *   [gcp_setup.ts](file:///Users/charles/Projects/content_passport/scripts/gcp_setup.ts): **[New]** GCP and GitHub setup automation tool
+*   [tests/](file:///Users/charles/Projects/content_passport/tests)
+    *   [memory.test.ts](file:///Users/charles/Projects/content_passport/tests/memory.test.ts): **[New]** Unit tests verifying Firestore and factory memory clients
+    *   [agents.test.ts](file:///Users/charles/Projects/content_passport/tests/agents.test.ts): Forensic ELA, EXIF parser, and sniffer tests
 
 ---
 
@@ -114,33 +103,64 @@ $$S = f(0) = \sum_{i=1}^{k} y_i \prod_{j \neq i} \frac{-x_j}{x_i - x_j} \pmod{p}
 
 The application is containerized and deployed as a **single-origin stateless container** on **Google Cloud Run**, serving both the API backend and static React SPA client on port `8080` (mapped to `https://content-passport.xyz/`).
 
-* **Multi-Stage Build Pipeline:** Compiled using GCP Cloud Build. The builder stage installs all dependencies, runs Vite production packaging, and outputs static assets to `web/dist`, which the Express runtime serves statically.
-* **GCP Secret Manager Integration:** Key secrets such as `SUI_PRIVATE_KEY` and `MEMWAL_PRIVATE_KEY` are mounted directly into container environment variables on startup.
-* **ED25519 Key Compatibility:** The backend contains a custom parser to translate Base64-encoded, 33-byte flagged key credentials (beginning with `00`) into raw 32-byte hex keys compatible with standard Sui SDKs.
+```mermaid
+graph TD
+    subgraph GCP [Google Cloud Platform]
+        run[Cloud Run Serverless] -->|Secret 마운트| sm[Secret Manager]
+        run -->|Keyless Vertex AI 호출| vertex[Vertex AI Gemini 3.5]
+        run -->|영구 메모리 저장소| db[Cloud Firestore]
+    end
+    subgraph GitHub
+        workflow[GitHub Actions CI/CD] -->|OIDC Token WIF| run
+    end
+```
+
+*   **Multi-Stage Build Pipeline:** Compiled using Docker multi-stage builds and deployed via GitHub Actions [[.github/workflows/ci.yml](file:///Users/charles/Projects/content_passport/.github/workflows/ci.yml)].
+*   **Keyless WIF Integration:** Employs Workload Identity Federation (WIF) OIDC credentials to authenticate pushes from GitHub to GCP keylessly.
+*   **Vertex AI & Firestore Support:** In production, AI Forensics runs keylessly using GCP IAM Vertex AI configurations. Metadata and forensic logs are permanently indexed using Cloud Firestore database schemas.
+*   **ED25519 Key Compatibility:** The backend contains a custom parser to translate Base64-encoded, 33-byte flagged key credentials (beginning with `00`) into raw 32-byte hex keys compatible with standard Sui SDKs.
 
 ---
 
-## 🛠️ Installation & Execution Guide
+## 🛠️ Installation & Execution Guide (Local Setup)
 
-### Prerequisites
+To set up the repository locally and run the test suite, follow these steps:
+
+### 1. Prerequisites
 *   Node.js (v20 or higher)
-*   Sui CLI (for on-chain package deployment)
+*   Sui CLI (for Move contract operations)
+*   Google Cloud SDK & GitHub CLI (for GCP/CI/CD deployment setups)
 
-### Install Dependencies
-Set up the backend SDK and the Web portal dependencies:
+### 2. Clone & Install Dependencies
+Set up the root server SDK and the React web portal dependencies:
 ```bash
+git clone https://github.com/CisThard/content_passport.git
+cd content_passport
 npm install
-npm --prefix web install
+npm --prefix web ci
 ```
 
-### Build Verification & Compilation
-Confirm the TypeScript SDK and the Web portal compile without any linter or type errors:
+### 3. Configure Local Environment Variables
+Create your local `.env` configuration file by copying the template file:
+```bash
+cp .env.example .env
+```
+Open `.env` and fill in the values for Sui nodes, MemWal, and Google Generative AI API keys. (See [[.env.example](file:///Users/charles/Projects/content_passport/.env.example)] for detailed parameter guidelines).
+
+### 4. Build Verification & Compilation
+Verify that the TypeScript server SDK and the Vite frontend compile without any type errors:
 ```bash
 npm run build
 npm --prefix web run build
 ```
 
-### Run Server Locally (Port 3000)
+### 5. Running the Test Suite
+Ensure that the entire test suite (26 units covering escrow, forensics, memory, and blockchain contracts) runs and passes:
+```bash
+npm test
+```
+
+### 6. Run Server Locally (Port 3000)
 To launch the Express server locally (which serves both the REST API and the static React client built inside `web/dist`):
 ```bash
 npm run start
@@ -149,30 +169,17 @@ Open your browser and navigate to `http://localhost:3000`.
 
 ---
 
-## 🔌 Environment Parameters
+## ⚡ GCP & GitHub Auto-Configuration Setup (Proactive Deployment)
 
-Configure a `.env` file in the project root directory or supply these in your shell environment (see `.env.example` for details):
+For team environments migrating to GCP, you can automatically provision and link all required cloud resources and repository credentials in a single click:
 
-```env
-# Authentication (Auth.js)
-AUTH_GOOGLE_ID="your-google-client-id.apps.googleusercontent.com"
-AUTH_GOOGLE_SECRET="GOCSPX-your-google-client-secret"
-AUTH_SECRET="your-nextauth-session-secret-key"
-AUTH_URL="http://localhost:3000"
-
-# Sui Smart Contracts
-CONTENT_RIGHT_PACKAGE_ID=0xac28432a557d52d7079930a82a5c1732a3709da3c6cb2991ce0332b0704061da
-SUI_PRIVATE_KEY=suiprivkey1...
-SUI_NETWORK=testnet
-
-# Walrus & MemWal Relayers
-WALRUS_PUBLISHER=https://publisher.walrus-testnet.walrus.space
-WALRUS_AGGREGATOR=https://aggregator.walrus-testnet.walrus.space
-MEMWAL_SERVER_URL=https://relayer.memory.walrus.xyz
-MEMWAL_ACCOUNT_ID=0x...
-MEMWAL_PRIVATE_KEY=...
-MEMWAL_NAMESPACE=content-right-hackathon
-
-# AI Verification
-GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy...   # Gemini Vision API key
+```bash
+npx tsx --env-file=.env scripts/gcp_setup.ts
 ```
+
+This automated setup script [[scripts/gcp_setup.ts](file:///Users/charles/Projects/content_passport/scripts/gcp_setup.ts)] will:
+1. **Enable GCP APIs**: Activate Artifact Registry, Cloud Run, Secret Manager, Vertex AI, and IAM services.
+2. **Provision Registries**: Create the Docker storage repo `content-passport-repo`.
+3. **Configure WIF & Service Accounts**: Create service accounts and bind secure OpenID Connect permissions allowing keyless deployments from your GitHub Actions runner.
+4. **Synchronize Secrets**: Safely upload local `.env` secrets directly into GCP Secret Manager.
+5. **Set GitHub Repository Secrets**: Register the WIF provider URLs and project IDs into GitHub secrets using `gh` CLI commands.
