@@ -45,6 +45,8 @@ export default function Register() {
   const [zkProof, setZkProof] = useState<any | null>(null)
   const [jwt, setJwt] = useState<string | null>(null)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [mintProgress, setMintProgress] = useState(0)
+  const [mintStatusText, setMintStatusText] = useState('')
 
   // Fetch configs on load
   useEffect(() => {
@@ -164,6 +166,8 @@ export default function Register() {
     setIsMinting(true)
     setPassportData(null)
     setMintLogs([])
+    setMintProgress(10)
+    setMintStatusText('INITIATING')
 
     try {
       const verification = lastVerification()
@@ -172,8 +176,10 @@ export default function Register() {
       const mediaBlobId = verification?.objective?.perceptualHash?.hash || `suins:${suinsName.trim()}`
       const evidenceBlobId = verification?.clueIds?.[0] || verification?.objective?.perceptualHash?.hash || 'local-evidence'
 
-      setMintLogs((prev) => [...prev, `Preparing transaction for zkLogin identity: ${shortId(zkUserAddress)}`])
-      setMintLogs((prev) => [...prev, 'Querying backend to construct transaction block (PTB) with Gas Sponsor...'])
+      setMintLogs((prev) => [...prev, `[10%] Initializing transaction schema for zkLogin identity: ${shortId(zkUserAddress)}`])
+      setMintLogs((prev) => [...prev, '[30%] Contacting backend to construct transaction block (PTB) with Gas Sponsor... (Est. time: ~0.8s)'])
+      setMintProgress(30)
+      setMintStatusText('BUILDING PTB')
 
       const buildRes = await fetch('/api/gas/build-mint', {
         method: 'POST',
@@ -193,12 +199,17 @@ export default function Register() {
         throw new Error(buildData.error || 'Failed to construct sponsored transaction')
       }
 
+      setMintProgress(55)
+      setMintStatusText('SIGNING')
+
       let txDigest = ''
       let explorerUrl = ''
       let passportObjectId = ''
 
       if (buildData.mockMode) {
-        setMintLogs((prev) => [...prev, '[SANDBOX] Sponsor is in Mock Mode. Executing simulated state change...'])
+        setMintLogs((prev) => [...prev, '[55%] [SANDBOX] Sponsor is in Mock Mode. Executing simulated state change...'])
+        setMintProgress(75)
+        setMintStatusText('BROADCASTING (SIMULATED)')
         
         const sponsorRes = await fetch('/api/gas/sponsor', {
           method: 'POST',
@@ -217,13 +228,15 @@ export default function Register() {
         txDigest = sponsorData.digest
         explorerUrl = '#'
         passportObjectId = '0x_mock_passport_id_' + Math.random().toString(36).substring(7)
-        setMintLogs((prev) => [...prev, `Simulated registration SUCCESS. Digest: ${txDigest}`])
+        setMintProgress(100)
+        setMintStatusText('SUCCESS')
+        setMintLogs((prev) => [...prev, `[100%] Simulated registration SUCCESS. Digest: ${txDigest}`])
       } else {
-        setMintLogs((prev) => [...prev, 'Sponsor transaction block received. Creating signature from Ephemeral Session Key...'])
+        setMintLogs((prev) => [...prev, '[55%] Sponsor transaction block received. Creating signature from Ephemeral Session Key...'])
 
         const txBytes = Uint8Array.from(atob(buildData.txBytesB64), (c) => c.charCodeAt(0))
         const session = getOrSetEphemeralSession(currentEpoch)
-        const ephemeralSignature = await session.keypair.signTransactionBlock(txBytes)
+        const ephemeralSignature = await session.keypair.signTransaction(txBytes)
 
         if (!jwt) {
           throw new Error('OAuth JWT session missing or expired')
@@ -246,7 +259,9 @@ export default function Register() {
           userSignature: ephemeralSignature.signature,
         })
 
-        setMintLogs((prev) => [...prev, 'Broadcasting combined signatures to Sui Blockchain network...'])
+        setMintProgress(75)
+        setMintStatusText('BROADCASTING')
+        setMintLogs((prev) => [...prev, '[75%] Broadcasting combined signatures to Sui Blockchain network... (Est. time: ~2.0s)'])
 
         const sponsorRes = await fetch('/api/gas/sponsor', {
           method: 'POST',
@@ -266,9 +281,11 @@ export default function Register() {
         explorerUrl = suiscanTxUrl(txDigest)
         passportObjectId = firstCreatedObjectId(sponsorData) || ''
 
-        setMintLogs((prev) => [...prev, `Transaction confirmed on Sui! Digest: ${shortId(txDigest, 12, 8)}`])
+        setMintProgress(100)
+        setMintStatusText('SUCCESS')
+        setMintLogs((prev) => [...prev, `[100%] Transaction confirmed on Sui! Digest: ${shortId(txDigest, 12, 8)}`])
         if (passportObjectId) {
-          setMintLogs((prev) => [...prev, `Passport NFT object created: ${shortId(passportObjectId)}`])
+          setMintLogs((prev) => [...prev, `[100%] Passport NFT object created: ${shortId(passportObjectId)}`])
         }
       }
 
@@ -388,13 +405,41 @@ export default function Register() {
           {/* Hologram Terminal Logs */}
           {(isMinting || mintLogs.length > 0) && (
             <div style={{ marginTop: '30px' }}>
-              <span className="header-badge" style={{ marginBottom: '10px', fontSize: '9px' }}>Minting Terminal</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span className="header-badge" style={{ fontSize: '9px' }}>Minting Terminal</span>
+                {isMinting && (
+                  <span style={{ fontSize: '11px', color: 'var(--neon-cyan)', fontFamily: 'var(--mono)', fontWeight: 'bold' }}>
+                    {mintStatusText} ({mintProgress}% Completed)
+                  </span>
+                )}
+              </div>
+              
+              {isMinting && (
+                <div style={{ marginBottom: '20px', background: 'rgba(255, 255, 255, 0.02)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)' }}>
+                  <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div 
+                      style={{ 
+                        width: `${mintProgress}%`, 
+                        height: '100%', 
+                        background: 'linear-gradient(90deg, var(--neon-cyan) 0%, var(--neon-emerald) 100%)', 
+                        boxShadow: '0 0 12px var(--neon-cyan)', 
+                        transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)' 
+                      }} 
+                    />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', marginTop: '8px', letterSpacing: '0.5px' }}>
+                    <span>ESTIMATED TIME REMAINING: {mintProgress < 100 ? '~3.0 SECONDS' : 'SUCCESS'}</span>
+                    <span>PIPELINE: {mintProgress < 35 ? 'BUILDING' : mintProgress < 75 ? 'SIGNING' : mintProgress < 100 ? 'BROADCASTING' : 'FINISHED'}</span>
+                  </div>
+                </div>
+              )}
+
               <div className="console-container" style={{ height: '200px' }}>
                 {mintLogs.map((log, idx) => (
                   <div key={idx} className="console-line">
                     <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
-                    <span className={`console-tag ${log.startsWith('[ERROR]') ? 'tag-rose' : log.includes('Transaction confirmed') || log.includes('SUCCESS') ? 'tag-success' : 'tag-system'}`}>
-                      {log.startsWith('[ERROR]') ? '[FAIL]' : log.includes('Transaction confirmed') || log.includes('SUCCESS') ? '[TX]' : '[PROCESS]'}
+                    <span className={`console-tag ${log.startsWith('[ERROR]') ? 'tag-rose' : log.includes('SUCCESS') || log.includes('confirmed') || log.includes('object created') ? 'tag-success' : 'tag-system'}`}>
+                      {log.startsWith('[ERROR]') ? '[FAIL]' : log.includes('SUCCESS') || log.includes('confirmed') || log.includes('object created') ? '[TX]' : '[PROCESS]'}
                     </span>
                     <span>{log}</span>
                   </div>
