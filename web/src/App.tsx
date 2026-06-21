@@ -8,7 +8,6 @@ const Verify = lazy(() => import('./pages/Verify'))
 const Vault = lazy(() => import('./pages/Vault'))
 const Chat = lazy(() => import('./pages/Chat'))
 const Blueprint = lazy(() => import('./pages/Blueprint'))
-const About = lazy(() => import('./pages/About'))
 const Journey = lazy(() => import('./pages/Journey'))
 import './styles.css'
 
@@ -18,7 +17,6 @@ function Navigation() {
 
   const NAV_ITEMS = [
     { label: 'Home', path: '/' },
-    { label: 'Odyssey', path: '/about' },
     { label: 'Identity Gate', path: '/register' },
     { label: 'Authenticity Audit', path: '/verify' },
     { label: 'Sealed Vault', path: '/vault' },
@@ -116,7 +114,6 @@ function MainAppShell() {
         <Suspense fallback={<div style={{ padding: '80px', textAlign: 'center', color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: '12px' }}>Loading chamber…</div>}>
           <Routes>
             <Route path="/" element={<Landing passportsCount={passportsCount} walrusStatus={walrusStatus} />} />
-            <Route path="/about" element={<About />} />
             <Route path="/journey" element={<Journey />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify" element={<Verify />} />

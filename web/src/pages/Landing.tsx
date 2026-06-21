@@ -252,9 +252,9 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
       <div style={{ textAlign: 'center', margin: '40px auto 60px', maxWidth: '820px' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
           <span className="header-badge">Magical Border Control Ecosystem</span>
-          <Link to="/about" className="header-badge badge-gold" style={{ textDecoration: 'none', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+          <a href="#odyssey-section" className="header-badge badge-gold" style={{ textDecoration: 'none', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
              Read Odyssey Story
-          </Link>
+          </a>
           <Link to="/journey" className="header-badge badge-emerald" style={{ textDecoration: 'none', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
              Judge Mode
           </Link>
@@ -325,6 +325,97 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ==================== THE ODYSSEY & SECURITY TRUST MATRIX ==================== */}
+      <div id="odyssey-section" className="grid-layout-2" style={{ gap: '40px', margin: '40px 0 60px' }}>
+        {/* Left Column: The Odyssey Narrative Saga */}
+        <div className="cyber-card" style={{ padding: '36px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div>
+            <span className="header-badge badge-gold" style={{ marginBottom: '8px' }}>THE CREATOR PROVENANCE SAGA</span>
+            <h3 style={{ fontSize: '26px', fontWeight: 800, color: '#fff', margin: 0 }}>The Odyssey Chapters</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px' }}>
+              A sequential workflow mapping creative ownership and trust directly to Sui smart contracts and distributed storage.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', borderLeft: '1px dashed var(--border-light)', paddingLeft: '20px', marginLeft: '10px' }}>
+            <div style={{ position: 'relative' }}>
+              <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-indigo)' }}></span>
+              <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Prologue: Identity Gate</strong>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+                Declare your sovereign SuiNS name, establish ephemeral cryptographic session keys, and mint your immutable Genesis Passport NFT.
+              </p>
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-gold)' }}></span>
+              <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter I: Authenticity Audit</strong>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+                Perform multi-agent forensic audits. Evaluate image pixel compression (ELA), EXIF header profiles, and Gemini Visual AI patterns.
+              </p>
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-emerald)' }}></span>
+              <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter II: Sealed Vault</strong>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+                Lock raw high-fidelity drafts under browser-level AES-256 envelope encryption, splitting keys into 5 sharded shares across Walrus nodes.
+              </p>
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-rose)' }}></span>
+              <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter III: Automated Royalties</strong>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+                Deploy co-creation policy registers on-chain to instantly route and split atomic payouts to creators upon licensing.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Security & Infrastructure Trust Grid */}
+        <div className="cyber-card" style={{ padding: '36px', display: 'flex', flexDirection: 'column', gap: '24px', borderColor: 'rgba(16, 185, 129, 0.15)' }}>
+          <div>
+            <span className="header-badge badge-emerald" style={{ marginBottom: '8px' }}>ENTERPRISE DEPLOYMENT SECURITY</span>
+            <h3 style={{ fontSize: '26px', fontWeight: 800, color: '#fff', margin: 0 }}>Infrastructure Trust Matrix</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px' }}>
+              High-level cryptographic protocols and cloud design patterns securing the server environment.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+            <div className="linear-card-recessed" style={{ padding: '14px', background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <strong style={{ fontSize: '13px', color: '#fff' }}>OIDC Federated Trust</strong>
+                <span className="header-badge badge-emerald" style={{ margin: 0, fontSize: '9px' }}>ACTIVE (Keyless WIF)</span>
+              </div>
+              <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                Stateless deployments authenticated keylessly via short-lived GitHub-GCP federated tokens. Zero permanent credentials.
+              </p>
+            </div>
+
+            <div className="linear-card-recessed" style={{ padding: '14px', background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <strong style={{ fontSize: '13px', color: '#fff' }}>Sovereign AI Runtime</strong>
+                <span className="header-badge badge-emerald" style={{ margin: 0, fontSize: '9px' }}>ACTIVE (Vertex AI IAM)</span>
+              </div>
+              <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                AI visual analysis is routed via Vertex AI utilizing direct Service Account IAM bindings. Zero static AI API keys stored.
+              </p>
+            </div>
+
+            <div className="linear-card-recessed" style={{ padding: '14px', background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <strong style={{ fontSize: '13px', color: '#fff' }}>Isolated Secrets Injection</strong>
+                <span className="header-badge badge-emerald" style={{ margin: 0, fontSize: '9px' }}>ACTIVE (GCP Secret Manager)</span>
+              </div>
+              <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                Blockchain private keys are securely sealed in GCP Secret Manager and mounted only in the ephemeral memory space of the container.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Dynamic Network Status & Stats Widget */}
