@@ -130,7 +130,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
     },
     {
       id: 1,
-      title: 'Aurelius Forensic Lab',
+      title: 'Authenticity Lab',
       badge: 'Forensics & EXIF Audit',
       desc: 'Execute multi-agent forensics check including Error Level Analysis (ELA) pixel compression metrics, EXIF header consistency, and Gemini AISniffer verification.',
       icon: '',

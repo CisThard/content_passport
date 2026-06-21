@@ -308,7 +308,7 @@ export default function Verify() {
       <div className="linear-card-recessed" style={{ marginBottom: '35px', padding: '16px 20px', background: 'rgba(99, 102, 241, 0.02)', borderColor: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', gap: '15px', borderRadius: '4px' }}>
         
         <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
-          <strong style={{ color: 'var(--neon-indigo)' }}>Active Roadmap Phase:</strong> Aurelius Lab is currently optimized for <strong style={{ color: '#fff' }}>Visual Media (Images)</strong>. Forensic verification suites for Audio, Video, and Text/Code are scheduled for development and will be deployed sequentially in upcoming protocol upgrades.
+          <strong style={{ color: 'var(--neon-indigo)' }}>Active Roadmap Phase:</strong> Authenticity Lab is currently optimized for <strong style={{ color: '#fff' }}>Visual Media (Images)</strong>. Forensic verification suites for Audio, Video, and Text/Code are scheduled for development and will be deployed sequentially in upcoming protocol upgrades.
         </div>
       </div>
 
