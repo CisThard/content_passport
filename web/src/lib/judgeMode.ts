@@ -46,7 +46,7 @@ export function buildJourneyNodes(): JourneyNode[] {
       status: hasVerification ? 'ready' : 'missing',
       detail: hasVerification
         ? `${verification.assessment?.grade || 'N/A'} grade, pHash ${verification.objective?.perceptualHash?.hash || 'N/A'}`
-        : 'Run Forensics Lab to create the first durable evidence packet.',
+        : 'Run Authenticity Lab to create the first durable evidence packet.',
       proof: verification?.objective?.sha256 ? shortId(verification.objective.sha256, 10, 8) : undefined,
       href: '/verify',
     },
@@ -79,7 +79,7 @@ export function buildJourneyNodes(): JourneyNode[] {
       status: hasPassport ? 'ready' : hasVerification ? 'active' : 'missing',
       detail: hasPassport
         ? `GenesisPassport ${onchain.passportId ? shortId(onchain.passportId) : 'issued'} on Sui.`
-        : 'Connect wallet and mint a real GenesisPassport from Register.',
+        : 'Connect wallet and mint a real GenesisPassport from Identity Gate.',
       proof: onchain.passportTxDigest ? shortId(onchain.passportTxDigest, 12, 8) : undefined,
       href: onchain.passportTxDigest ? suiscanTxUrl(onchain.passportTxDigest) : '/register',
     },
@@ -90,7 +90,7 @@ export function buildJourneyNodes(): JourneyNode[] {
       status: hasPolicy ? 'ready' : hasPassport ? 'active' : 'missing',
       detail: hasPolicy
         ? `CoCreationPolicy ${onchain.policyId ? shortId(onchain.policyId) : 'created'} with funded escrow.`
-        : 'Create and fund the remix policy from Blueprint.',
+        : 'Create and fund the remix policy from Automated Royalties.',
       proof: onchain.policyTxDigest ? shortId(onchain.policyTxDigest, 12, 8) : undefined,
       href: onchain.policyTxDigest ? suiscanTxUrl(onchain.policyTxDigest) : '/blueprint',
     },

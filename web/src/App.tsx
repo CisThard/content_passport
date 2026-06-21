@@ -22,7 +22,7 @@ function Navigation() {
     { label: 'Sealed Vault', path: '/vault' },
     { label: 'Automated Royalties', path: '/blueprint' },
     { label: 'Judge Mode', path: '/journey' },
-    { label: 'K-9 Chat', path: '/chat' }
+    { label: 'AI Assistant', path: '/chat' }
   ]
 
   return (

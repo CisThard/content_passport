@@ -6,7 +6,7 @@ const AGENTS = [
   {
     name: 'Forensic Agent',
     memory: 'Writes ELA, DCT pHash, and frequency artifact clues.',
-    trigger: 'Upload image in Forensics Lab',
+    trigger: 'Upload image in Authenticity Lab',
   },
   {
     name: 'Provenance Agent',
@@ -26,7 +26,7 @@ const AGENTS = [
   {
     name: 'Settlement Agent',
     memory: 'Creates funded CoCreationPolicy and triggers royalty distribution.',
-    trigger: 'Blueprint live control panel',
+    trigger: 'Automated Royalties control panel',
   },
   {
     name: 'Archivist Agent',

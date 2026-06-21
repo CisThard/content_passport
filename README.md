@@ -10,21 +10,21 @@ The project is deployed and fully operational at **`https://content-passport.xyz
 
 The ecosystem is divided into four distinct cryptographic chambers:
 
-### 1. 🎫 Platform 9 ¾ Chamber (On-chain Identity)
+### 1. 🎫 Identity Gate (On-chain Identity)
 *   **Sovereign Namespaces:** Claim unique subdomains via SuiNS (Sui Name Service) directly written into Move identity objects.
 *   **Sponsored Session Keys:** Generate local, ephemeral Ed25519 SessionKeys with 10-minute TTLs, enabling gasless, pop-up-free sponsored transaction block (PTB) pipelines.
 
-### 2. 🦁 Aurelius Forensic Lab (AASE Checkpoint)
+### 2. 🔍 Authenticity Lab (AASE Checkpoint)
 *   **Error Level Analysis (ELA):** Detect pixel manipulations by re-compressing uploaded images at 90% quality using `sharp` modules and measuring error metrics.
 *   **EXIF Metadata Audit:** Read hardware profiles and sensor pattern timestamps via `exifr` parsers to check for capture-vs-modification consistency.
 *   **AI Sniffer (Gemini & Vertex AI):** Pipelines forensic clues as context to Gemini cognitive visual models to audit synthetic lights, refractions, and neural net artifacts. Seamlessly supports Keyless Vertex AI in GCP production environments.
 *   **Decentralized Memory Registry (MemWal):** Saves and queries forensic logs dynamically across Sui Testnet sharded memory blocks via the Walrus MemWal Relayer.
 
-### 3. 🔐 Sharded Secret Vault (SEAL Cryptography)
+### 3. 🔐 Sealed Vault (SEAL Cryptography)
 *   **Shamir Secret Sharing:** AES-256 symmetric keys encrypting raw drafts are sharded into 5 shares $(k=3, n=5)$ over GF(256) and stored across global guardians.
 *   **Walrus Aggregator Blobs:** Sealed file packages are uploaded as secure, decentralized blobs locked under global digest registries.
 
-### 4. 🚂 Escrow Stamp Junction (Odyssey Ledger)
+### 4. 💰 Automated Royalties (Odyssey Ledger)
 *   **Sui Move Smart Contract:** Declares creative weights on-chain using `co_creation_policy.move` registers.
 *   **Atomic Royalty Splits:** Routes royalties directly into participants' wallets in a single transaction block when downstream remixed works are stamped.
 

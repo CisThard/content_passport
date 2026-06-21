@@ -71,10 +71,10 @@ export default function Chat() {
   return (
     <div className="dashboard-container" style={{ maxWidth: '900px' }}>
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <span className="header-badge badge-rose">MemWal Chat</span>
-        <h2 className="cyber-title">K-9 Sniffer AI Central</h2>
+        <span className="header-badge badge-rose">AI Terminal</span>
+        <h2 className="cyber-title">Interactive AI Assistant</h2>
         <p className="cyber-subtitle" style={{ margin: '10px auto 0' }}>
-          Consult with our security agent to query architectural parameters of the Sui blockchain and Walrus sharded storage protocols.
+          Consult with our AI assistant to learn about Creator Passports, Authenticity Audits, Sealed Vaults, and Automated Royalties.
         </p>
       </div>
 
@@ -85,7 +85,7 @@ export default function Chat() {
             {messages.map((msg, idx) => (
               <div key={idx} className={`bubble-wrap ${msg.sender}`}>
                 <span className="bubble-meta" style={{ marginBottom: '4px' }}>
-                  {msg.sender === 'user' ? 'CREATOR NODE' : ' K-9 AGENT'}
+                  {msg.sender === 'user' ? 'CREATOR NODE' : 'AI ASSISTANT'}
                 </span>
                 <div className="chat-bubble">
                   {msg.text}
@@ -96,7 +96,7 @@ export default function Chat() {
 
             {isTyping && (
               <div className="bubble-wrap agent" style={{ animation: 'fadeIn 0.3s infinite alternate' }}>
-                <span className="bubble-meta"> K-9 AGENT is computing...</span>
+                <span className="bubble-meta">AI ASSISTANT is computing...</span>
                 <div className="chat-bubble" style={{ background: 'rgba(255,255,255,0.01)', borderStyle: 'dashed' }}>
                   <span style={{ display: 'inline-flex', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--neon-rose)', marginRight: '4px', animation: 'pulseDot 1s infinite' }} />
                   <span style={{ display: 'inline-flex', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--neon-rose)', marginRight: '4px', animation: 'pulseDot 1s infinite 0.2s' }} />
@@ -110,7 +110,7 @@ export default function Chat() {
           <form onSubmit={handleSendMessage} className="chat-input-row">
             <input
               type="text"
-              placeholder="Ask K-9 Sniffer... (e.g. ELA forensics, SEAL secret vault, co-creation escrow weights)"
+              placeholder="Ask AI Assistant... (e.g. ELA forensics, SEAL secret vault, co-creation escrow weights)"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               disabled={isTyping}
