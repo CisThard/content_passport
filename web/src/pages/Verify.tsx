@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { SAMPLE_MEDIAS } from '../samples'
 
 interface ScanProgressStep {
@@ -684,6 +685,50 @@ export default function Verify() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Proceed to Sealed Vault Action Button for Approved Audits */}
+              {isApproved && (
+                <div style={{ 
+                  marginTop: '30px', 
+                  paddingTop: '20px', 
+                  borderTop: '1px solid rgba(16, 185, 129, 0.2)',
+                  animation: 'fadeIn 0.5s ease 0.3s both'
+                }}>
+                  <div style={{ 
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(14, 165, 233, 0.08) 100%)', 
+                    border: '1px solid rgba(16, 185, 129, 0.25)', 
+                    borderRadius: '8px', 
+                    padding: '16px',
+                    textAlign: 'center',
+                    boxShadow: '0 0 15px rgba(16, 185, 129, 0.05)'
+                  }}>
+                    <h5 style={{ color: '#fff', fontSize: '13px', margin: '0 0 6px 0', fontWeight: 700 }}>
+                      ✓ Verify SUCCESS: Provenance Confirmed
+                    </h5>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '11px', margin: '0 0 16px 0', lineHeight: 1.4 }}>
+                      Your specimen is verified as an original real photograph. Proceed to lock and protect raw master files using Shamir's Secret Sharing (3/5) on Walrus storage.
+                    </p>
+                    <Link 
+                      to="/vault" 
+                      className="cyber-btn cyber-btn-emerald"
+                      style={{ 
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '10px 16px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.5px',
+                        textDecoration: 'none'
+                      }}
+                    >
+                      🛡️ Proceed to Sealed Vault (SEAL)
+                    </Link>
                   </div>
                 </div>
               )}
