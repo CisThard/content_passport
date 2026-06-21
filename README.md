@@ -106,9 +106,9 @@ The application is containerized and deployed as a **single-origin stateless con
 ```mermaid
 graph TD
     subgraph GCP [Google Cloud Platform]
-        run[Cloud Run Serverless] -->|Secret 마운트| sm[Secret Manager]
-        run -->|Keyless Vertex AI 호출| vertex[Vertex AI Gemini 3.5]
-        run -->|영구 메모리 저장소| db[Cloud Firestore]
+        run[Cloud Run Serverless] -->|Mount Secrets| sm[Secret Manager]
+        run -->|Keyless Vertex AI Calls| vertex[Vertex AI Gemini 3.5]
+        run -->|Persistent Memory Store| db[Cloud Firestore]
     end
     subgraph GitHub
         workflow[GitHub Actions CI/CD] -->|OIDC Token WIF| run
