@@ -255,6 +255,9 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
           <Link to="/about" className="header-badge badge-gold" style={{ textDecoration: 'none', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
              Read Odyssey Story
           </Link>
+          <Link to="/journey" className="header-badge badge-emerald" style={{ textDecoration: 'none', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+             Judge Mode
+          </Link>
           <button 
             onClick={() => setShowIntro(true)} 
             className="header-badge" 

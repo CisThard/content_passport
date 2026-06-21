@@ -9,6 +9,7 @@ const Vault = lazy(() => import('./pages/Vault'))
 const Chat = lazy(() => import('./pages/Chat'))
 const Blueprint = lazy(() => import('./pages/Blueprint'))
 const About = lazy(() => import('./pages/About'))
+const Journey = lazy(() => import('./pages/Journey'))
 import './styles.css'
 
 function Navigation() {
@@ -18,6 +19,7 @@ function Navigation() {
   const NAV_ITEMS = [
     { label: 'Home Orbit', path: '/' },
     { label: 'Odyssey Story', path: '/about' },
+    { label: 'Judge Mode', path: '/journey' },
     { label: 'Co-Creation Model', path: '/blueprint' },
     { label: 'Register Identity', path: '/register' },
     { label: 'Forensics Lab', path: '/verify' },
@@ -134,6 +136,7 @@ function MainAppShell() {
           <Routes>
             <Route path="/" element={<Landing passportsCount={passportsCount} walrusStatus={walrusStatus} />} />
             <Route path="/about" element={<About />} />
+            <Route path="/journey" element={<Journey />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify" element={<Verify />} />
             <Route path="/vault" element={<Vault />} />

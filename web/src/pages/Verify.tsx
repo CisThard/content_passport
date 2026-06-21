@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { SAMPLE_MEDIAS } from '../samples'
 
 interface ScanProgressStep {
-  status: 'idle' | 'received' | 'hashing' | 'forensic_ela' | 'exifr_audit' | 'k9_sniffer' | 'complete'
+  status: 'idle' | 'received' | 'hashing' | 'forensic_ela' | 'exifr_audit' | 'k9_sniffer' | 'walrus_archive' | 'complete'
   progress: number
   logLine: string
 }
@@ -268,6 +268,7 @@ export default function Verify() {
                   {(progressStep.status === 'received' || progressStep.status === 'hashing') && ' HASHING OBJECTIVE SIGNALS...'}
                   {progressStep.status === 'exifr_audit' && ' AUDITING EXIF METADATA HEADERS...'}
                   {progressStep.status === 'k9_sniffer' && ' SNIFFING SYNTHETIC ARTIFACTS...'}
+                  {progressStep.status === 'walrus_archive' && ' ARCHIVING WALRUS ARTIFACTS...'}
                   {progressStep.status === 'complete' && ' VERIFICATION COMPLETE'}
                 </span>
                 <span style={{ fontFamily: 'var(--mono)', fontSize: '11px' }}>{progressStep.progress}%</span>
@@ -282,6 +283,7 @@ export default function Verify() {
                     {(progressStep.status === 'received' || progressStep.status === 'hashing') && ''}
                     {progressStep.status === 'exifr_audit' && ''}
                     {progressStep.status === 'k9_sniffer' && ''}
+                    {progressStep.status === 'walrus_archive' && ''}
                   </span>
                   <span style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: '#fff' }}>
                     REAL-TIME MULTI-AGENT INQUEST IN PROGRESS

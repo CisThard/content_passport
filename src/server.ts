@@ -9,6 +9,7 @@ import { calculateAASE } from "./aase.js";
 import { loadMemWalConfig, MemWalSemanticMemoryClient } from "./memwal.js";
 import { InMemoryAuthenticityMemoryClient, TimedAuthenticityMemoryClient } from "./memory.js";
 import { objectiveForensics } from "./forensics.js";
+import { HttpWalrusClient, WalrusClient } from "./walrus.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,6 +60,15 @@ app.get("/api/health", async (_req, res) => {
 
 type VerifyEvent = (event: string, data: Record<string, unknown>) => void;
 
+function getWalrusClient(): WalrusClient | undefined {
+  const configuredPublisher = process.env.WALRUS_PUBLISHER || process.env.WALRUS_PUBLISHER_URL;
+  const archiveEnabled = process.env.WALRUS_ARCHIVE_ENABLED === "true" || Boolean(configuredPublisher);
+  if (!archiveEnabled) return undefined;
+  const publisher = configuredPublisher || "https://publisher.walrus-testnet.walrus.space";
+  const aggregator = process.env.WALRUS_AGGREGATOR || process.env.WALRUS_AGGREGATOR_URL || "https://aggregator.walrus-testnet.walrus.space";
+  return new HttpWalrusClient({ publisher, aggregator, epochs: Number(process.env.WALRUS_EPOCHS || 1) });
+}
+
 async function verifyUploadedFile(file: Express.Multer.File, emit?: VerifyEvent) {
   const fileBuffer = new Uint8Array(file.buffer);
 
@@ -101,7 +111,7 @@ async function verifyUploadedFile(file: Express.Multer.File, emit?: VerifyEvent)
 
   const assessment = calculateAASE(result.scores, "A");
 
-  return {
+  const payload = {
     success: true,
     filename: file.originalname,
     size: file.size,
@@ -111,6 +121,22 @@ async function verifyUploadedFile(file: Express.Multer.File, emit?: VerifyEvent)
     clueIds: result.clueIds,
     inspector: result.inspector,
     objective,
+  };
+
+  emit?.("progress", {
+    status: "walrus_archive",
+    progress: 88,
+    logLine: "ArchivistAgent storing media hash and audit report artifacts on Walrus...",
+  });
+
+  const walrusArtifacts = await archiveVerificationArtifacts(fileBuffer, payload).catch((error: any) => ({
+    status: "unavailable" as const,
+    error: error.message || String(error),
+  }));
+
+  return {
+    ...payload,
+    walrusArtifacts,
   };
 }
 
@@ -174,6 +200,61 @@ app.post("/api/verify/stream", upload.single("file"), async (req, res) => {
     res.end();
   }
 });
+
+async function archiveVerificationArtifacts(media: Uint8Array, payload: Record<string, unknown>) {
+  const walrus = getWalrusClient();
+  if (!walrus) return { status: "not_configured" as const };
+
+  const reportBytes = new TextEncoder().encode(JSON.stringify({
+    ...payload,
+    archivedAt: new Date().toISOString(),
+  }));
+
+  const [mediaBlob, reportBlob] = await Promise.all([
+    withTimeout(walrus.storeBlob(media), 10_000),
+    withTimeout(walrus.storeBlob(reportBytes), 10_000),
+  ]);
+
+  const aggregator = process.env.WALRUS_AGGREGATOR || process.env.WALRUS_AGGREGATOR_URL || "https://aggregator.walrus-testnet.walrus.space";
+  return {
+    status: "stored" as const,
+    aggregator,
+    artifacts: [
+      {
+        kind: "media",
+        name: "original-media",
+        blobId: mediaBlob.blobId,
+        digest: mediaBlob.digest,
+        size: mediaBlob.size,
+        source: mediaBlob.source,
+        url: `${aggregator.replace(/\/$/, "")}/v1/blobs/${encodeURIComponent(mediaBlob.blobId)}`,
+      },
+      {
+        kind: "audit-report",
+        name: "aase-report.json",
+        blobId: reportBlob.blobId,
+        digest: reportBlob.digest,
+        size: reportBlob.size,
+        source: reportBlob.source,
+        url: `${aggregator.replace(/\/$/, "")}/v1/blobs/${encodeURIComponent(reportBlob.blobId)}`,
+      },
+    ],
+  };
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`Walrus archive timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 // Fallback all non-API GET requests to index.html for SPA client-side routing
 app.get("*", (req, res, next) => {
