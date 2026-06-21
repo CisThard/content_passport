@@ -85,7 +85,7 @@ export default function Chat() {
             {messages.map((msg, idx) => (
               <div key={idx} className={`bubble-wrap ${msg.sender}`}>
                 <span className="bubble-meta" style={{ marginBottom: '4px' }}>
-                  {msg.sender === 'user' ? 'CREATOR NODE' : '🐕 K-9 AGENT'}
+                  {msg.sender === 'user' ? 'CREATOR NODE' : ' K-9 AGENT'}
                 </span>
                 <div className="chat-bubble">
                   {msg.text}
@@ -96,7 +96,7 @@ export default function Chat() {
 
             {isTyping && (
               <div className="bubble-wrap agent" style={{ animation: 'fadeIn 0.3s infinite alternate' }}>
-                <span className="bubble-meta">🐕 K-9 AGENT is computing...</span>
+                <span className="bubble-meta"> K-9 AGENT is computing...</span>
                 <div className="chat-bubble" style={{ background: 'rgba(255,255,255,0.01)', borderStyle: 'dashed' }}>
                   <span style={{ display: 'inline-flex', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--neon-rose)', marginRight: '4px', animation: 'pulseDot 1s infinite' }} />
                   <span style={{ display: 'inline-flex', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--neon-rose)', marginRight: '4px', animation: 'pulseDot 1s infinite 0.2s' }} />

@@ -1,11 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// extensionAlias lets us import the node-ESM library in ../src (which uses
-// explicit `.js` specifiers) directly as TypeScript source.
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    extensionAlias: { '.js': ['.ts', '.js'] },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split rarely-changing vendor libs into their own chunk for better caching.
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
   },
 })

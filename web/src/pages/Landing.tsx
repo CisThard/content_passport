@@ -124,7 +124,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
       title: 'Gate 2.7 Chamber',
       badge: 'Identity Registry',
       desc: 'Declare your sovereign SuiNS identity, establish ephemeral cryptographic session keys, and mint an immutable, tamper-proof creator passport NFT.',
-      icon: '🎫',
+      icon: '',
       path: '/register',
       colorClass: 'cyber-card-glow-indigo'
     },
@@ -133,7 +133,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
       title: 'Aurelius Forensic Lab',
       badge: 'Forensics & EXIF Audit',
       desc: 'Execute multi-agent forensics check including Error Level Analysis (ELA) pixel compression metrics, EXIF header consistency, and Gemini AISniffer verification.',
-      icon: '🦁',
+      icon: '',
       path: '/verify',
       colorClass: 'cyber-card-glow-gold',
       badgeColor: 'badge-gold'
@@ -143,7 +143,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
       title: 'Sharded Secret Vault',
       badge: 'Threshold Encryption',
       desc: 'Lock and seal raw digital masterpieces in decentralized Walrus blobs using Shamir Secret Sharing (3/5) cryptography and multi-party sign approvals.',
-      icon: '🔐',
+      icon: '',
       path: '/vault',
       colorClass: 'cyber-card-glow-emerald',
       badgeColor: 'badge-emerald'
@@ -153,7 +153,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
       title: 'Co-Creation Model',
       badge: 'Sui Move Smart Escrow',
       desc: 'Deploy co_creation_policy.move smart contracts to automatically route and atomic-split royalties among contributors as works are remixed and stamped.',
-      icon: '🚂',
+      icon: '',
       path: '/blueprint',
       colorClass: 'cyber-card-glow-rose',
       badgeColor: 'badge-rose'
@@ -216,7 +216,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
               textTransform: 'uppercase'
             }}
           >
-            🚀 Enter Basecamp Cockpit
+             Enter Basecamp Cockpit
           </button>
           <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '1px' }}>
             Establishing gasless SessionKey tunnel to Sui network...
@@ -253,14 +253,14 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
           <span className="header-badge">Magical Border Control Ecosystem</span>
           <Link to="/about" className="header-badge badge-gold" style={{ textDecoration: 'none', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-            📖 Read Odyssey Story
+             Read Odyssey Story
           </Link>
           <button 
             onClick={() => setShowIntro(true)} 
             className="header-badge" 
             style={{ border: '1px solid rgba(255, 255, 255, 0.15)', cursor: 'pointer', background: 'rgba(255,255,255,0.03)' }}
           >
-            🎬 Watch Trailer
+             Watch Trailer
           </button>
         </div>
         <h2 className="cyber-title" style={{ fontSize: '52px' }}>

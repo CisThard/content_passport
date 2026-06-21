@@ -1068,3 +1068,13 @@ html, body, #root {
   .cyber-card { padding: 16px; }
   .hud-nav-item { padding: 6px 9px; font-size: 11px; }
 }
+
+/* Accessibility + perf: honor reduced-motion (disables aurora/particle/spin animations) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

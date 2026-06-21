@@ -77,7 +77,7 @@ export default function Vault() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
           {vaultState === 'idle' ? (
             <div className="runic-zone" onClick={handleFileDrop}>
-              <div className="runic-zone-icon">🔒</div>
+              <div className="runic-zone-icon"></div>
               <h4>Upload raw file to encrypt &amp; seal</h4>
               <p>Drag and drop or click to upload your high-fidelity draft files, sketches, or metadata to encrypt and seal in the passport.</p>
             </div>
@@ -102,7 +102,7 @@ export default function Vault() {
               <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
                 {vaultState === 'locked' && (
                   <button onClick={handleUnlockVault} className="cyber-btn cyber-btn-emerald" style={{ flex: 1 }}>
-                    🔐 Request Decryption Key Shares
+                     Request Decryption Key Shares
                   </button>
                 )}
                 {(vaultState === 'unlocked' || vaultState === 'locked') && (
@@ -172,7 +172,7 @@ export default function Vault() {
               <div className="orbit-shards-box">
                 {/* Center dial core */}
                 <div className={`orbit-center-node ${vaultState === 'unlocked' ? 'unlocked' : ''}`}>
-                  {vaultState === 'unlocked' ? '🔓' : '🔒'}
+                  {vaultState === 'unlocked' ? '' : ''}
                 </div>
 
                 {/* Shards rotating */}
@@ -191,7 +191,7 @@ export default function Vault() {
                         transform: `translate(${x}px, ${y}px)`
                       }}
                     >
-                      🔑
+                      
                     </div>
                   )
                 })}
@@ -218,7 +218,7 @@ export default function Vault() {
                 opacity: 0.6 
               }}
             >
-              <span style={{ fontSize: '40px', marginBottom: '16px' }}>🔐</span>
+              <span style={{ fontSize: '40px', marginBottom: '16px' }}></span>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', padding: '0 30px', lineHeight: 1.5 }}>
                 Select a draft file to encrypt and visualize the key orbit mechanics.
               </p>

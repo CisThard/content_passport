@@ -112,10 +112,10 @@ export default function Register() {
                   <span style={{ fontFamily: 'var(--sans)', fontSize: '10px', fontWeight: 800, color: 'var(--neon-gold)', letterSpacing: '1px' }}>
                     SUI CREATOR PASSPORT
                   </span>
-                  <span style={{ fontSize: '18px' }}>🌐</span>
+                  
                 </div>
 
-                <div className="holo-seal-emblem">🦁</div>
+                <div className="holo-seal-emblem"></div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
@@ -139,7 +139,7 @@ export default function Register() {
                       <div style={{ fontSize: '7px', color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>ISSUED TIMESTAMP</div>
                       <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px', whiteSpace: 'nowrap' }}>{passportData.issuedAt}</div>
                     </div>
-                    <span style={{ fontSize: '14px' }}>🐕</span>
+                    
                   </div>
                 </div>
               </div>
@@ -159,7 +159,7 @@ export default function Register() {
                 opacity: 0.6 
               }}
             >
-              <span style={{ fontSize: '40px', marginBottom: '16px' }}>🛂</span>
+              <span style={{ fontSize: '40px', marginBottom: '16px' }}></span>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', padding: '0 20px', lineHeight: 1.5 }}>
                 Your holographic gold passport card will materialize here once identity registration completes.
               </p>

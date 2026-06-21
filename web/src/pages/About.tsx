@@ -88,7 +88,7 @@ export default function About() {
       id: 'gate',
       title: 'Prologue: Gate 2.7',
       subtitle: 'Hidden gate · blank passport',
-      icon: '🎫',
+      icon: '',
       story: 'Step through the hidden gate and you’re issued a blank Content Passport — claim your sovereign name and start signing gaslessly.',
       tech: 'genesis_passport.move mints the Passport NFT; SuiNS + ephemeral Ed25519 session keys enable gasless transactions.',
       linkText: 'Enter Gate 2.7',
@@ -99,7 +99,7 @@ export default function About() {
       id: 'audit',
       title: 'Chapter I: Authenticity Audit',
       subtitle: 'Forensics before issuance',
-      icon: '🔬',
+      icon: '',
       story: 'Every upload is checked for manipulation before it earns a passport.',
       tech: 'AASE combines ELA (forensics), EXIF (metadata) and a Gemini AI-sniffer. Visual media is live; audio/video/text domains are on the roadmap.',
       linkText: 'Run forensics',
@@ -110,7 +110,7 @@ export default function About() {
       id: 'vault',
       title: 'Chapter II: Sealed Vault',
       subtitle: 'Threshold-encrypted drafts',
-      icon: '🔐',
+      icon: '',
       story: 'Seal raw drafts so only you can reopen them — the key is split into 5 shards and recombined in your browser.',
       tech: 'Shamir 3-of-5 secret sharing + AES-256; sealed blobs stored on Walrus.',
       linkText: 'Open vault',
@@ -121,7 +121,7 @@ export default function About() {
       id: 'royalties',
       title: 'Chapter III: Automated Royalties',
       subtitle: 'Set the split once',
-      icon: '🚂',
+      icon: '',
       story: 'Set your royalty split once; when a remix earns, revenue routes to every contributor in a single transaction.',
       tech: 'co_creation_policy.move records weights and runs atomic distribute_royalties payouts.',
       linkText: 'View blueprint',
@@ -141,7 +141,7 @@ export default function About() {
         <div style={{ textAlign: 'center', marginBottom: '60px' }}>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '14px' }}>
             <span className="header-badge badge-gold" style={{ background: 'rgba(245, 158, 11, 0.1)', borderColor: 'var(--neon-gold)', color: 'var(--neon-gold)' }}>
-              🛡️ AURELIUS CREATIVE ACADEMY
+               AURELIUS CREATIVE ACADEMY
             </span>
             <span className="header-badge" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }}>
               A magical-realism Web3 world
@@ -185,7 +185,7 @@ export default function About() {
               {/* Tech Underpinnings Box */}
               <div className="linear-card-recessed" style={{ padding: '15px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '4px', marginBottom: '20px' }}>
                 <span style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '5px' }}>
-                  ⚡ Web3 Technical Matrix
+                   Web3 Technical Matrix
                 </span>
                 <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
                   {chap.tech}
@@ -214,7 +214,7 @@ export default function About() {
             borderStyle: 'dashed' 
           }}
         >
-          <span style={{ fontSize: '36px', display: 'block', marginBottom: '16px' }}>🛡️</span>
+          <span style={{ fontSize: '36px', display: 'block', marginBottom: '16px' }}></span>
           <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', marginBottom: '10px' }}>Epilogue: Sovereign by Default</h3>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '650px', margin: '0 auto 24px', fontStyle: 'italic' }}>
             "Creative provenance, bound to the immutable Sui ledger. Pass through Gate 2.7, prove your work, and own your sovereignty forever."
@@ -222,10 +222,10 @@ export default function About() {
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
             <Link to="/" className="cyber-btn cyber-btn-gold" style={{ padding: '10px 30px', fontSize: '12px', fontWeight: 700 }}>
-              🚀 Open Cockpit
+               Open Cockpit
             </Link>
             <Link to="/register" className="cyber-btn" style={{ padding: '10px 30px', fontSize: '12px' }}>
-              🎫 Get your passport
+               Get your passport
             </Link>
           </div>
         </div>

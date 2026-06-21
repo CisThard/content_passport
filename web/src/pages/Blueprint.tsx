@@ -45,7 +45,7 @@ export default function Blueprint() {
       <section style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '60px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
           <h3 className="cyber-title" style={{ fontSize: '22px', margin: 0, color: 'var(--neon-gold)' }}>
-            🦁 1. Supply-Side Flow: Paid Remix Chain
+             1. Supply-Side Flow: Paid Remix Chain
           </h3>
           <span className="header-badge" style={{ background: 'var(--neon-emerald)', color: '#fff', border: 'none', padding: '3px 8px', fontSize: '9px', fontWeight: 700 }}>ACTIVE / IMPLEMENTED</span>
         </div>
@@ -115,7 +115,7 @@ export default function Blueprint() {
             {/* Atomic Escrow Settlement */}
             <div className="linear-card-recessed" style={{ marginTop: '30px', padding: '18px', background: 'rgba(16, 185, 129, 0.02)', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--neon-emerald)', letterSpacing: '0.5px' }}>🔗 ATOMIC ESCROW SETTLEMENT ACTIVE</span>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--neon-emerald)', letterSpacing: '0.5px' }}> ATOMIC ESCROW SETTLEMENT ACTIVE</span>
                 <span className="header-badge" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--neon-emerald)', fontSize: '11px' }}>Total Price: {totalRemixCost} SUI</span>
               </div>
               <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '15px' }}>
@@ -147,7 +147,7 @@ export default function Blueprint() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div className="cyber-input-wrap">
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600, color: 'var(--neon-gold)' }}>
-                    <span>🦁 Anya's Template Base Fee</span>
+                    <span> Anya's Template Base Fee</span>
                     <span>{anyaFee} SUI</span>
                   </div>
                   <input
@@ -161,7 +161,7 @@ export default function Blueprint() {
 
                 <div className="cyber-input-wrap">
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600, color: 'var(--neon-cyan)' }}>
-                    <span>🎹 Ben's Design Added Value</span>
+                    <span> Ben's Design Added Value</span>
                     <span>{benFee} SUI</span>
                   </div>
                   <input
@@ -175,7 +175,7 @@ export default function Blueprint() {
 
                 <div className="cyber-input-wrap">
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600, color: 'var(--neon-rose)' }}>
-                    <span>🚂 Chloe's Sound Added Value</span>
+                    <span> Chloe's Sound Added Value</span>
                     <span>{chloeFee} SUI</span>
                   </div>
                   <input
@@ -209,7 +209,7 @@ export default function Blueprint() {
       <section style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '60px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
           <h3 className="cyber-title" style={{ fontSize: '22px', margin: 0, color: 'var(--neon-cyan)' }}>
-            🚂 2. Demand-Side Flow: Co-Creation Quest
+             2. Demand-Side Flow: Co-Creation Quest
           </h3>
           <span className="header-badge" style={{ background: 'var(--neon-cyan)', color: '#000', border: 'none', padding: '3px 8px', fontSize: '9px', fontWeight: 700 }}>PLANNED / UNDER DEVELOPMENT</span>
         </div>
@@ -223,7 +223,7 @@ export default function Blueprint() {
             </div>
 
             <div className="linear-card-recessed" style={{ marginBottom: '25px', padding: '12px 16px', background: 'rgba(6, 182, 212, 0.02)', borderColor: 'rgba(6, 182, 212, 0.15)', borderStyle: 'dashed', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '14px' }}>⏳</span>
+              
               <span style={{ fontSize: '11px', color: 'var(--neon-cyan)', fontWeight: 600 }}>Development Status: Scheduled for core protocol upgrade. (Escrow UI coming soon)</span>
             </div>
 
@@ -294,7 +294,7 @@ export default function Blueprint() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div className="cyber-input-wrap">
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                    <span>💼 Total Escrow Bounty Pool</span>
+                    <span> Total Escrow Bounty Pool</span>
                     <span>{totalBounty} SUI</span>
                   </div>
                   <input
@@ -371,12 +371,12 @@ export default function Blueprint() {
       {/* ==================== SECTION 3: Embedded Chamber Technologies ==================== */}
       <section style={{ paddingBottom: '20px' }}>
         <div className="cyber-card" style={{ padding: '30px' }}>
-          <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '20px', letterSpacing: '0.5px' }}>🔒 Embedded Chamber Technologies Mapping</h4>
+          <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '20px', letterSpacing: '0.5px' }}> Embedded Chamber Technologies Mapping</h4>
           <div className="grid-layout-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
             
             <div className="linear-card-recessed" style={{ padding: '18px' }}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '18px' }}>🎫</span>
+                
                 <h5 style={{ fontSize: '13px', color: '#fff', fontWeight: 700 }}>SuiNS &amp; SessionKeys</h5>
               </div>
               <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
@@ -386,7 +386,7 @@ export default function Blueprint() {
             
             <div className="linear-card-recessed" style={{ padding: '18px' }}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '18px' }}>🦁</span>
+                
                 <h5 style={{ fontSize: '13px', color: '#fff', fontWeight: 700 }}>Aurelius Forensic Lab</h5>
               </div>
               <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
@@ -396,7 +396,7 @@ export default function Blueprint() {
 
             <div className="linear-card-recessed" style={{ padding: '18px' }}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '18px' }}>🔐</span>
+                
                 <h5 style={{ fontSize: '13px', color: '#fff', fontWeight: 700 }}>Sharded Secret Vault</h5>
               </div>
               <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.4 }}>

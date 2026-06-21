@@ -120,9 +120,9 @@ export default function Verify() {
 
       {/* Roadmap Phase-in Notice */}
       <div className="linear-card-recessed" style={{ marginBottom: '35px', padding: '16px 20px', background: 'rgba(99, 102, 241, 0.02)', borderColor: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', gap: '15px', borderRadius: '4px' }}>
-        <span style={{ fontSize: '20px' }}>🚧</span>
+        
         <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
-          <strong style={{ color: 'var(--neon-indigo)' }}>Active Roadmap Phase:</strong> Aurelius Lab is currently optimized for <strong style={{ color: '#fff' }}>Visual Media (Images)</strong>. Forensic verification suites for Audio, Video, and Text Text (Text/Code) Code are scheduled for development and will be deployed sequentially in upcoming protocol upgrades.
+          <strong style={{ color: 'var(--neon-indigo)' }}>Active Roadmap Phase:</strong> Aurelius Lab is currently optimized for <strong style={{ color: '#fff' }}>Visual Media (Images)</strong>. Forensic verification suites for Audio, Video, and Text/Code are scheduled for development and will be deployed sequentially in upcoming protocol upgrades.
         </div>
       </div>
 
@@ -158,9 +158,9 @@ export default function Verify() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: sample.type === 'real' ? 'var(--neon-emerald)' : 'var(--neon-rose)' }}>
-                      {sample.type === 'real' ? '📸 CAMERA RAW' : '🤖 GENERATED AI'}
+                      {sample.type === 'real' ? ' CAMERA RAW' : ' GENERATED AI'}
                     </span>
-                    <span style={{ fontSize: '14px' }}>{sample.type === 'real' ? '🏔️' : '🏙️'}</span>
+                    <span style={{ fontSize: '14px' }}>{sample.type === 'real' ? '' : ''}</span>
                   </div>
                   <strong style={{ fontSize: '13px', color: '#fff', display: 'block', marginBottom: '4px' }}>{sample.title}</strong>
                   <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>{sample.name}</span>
@@ -206,7 +206,7 @@ export default function Verify() {
               >
                 {customFile ? (
                   <div>
-                    <span style={{ fontSize: '20px', display: 'block', marginBottom: '6px' }}>🖼️</span>
+                    <span style={{ fontSize: '20px', display: 'block', marginBottom: '6px' }}></span>
                     <strong style={{ fontSize: '12px', color: '#fff', display: 'block' }}>{customFile.name}</strong>
                     <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                       {(customFile.size / 1024 / 1024).toFixed(2)} MB • Click to change
@@ -214,7 +214,7 @@ export default function Verify() {
                   </div>
                 ) : (
                   <div>
-                    <span style={{ fontSize: '20px', display: 'block', marginBottom: '6px' }}>📤</span>
+                    <span style={{ fontSize: '20px', display: 'block', marginBottom: '6px' }}></span>
                     <strong style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block' }}>
                       Drag & Drop or Click to Upload
                     </strong>
@@ -245,9 +245,9 @@ export default function Verify() {
             <div className="cyber-card" style={{ padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--neon-emerald)' }}>
-                  {progressStep.status === 'forensic_ela' && '🔍 SCANNING PIXEL MATRIX (ELA)...'}
-                  {progressStep.status === 'exifr_audit' && '📂 AUDITING EXIF METADATA HEADERS...'}
-                  {progressStep.status === 'k9_sniffer' && '🐕 SNIFFING SYNTHETIC ARTIFACTS...'}
+                  {progressStep.status === 'forensic_ela' && ' SCANNING PIXEL MATRIX (ELA)...'}
+                  {progressStep.status === 'exifr_audit' && ' AUDITING EXIF METADATA HEADERS...'}
+                  {progressStep.status === 'k9_sniffer' && ' SNIFFING SYNTHETIC ARTIFACTS...'}
                 </span>
                 <span style={{ fontFamily: 'var(--mono)', fontSize: '11px' }}>{progressStep.progress}%</span>
               </div>
@@ -257,9 +257,9 @@ export default function Verify() {
                 <div className="laser-scanning-bar"></div>
                 <div style={{ zIndex: 10, textAlign: 'center' }}>
                   <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>
-                    {progressStep.status === 'forensic_ela' && '🎛️'}
-                    {progressStep.status === 'exifr_audit' && '📂'}
-                    {progressStep.status === 'k9_sniffer' && '🐕'}
+                    {progressStep.status === 'forensic_ela' && ''}
+                    {progressStep.status === 'exifr_audit' && ''}
+                    {progressStep.status === 'k9_sniffer' && ''}
                   </span>
                   <span style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: '#fff' }}>
                     REAL-TIME MULTI-AGENT INQUEST IN PROGRESS
@@ -314,7 +314,7 @@ export default function Verify() {
                   justifyContent: 'center',
                   boxShadow: isApproved ? '0 0 25px var(--neon-emerald-glow)' : '0 0 25px var(--neon-rose-glow)'
                 }}>
-                  <span style={{ fontSize: '36px' }}>{isApproved ? '🛂' : '❌'}</span>
+                  <span style={{ fontSize: '36px' }}>{isApproved ? '' : ''}</span>
                 </div>
                 <h4 style={{ fontSize: '22px', color: '#fff', marginTop: '16px', fontWeight: 800 }}>
                   {isApproved ? 'Audit Approved' : 'Synthetic Alert'}
@@ -363,7 +363,7 @@ export default function Verify() {
                 if (!p) return null
                 const map: Record<string, { color: string; label: string }> = {
                   verified:    { color: 'var(--neon-emerald)', label: '✓ Verified provenance' },
-                  present:     { color: 'var(--neon-gold)',    label: '⚠ Manifest present (signature unverified)' },
+                  present:     { color: 'var(--neon-gold)',    label: ' Manifest present (signature unverified)' },
                   absent:      { color: 'var(--text-muted)',   label: '— No Content Credentials embedded' },
                   unavailable: { color: 'var(--text-muted)',   label: '— C2PA check unavailable' },
                 }
@@ -455,7 +455,7 @@ export default function Verify() {
                 opacity: 0.85
               }}
             >
-              <span style={{ fontSize: '40px', marginBottom: '16px', filter: 'drop-shadow(0 0 10px rgba(99,102,241,0.5))' }}>🛂</span>
+              <span style={{ fontSize: '40px', marginBottom: '16px', filter: 'drop-shadow(0 0 10px rgba(99,102,241,0.5))' }}></span>
               <p style={{ fontSize: '13px', color: '#fff', textAlign: 'center', padding: '0 30px', lineHeight: 1.5, textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
                 Forensics verdict report card will dynamically render here once audit analysis is triggered.
               </p>
