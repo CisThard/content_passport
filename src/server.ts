@@ -10,6 +10,10 @@ import { loadMemWalConfig, MemWalSemanticMemoryClient } from "./memwal.js";
 import { getAuthenticityMemoryClient } from "./memory.js";
 import { objectiveForensics } from "./forensics.js";
 import { HttpWalrusClient, InMemoryWalrusClient, WalrusClient } from "./walrus.js";
+import { sha256 } from "./evidence.js";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
+import { getContentRightConfig, buildIssueGenesisPassportTx } from "./sui.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -310,6 +314,211 @@ app.get("/api/vault/download/:blobId", async (req, res) => {
     res.send(Buffer.from(data));
   } catch (error: any) {
     console.error("[Server] Vault download failed:", error);
+    res.status(500).json({ success: false, error: error.message || String(error) });
+  }
+});
+
+// ==========================================
+// 🛡️ zkLogin & Sponsored Transactions (Pure Web2.5)
+// ==========================================
+
+function getSponsorKeypair(): Ed25519Keypair | undefined {
+  const secret = process.env.SUI_SPONSOR_SECRET_KEY || process.env.SPONSOR_SECRET;
+  if (!secret) return undefined;
+  try {
+    return Ed25519Keypair.fromSecretKey(Buffer.from(secret, "hex"));
+  } catch (e) {
+    console.error("[Server] Invalid Sponsor Secret Key:", e);
+    return undefined;
+  }
+}
+
+// GET /api/auth/config
+app.get("/api/auth/config", async (req, res) => {
+  const rpcUrl = process.env.SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
+  const network = (process.env.SUI_NETWORK || "testnet") as any;
+  const suiClient = new SuiJsonRpcClient({ url: rpcUrl, network });
+  let epoch = 100;
+  try {
+    const systemState = await suiClient.getLatestSuiSystemState();
+    epoch = Number(systemState.epoch);
+  } catch (e) {
+    console.warn("[Server] Failed to fetch current epoch from RPC:", e);
+  }
+
+  res.json({
+    googleClientId: process.env.AUTH_GOOGLE_ID || "",
+    packageId: process.env.CONTENT_RIGHT_PACKAGE_ID || process.env.SUI_PACKAGE_ID || "",
+    epoch,
+  });
+});
+
+// POST /api/auth/zklogin
+app.post("/api/auth/zklogin", async (req, res) => {
+  try {
+    const { jwt, ephemeralPublicKeyB64, maxEpoch, randomness } = req.body;
+    if (!jwt || !ephemeralPublicKeyB64) {
+      res.status(400).json({ success: false, error: "Missing jwt or ephemeralPublicKeyB64" });
+      return;
+    }
+
+    const proverUrl = "https://prover-dev.zklogin.sui.io/v1";
+    let zkProof: any = null;
+    let zkAddress = "";
+    const salt = "12345678901234567890123456789012";
+
+    try {
+      const response = await fetch(proverUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jwt,
+          extendedEphemeralPublicKey: ephemeralPublicKeyB64,
+          maxEpoch,
+          jwtRandomness: randomness,
+          obfuscatedMobile: "12345",
+          keyClaimName: "sub",
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        zkProof = data.zkProof;
+        const { jwtToAddress } = await import("@mysten/sui/zklogin");
+        zkAddress = jwtToAddress(jwt, salt, false);
+      }
+    } catch (e) {
+      console.warn("[Server] Real zkLogin prover failed, falling back to mock session. Error:", e);
+    }
+
+    if (!zkAddress) {
+      zkAddress = "0x" + sha256(new TextEncoder().encode(jwt + salt)).slice(0, 40);
+      zkProof = { mockProof: true, seed: Math.random().toString(36).substring(7) };
+    }
+
+    res.json({
+      success: true,
+      address: zkAddress,
+      proof: zkProof,
+    });
+  } catch (error: any) {
+    console.error("[Server] zkLogin setup failed:", error);
+    res.status(500).json({ success: false, error: error.message || String(error) });
+  }
+});
+
+// POST /api/gas/build-mint
+app.post("/api/gas/build-mint", async (req, res) => {
+  try {
+    const { sender, recipient, contentHash, grade, mediaBlobId, evidenceBlobId } = req.body;
+    if (!sender || !recipient || !contentHash || !grade || !mediaBlobId || !evidenceBlobId) {
+      res.status(400).json({ success: false, error: "Missing required fields in request body" });
+      return;
+    }
+
+    const sponsorKeypair = getSponsorKeypair();
+    const config = getContentRightConfig();
+    const packageId = config.packageId;
+
+    if (!packageId) {
+      res.status(500).json({ success: false, error: "CONTENT_RIGHT_PACKAGE_ID is not configured on the server" });
+      return;
+    }
+
+    const tx = buildIssueGenesisPassportTx({
+      packageId,
+      recipient,
+      contentHash,
+      grade,
+      mediaBlobId,
+      evidenceBlobId,
+    });
+
+    tx.setSender(sender);
+
+    if (!sponsorKeypair) {
+      console.log("[Server] SUI_SPONSOR_SECRET_KEY not set. Operating in MOCK SPONSOR MODE.");
+      res.json({
+        success: true,
+        mockMode: true,
+        txBytesB64: Buffer.from("MOCK_TX_BYTES_DUMMY").toString("base64"),
+      });
+      return;
+    }
+
+    const sponsorAddress = sponsorKeypair.toSuiAddress();
+    tx.setGasOwner(sponsorAddress);
+
+    const rpcUrl = process.env.SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
+    const network = (process.env.SUI_NETWORK || "testnet") as any;
+    const suiClient = new SuiJsonRpcClient({ url: rpcUrl, network });
+
+    // Build the transaction
+    const txBytes = await tx.build({ client: suiClient as any });
+
+    res.json({
+      success: true,
+      mockMode: false,
+      txBytesB64: Buffer.from(txBytes).toString("base64"),
+    });
+  } catch (error: any) {
+    console.error("[Server] Build mint transaction failed:", error);
+    res.status(500).json({ success: false, error: error.message || String(error) });
+  }
+});
+
+// POST /api/gas/sponsor
+app.post("/api/gas/sponsor", async (req, res) => {
+  try {
+    const { txBytesB64, userSignature } = req.body;
+    if (!txBytesB64) {
+      res.status(400).json({ success: false, error: "Missing txBytesB64" });
+      return;
+    }
+
+    const txBytes = Buffer.from(txBytesB64, "base64");
+    const sponsorKeypair = getSponsorKeypair();
+
+    if (!sponsorKeypair) {
+      console.log("[Server] SUI_SPONSOR_SECRET_KEY not set. Operating in MOCK SPONSOR MODE.");
+      res.json({
+        success: true,
+        mockMode: true,
+        digest: "E2E_MOCK_SPONSOR_TX_DIGEST_" + Math.random().toString(36).substring(7).toUpperCase(),
+        message: "Simulated Sponsor Sign & Broadcast SUCCESS."
+      });
+      return;
+    }
+
+    const rpcUrl = process.env.SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
+    const network = (process.env.SUI_NETWORK || "testnet") as any;
+    const suiClient = new SuiJsonRpcClient({ url: rpcUrl, network });
+
+    const sponsorSignResult = await sponsorKeypair.signTransaction(txBytes);
+    const combinedSignatures = [userSignature];
+    if (sponsorSignResult.signature) {
+      combinedSignatures.push(sponsorSignResult.signature);
+    }
+
+    console.log("[Server] Broadcasting sponsored transaction...");
+    const executionResult = await suiClient.executeTransactionBlock({
+      transactionBlock: txBytes,
+      signature: combinedSignatures,
+      options: {
+        showRawEffects: true,
+        showObjectChanges: true,
+      }
+    });
+
+    res.json({
+      success: true,
+      mockMode: false,
+      digest: executionResult.digest,
+      effects: executionResult.effects,
+      objectChanges: executionResult.objectChanges,
+    });
+  } catch (error: any) {
+    console.error("[Server] Sponsor execute failed:", error);
     res.status(500).json({ success: false, error: error.message || String(error) });
   }
 });

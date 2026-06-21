@@ -1,15 +1,29 @@
-import { useState } from 'react'
-import { ConnectButton, useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
-import { buildIssueGenesisPassportTx } from '../../../src/sui'
+import { useState, useEffect } from 'react'
+import {
+  getOrSetEphemeralSession,
+  buildGoogleAuthUrl,
+  getJwtFromUrlHash,
+  clearEphemeralSession,
+} from '../lib/zklogin'
+import { genAddressSeed, getZkLoginSignature } from '@mysten/sui/zklogin'
 import {
   CONTENT_RIGHT_PACKAGE_ID,
-  SUI_CHAIN,
   firstCreatedObjectId,
   lastVerification,
   rememberOnchainState,
   shortId,
   suiscanTxUrl,
 } from '../lib/suiNetwork'
+
+function decodeJwt(token: string) {
+  const parts = token.split('.')
+  if (parts.length !== 3) {
+    throw new Error('Invalid JWT format')
+  }
+  const payload = parts[1]
+  const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+  return JSON.parse(decoded)
+}
 
 export default function Register() {
   const [suinsName, setSuinsName] = useState('')
@@ -23,23 +37,126 @@ export default function Register() {
     txDigest: string
     explorerUrl: string
   } | null>(null)
-  const currentAccount = useCurrentAccount()
-  const suiClient = useSuiClient()
-  const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction({
-    execute: async ({ bytes, signature }) =>
-      suiClient.executeTransactionBlock({
-        transactionBlock: bytes,
-        signature,
-        options: {
-          showRawEffects: true,
-          showObjectChanges: true,
-          showEvents: true,
-        },
-      }),
-  })
+
+  const [googleClientId, setGoogleClientId] = useState('')
+  const [serverPackageId, setServerPackageId] = useState('')
+  const [currentEpoch, setCurrentEpoch] = useState(100)
+  const [zkUserAddress, setZkUserAddress] = useState<string | null>(null)
+  const [zkProof, setZkProof] = useState<any | null>(null)
+  const [jwt, setJwt] = useState<string | null>(null)
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+
+  // Fetch configs on load
+  useEffect(() => {
+    fetch('/api/auth/config')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.googleClientId) setGoogleClientId(data.googleClientId)
+        if (data.packageId) setServerPackageId(data.packageId)
+        if (data.epoch) setCurrentEpoch(data.epoch)
+      })
+      .catch((err) => console.error('Failed to load auth config:', err))
+  }, [])
+
+  // Handle URL redirect or session restoration
+  useEffect(() => {
+    const savedAddress = sessionStorage.getItem('cp_zk_address')
+    const savedProof = sessionStorage.getItem('cp_zk_proof')
+    const savedJwt = sessionStorage.getItem('cp_zk_jwt')
+
+    if (savedAddress && savedProof && savedJwt) {
+      setZkUserAddress(savedAddress)
+      setZkProof(JSON.parse(savedProof))
+      setJwt(savedJwt)
+      return
+    }
+
+    const urlJwt = getJwtFromUrlHash()
+    if (urlJwt) {
+      // Clean hash
+      window.location.hash = ''
+      setJwt(urlJwt)
+      sessionStorage.setItem('cp_zk_jwt', urlJwt)
+      handleZkLogin(urlJwt)
+    }
+  }, [currentEpoch])
+
+  const handleZkLogin = async (token: string) => {
+    setIsLoggingIn(true)
+    setMintLogs((prev) => [...prev, 'OIDC Token captured. Deriving zkLogin address seed...'])
+    try {
+      const session = getOrSetEphemeralSession(currentEpoch)
+      const ephemeralPublicKeyB64 = session.keypair.getPublicKey().toBase64()
+
+      const response = await fetch('/api/auth/zklogin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jwt: token,
+          ephemeralPublicKeyB64,
+          maxEpoch: session.maxEpoch,
+          randomness: session.randomness,
+        }),
+      })
+
+      const data = await response.json()
+      if (!data.success) {
+        throw new Error(data.error || 'zkLogin API returned failure')
+      }
+
+      setZkUserAddress(data.address)
+      setZkProof(data.proof)
+
+      sessionStorage.setItem('cp_zk_address', data.address)
+      sessionStorage.setItem('cp_zk_proof', JSON.stringify(data.proof))
+
+      setMintLogs((prev) => [
+        ...prev,
+        `Derived zkLogin address: ${shortId(data.address)}`,
+        data.proof.mockProof ? '[SANDBOX] Running in Mock zkLogin validation.' : 'zkLogin validation complete (ZK Proof validated).'
+      ])
+    } catch (err: any) {
+      setMintLogs((prev) => [...prev, `[ERROR] zkLogin Address derivation failed: ${err.message || String(err)}`])
+      console.error(err)
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }
+
+  const handleGoogleLogin = () => {
+    if (!googleClientId) {
+      alert('Google OAuth client ID not configured on the backend.')
+      return
+    }
+    const session = getOrSetEphemeralSession(currentEpoch)
+    const nonce = generateNonce(session.keypair.getPublicKey(), session.maxEpoch, session.randomness)
+    const redirectUri = window.location.origin + '/register'
+
+    const authUrl = buildGoogleAuthUrl({
+      clientId: googleClientId,
+      redirectUri,
+      nonce,
+    })
+
+    setMintLogs((prev) => [...prev, 'Redirecting to Google Account Authentication...'])
+    window.location.href = authUrl
+  }
+
+  const handleLogout = () => {
+    clearEphemeralSession()
+    sessionStorage.removeItem('cp_zk_jwt')
+    sessionStorage.removeItem('cp_zk_address')
+    sessionStorage.removeItem('cp_zk_proof')
+    setZkUserAddress(null)
+    setZkProof(null)
+    setJwt(null)
+    setMintLogs([])
+    setPassportData(null)
+  }
 
   const handleMintPassport = async () => {
-    if (!suinsName.trim() || !currentAccount || !CONTENT_RIGHT_PACKAGE_ID) return
+    const activePackageId = serverPackageId || CONTENT_RIGHT_PACKAGE_ID
+    if (!suinsName.trim() || !zkUserAddress || !activePackageId) return
     setIsMinting(true)
     setPassportData(null)
     setMintLogs([])
@@ -51,40 +168,124 @@ export default function Register() {
       const mediaBlobId = verification?.objective?.perceptualHash?.hash || `suins:${suinsName.trim()}`
       const evidenceBlobId = verification?.clueIds?.[0] || verification?.objective?.perceptualHash?.hash || 'local-evidence'
 
-      setMintLogs((prev) => [...prev, `Wallet connected: ${shortId(currentAccount.address)}`])
-      setMintLogs((prev) => [...prev, `Building PTB: genesis_passport::issue_passport(${grade}, ${shortId(contentHash, 10, 8)})`])
-      const tx = buildIssueGenesisPassportTx({
-        packageId: CONTENT_RIGHT_PACKAGE_ID,
-        recipient: currentAccount.address,
-        contentHash,
-        grade,
-        mediaBlobId,
-        evidenceBlobId,
+      setMintLogs((prev) => [...prev, `Preparing transaction for zkLogin identity: ${shortId(zkUserAddress)}`])
+      setMintLogs((prev) => [...prev, 'Querying backend to construct transaction block (PTB) with Gas Sponsor...'])
+
+      const buildRes = await fetch('/api/gas/build-mint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender: zkUserAddress,
+          recipient: zkUserAddress,
+          contentHash,
+          grade,
+          mediaBlobId,
+          evidenceBlobId,
+        })
       })
 
-      setMintLogs((prev) => [...prev, 'Requesting wallet signature and executing on Sui...'])
-      const result = await signAndExecuteTransaction({ transaction: tx, chain: SUI_CHAIN })
-      const passportObjectId = firstCreatedObjectId(result) || ''
-      const timestamp = new Date().toUTCString()
+      const buildData = await buildRes.json()
+      if (!buildData.success) {
+        throw new Error(buildData.error || 'Failed to construct sponsored transaction')
+      }
 
+      let txDigest = ''
+      let explorerUrl = ''
+      let passportObjectId = ''
+
+      if (buildData.mockMode) {
+        setMintLogs((prev) => [...prev, '[SANDBOX] Sponsor is in Mock Mode. Executing simulated state change...'])
+        
+        const sponsorRes = await fetch('/api/gas/sponsor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            txBytesB64: buildData.txBytesB64,
+            userSignature: 'mock_signature',
+          })
+        })
+
+        const sponsorData = await sponsorRes.json()
+        if (!sponsorData.success) {
+          throw new Error(sponsorData.error || 'Simulated sponsor execution failed')
+        }
+
+        txDigest = sponsorData.digest
+        explorerUrl = '#'
+        passportObjectId = '0x_mock_passport_id_' + Math.random().toString(36).substring(7)
+        setMintLogs((prev) => [...prev, `Simulated registration SUCCESS. Digest: ${txDigest}`])
+      } else {
+        setMintLogs((prev) => [...prev, 'Sponsor transaction block received. Creating signature from Ephemeral Session Key...'])
+
+        const txBytes = Uint8Array.from(atob(buildData.txBytesB64), (c) => c.charCodeAt(0))
+        const session = getOrSetEphemeralSession(currentEpoch)
+        const ephemeralSignature = await session.keypair.signTransactionBlock(txBytes)
+
+        if (!jwt) {
+          throw new Error('OAuth JWT session missing or expired')
+        }
+        const decodedJwt = decodeJwt(jwt)
+
+        const addressSeed = genAddressSeed(
+          BigInt("12345678901234567890123456789012"), // static salt
+          'sub',
+          decodedJwt.sub,
+          decodedJwt.aud
+        ).toString()
+
+        const userZkSignature = getZkLoginSignature({
+          inputs: {
+            ...zkProof,
+            addressSeed,
+          },
+          maxEpoch: session.maxEpoch,
+          userSignature: ephemeralSignature.signature,
+        })
+
+        setMintLogs((prev) => [...prev, 'Broadcasting combined signatures to Sui Blockchain network...'])
+
+        const sponsorRes = await fetch('/api/gas/sponsor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            txBytesB64: buildData.txBytesB64,
+            userSignature: userZkSignature,
+          })
+        })
+
+        const sponsorData = await sponsorRes.json()
+        if (!sponsorData.success) {
+          throw new Error(sponsorData.error || 'Sponsor transaction broadcast failed')
+        }
+
+        txDigest = sponsorData.digest
+        explorerUrl = suiscanTxUrl(txDigest)
+        passportObjectId = firstCreatedObjectId(sponsorData) || ''
+
+        setMintLogs((prev) => [...prev, `Transaction confirmed on Sui! Digest: ${shortId(txDigest, 12, 8)}`])
+        if (passportObjectId) {
+          setMintLogs((prev) => [...prev, `Passport NFT object created: ${shortId(passportObjectId)}`])
+        }
+      }
+
+      const timestamp = new Date().toUTCString()
       rememberOnchainState({
         passportId: passportObjectId,
-        passportTxDigest: result.digest,
+        passportTxDigest: txDigest,
         suins: suinsName.endsWith('.sui') ? suinsName : suinsName + '.sui',
       })
-      setMintLogs((prev) => [...prev, `Transaction confirmed: ${shortId(result.digest, 12, 8)}`])
-      if (passportObjectId) setMintLogs((prev) => [...prev, `GenesisPassport object: ${shortId(passportObjectId)}`])
 
       setPassportData({
         suins: suinsName.endsWith('.sui') ? suinsName : suinsName + '.sui',
-        address: passportObjectId || currentAccount.address,
+        address: passportObjectId || zkUserAddress,
         issuedAt: timestamp,
-        serial: `SUI-${result.digest.slice(0, 10).toUpperCase()}`,
-        txDigest: result.digest,
-        explorerUrl: suiscanTxUrl(result.digest),
+        serial: `SUI-${txDigest.slice(0, 10).toUpperCase()}`,
+        txDigest,
+        explorerUrl,
       })
+
     } catch (error: any) {
-      setMintLogs((prev) => [...prev, `[ERROR] ${error.message || String(error)}`])
+      setMintLogs((prev) => [...prev, `[ERROR] Mint failed: ${error.message || String(error)}`])
     } finally {
       setIsMinting(false)
     }
@@ -96,7 +297,7 @@ export default function Register() {
         <span className="header-badge">Prologue · Identity Gate</span>
         <h2 className="cyber-title">On-chain Identity Registry</h2>
         <p className="cyber-subtitle" style={{ margin: '10px auto 0' }}>
-          Declare your sovereign SuiNS (Sui Name Service) identity and generate local ephemeral session keys to mint your tamper-proof creator passport NFT.
+          Declare your sovereign SuiNS (Sui Name Service) identity using your Google account to instantly mint a creator passport with zero gas fees.
         </p>
       </div>
 
@@ -104,21 +305,58 @@ export default function Register() {
         {/* Registration Form & Console */}
         <div className="cyber-card">
           <h3 className="card-title">Passport Authority Form</h3>
-          <p className="card-subtitle">Connect a Sui wallet and issue a real GenesisPassport transaction from the deployed Move package.</p>
+          <p className="card-subtitle">Authenticate via Google and the system will auto-fund the on-chain mint transaction.</p>
 
-          <div className="linear-card-recessed" style={{ padding: '14px 16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>SUI WALLET STATUS</div>
-              <strong style={{ color: currentAccount ? 'var(--neon-emerald)' : 'var(--neon-rose)', fontSize: '12px' }}>
-                {currentAccount ? `Connected ${shortId(currentAccount.address)}` : 'Wallet required for real mint'}
-              </strong>
-              {!CONTENT_RIGHT_PACKAGE_ID && (
-                <div style={{ color: 'var(--neon-gold)', fontSize: '10px', marginTop: '4px' }}>
-                  Set VITE_CONTENT_RIGHT_PACKAGE_ID to enable package calls.
+          <div className="linear-card-recessed" style={{ padding: '16px 20px', marginBottom: '20px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(255, 255, 255, 0.02)', backdropFilter: 'blur(10px)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', letterSpacing: '1px', textTransform: 'uppercase' }}>Google OIDC Identity</div>
+                <strong style={{ color: zkUserAddress ? 'var(--neon-emerald)' : 'var(--neon-rose)', fontSize: '14px', fontFamily: 'var(--mono)', display: 'block', marginTop: '4px' }}>
+                  {zkUserAddress ? `Google User: ${shortId(zkUserAddress)}` : 'Google Authentication Required'}
+                </strong>
+                <div style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '4px' }}>
+                  {zkUserAddress ? 'Gas sponsored by Content Passport ($0.00 Gas fee)' : 'Mint sponsored passports with zero wallet or gas friction'}
                 </div>
+              </div>
+              {zkUserAddress ? (
+                <button 
+                  onClick={handleLogout} 
+                  className="cyber-btn cyber-btn-rose"
+                  style={{ padding: '8px 16px', fontSize: '12px' }}
+                >
+                  Logout
+                </button>
+              ) : (
+                <button 
+                  onClick={handleGoogleLogin} 
+                  disabled={isLoggingIn || !googleClientId}
+                  className="cyber-btn cyber-btn-indigo"
+                  style={{ 
+                    padding: '10px 20px', 
+                    fontSize: '12px', 
+                    fontWeight: 700, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px',
+                    boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)'
+                  }}
+                >
+                  {isLoggingIn ? (
+                    'Processing...'
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                      </svg>
+                      Sign In with Google
+                    </>
+                  )}
+                </button>
               )}
             </div>
-            <ConnectButton />
           </div>
 
           <div className="cyber-input-wrap">
@@ -129,12 +367,12 @@ export default function Register() {
                 placeholder="e.g. charles.sui"
                 value={suinsName}
                 onChange={(e) => setSuinsName(e.target.value)}
-                disabled={isMinting}
+                disabled={isMinting || !zkUserAddress}
                 style={{ flex: 1 }}
               />
               <button
                 onClick={handleMintPassport}
-                disabled={isMinting || !suinsName.trim() || !currentAccount || !CONTENT_RIGHT_PACKAGE_ID}
+                disabled={isMinting || !suinsName.trim() || !zkUserAddress}
                 className="cyber-btn cyber-btn-indigo"
                 style={{ padding: '0 28px', whiteSpace: 'nowrap' }}
               >
@@ -151,8 +389,8 @@ export default function Register() {
                 {mintLogs.map((log, idx) => (
                   <div key={idx} className="console-line">
                     <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
-                    <span className={`console-tag ${log.startsWith('[ERROR]') ? 'tag-rose' : log.startsWith('Transaction') ? 'tag-success' : 'tag-system'}`}>
-                      {log.startsWith('[ERROR]') ? '[FAIL]' : log.startsWith('Transaction') ? '[TX]' : '[PROCESS]'}
+                    <span className={`console-tag ${log.startsWith('[ERROR]') ? 'tag-rose' : log.includes('Transaction confirmed') || log.includes('SUCCESS') ? 'tag-success' : 'tag-system'}`}>
+                      {log.startsWith('[ERROR]') ? '[FAIL]' : log.includes('Transaction confirmed') || log.includes('SUCCESS') ? '[TX]' : '[PROCESS]'}
                     </span>
                     <span>{log}</span>
                   </div>
@@ -172,7 +410,6 @@ export default function Register() {
                   <span style={{ fontFamily: 'var(--sans)', fontSize: '10px', fontWeight: 800, color: 'var(--neon-gold)', letterSpacing: '1px' }}>
                     SUI CREATOR PASSPORT
                   </span>
-                  
                 </div>
 
                 <div className="holo-seal-emblem"></div>
@@ -190,7 +427,7 @@ export default function Register() {
                     </div>
                     <div>
                       <div style={{ fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>SERIAL NUMBER</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--mono)' }}>{passportData.serial}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'var(--mono)' }}>{shortId(passportData.serial, 10, 0)}</div>
                     </div>
                   </div>
 
@@ -199,9 +436,13 @@ export default function Register() {
                       <div style={{ fontSize: '7px', color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>ISSUED TIMESTAMP</div>
                       <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px', whiteSpace: 'nowrap' }}>{passportData.issuedAt}</div>
                     </div>
-                    <a href={passportData.explorerUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--neon-cyan)', fontSize: '9px', fontFamily: 'var(--mono)' }}>
-                      Suiscan
-                    </a>
+                    {passportData.txDigest !== 'mock' && passportData.explorerUrl !== '#' ? (
+                      <a href={passportData.explorerUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--neon-cyan)', fontSize: '9px', fontFamily: 'var(--mono)' }}>
+                        Suiscan
+                      </a>
+                    ) : (
+                      <span style={{ color: 'var(--neon-gold)', fontSize: '9px', fontFamily: 'var(--mono)' }}>Mocknet</span>
+                    )}
                   </div>
                 </div>
               </div>

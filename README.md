@@ -10,9 +10,11 @@ The project is deployed and fully operational at **`https://content-passport.xyz
 
 The ecosystem is divided into four distinct cryptographic chambers:
 
-### 1. 🎫 Identity Gate (On-chain Identity)
-*   **Sovereign Namespaces:** Claim unique subdomains via SuiNS (Sui Name Service) directly written into Move identity objects.
-*   **Sponsored Session Keys:** Generate local, ephemeral Ed25519 SessionKeys with 10-minute TTLs, enabling gasless, pop-up-free sponsored transaction block (PTB) pipelines.
+### 1. 🎫 Identity Gate (Pure Web2.5 zkLogin)
+*   **Zero-friction Social Onboarding:** General users authenticate via **Google Account (OIDC)**. No browser wallet extensions (like Sui Wallet) or pre-existing token balances are required.
+*   **Decentralized Address Derivation:** Ephemeral session keys (ED25519) are generated in browser memory, bound to the user's Google JWT, and verified via Sui's public ZK Prover to derive a secure zkLogin address.
+*   **Sponsored Transactions ($0.00 Gas Fee):** Transactions are built by the backend, signed locally by the user's ephemeral key, and co-signed by the backend Sponsor Wallet, which pays all gas fees.
+*   **Sandbox Fallback:** Features a mock validation mode that simulates key derivation and transaction execution when RPC networks or sponsor secrets are unavailable.
 
 ### 2. 🔍 Authenticity Lab (AASE Checkpoint)
 *   **Error Level Analysis (ELA):** Detect pixel manipulations by re-compressing uploaded images at 90% quality using `sharp` modules and measuring error metrics.
@@ -45,6 +47,36 @@ graph TD
     G & I --> J[Royalty Escrow Stamp Route]
     J -->|Co-creation Policy Weights| K[Move Atomic Split Escrow]
     K -->|Proportional Royalty Split| L[Sui Wallets]
+```
+
+### 3. Pure Web2.5 zkLogin & Sponsor Sequence
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Creator / Judge
+    participant Front as React Frontend
+    participant Back as Express Backend
+    participant Prover as Sui ZK Prover (Free)
+    participant Sui as Sui Blockchain (RPC)
+
+    User->>Front: Click "Sign In with Google"
+    Front->>Front: Generate Ephemeral Keypair & Nonce
+    Front->>User: Redirect to Google OAuth
+    User->>Front: Redirect back with OIDC JWT
+    Front->>Back: Submit JWT + Ephemeral PubKey
+    Back->>Prover: Request ZK Proof (JWT, PubKey, Salt)
+    Prover-->>Back: Return ZK Proof
+    Back->>Back: Derive zkLogin Address via user Salt
+    Back-->>Front: Return zkLogin Address & Proof
+    User->>Front: Mint Passport
+    Front->>Back: Request sponsored PTB
+    Back->>Back: Build PTB & set Sponsor as Gas Owner
+    Back-->>Front: Return Transaction Bytes (txBytes)
+    Front->>Front: Sign txBytes with Ephemeral Key
+    Front->>Back: Send user signature + zkLogin Proof
+    Back->>Back: Co-sign transaction with Sponsor Key
+    Back->>Sui: Broadcast combined signatures to network
+    Sui-->>User: Passport Minted Successfully
 ```
 
 ### 1. AASE Forensic Scoring Formula
