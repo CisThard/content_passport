@@ -147,7 +147,7 @@ export default function Journey() {
           title: 'Durable Memory Clues',
           details: [
             ['MemWal Clue IDs', verification?.clueIds?.join(', ') || 'No clues logged'],
-            ['Clue Inspector Verdict', verification?.inspector || 'Handshake idle'],
+            ['Clue Inspector Verdict', verification?.inspector?.clues?.length ? `${verification.inspector.clues.length} clue(s) reconciled` : 'Handshake idle'],
             ['Semantic Risk Threshold', 'No replica overlap identified'],
             ['Durable Sync Status', verification ? 'Durable memory active' : 'Awaiting sync'],
           ]
@@ -206,7 +206,7 @@ export default function Journey() {
 
       {/* 🧭 SVG Interactive Journey Graph Map with Dynamic Pulse Lines */}
       <section className="cyber-card" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden' }}>
-        <span className="header-badge">Interactive Progress 관제 맵</span>
+        <span className="header-badge">Interactive Progress Map</span>
         
         <div style={{ width: '100%', overflowX: 'auto', padding: '20px 0' }}>
           <svg width={920} height={160} style={{ display: 'block', margin: '0 auto' }}>
@@ -375,14 +375,14 @@ export default function Journey() {
                   </span>
                   <strong style={{ 
                     fontSize: '11.5px', 
-                    color: val === 'APPROVED' || val.includes('Success') || val.includes('Active') ? 'var(--neon-emerald)' : '#fff',
+                    color: String(val) === 'APPROVED' || String(val).includes('Success') || String(val).includes('Active') ? 'var(--neon-emerald)' : '#fff',
                     fontFamily: 'var(--mono)',
                     maxWidth: '60%',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap'
                   }}>
-                    {val}
+                    {String(val)}
                   </strong>
                 </div>
               ))}

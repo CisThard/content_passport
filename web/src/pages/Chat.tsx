@@ -10,7 +10,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'agent',
-      text: 'Hello. I am the K-9 Sniffer Agent guarding the border checkpoints. Feel free to ask me anything about creator passports, SuiNS namespace identities, AASE forensic ELA algorithms, sharded security vaults, or Move royalty stamp contracts.',
+      text: 'Hello. I am the AI Sniffer Agent guarding the border checkpoints. Feel free to ask me anything about creator passports, SuiNS namespace identities, AASE forensic ELA algorithms, sharded security vaults, or Move royalty stamp contracts.',
       time: new Date().toLocaleTimeString().slice(0, -3)
     }
   ])

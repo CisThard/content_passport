@@ -245,7 +245,7 @@ export default function Verify() {
   
   const aiAgent = verdictResult?.scores?.find((s: any) => s.agentId === 'ai-detection-agent');
   const aiProbability = aiAgent ? (100 - aiAgent.score) : 50;
-  const noteText = aiAgent ? aiAgent.evidence.join('. ') : 'AI K-9 Sniffer audit completed.';
+  const noteText = aiAgent ? aiAgent.evidence.join('. ') : 'AI Sniffer audit completed.';
 
   const metadataAgent = verdictResult?.scores?.find((s: any) => s.agentId === 'metadata-agent');
   const cameraSpec = metadataAgent?.evidence?.find((e: string) => e.startsWith('Camera'))?.replace('Camera ', '') || 'Camera Hardware Undefined';

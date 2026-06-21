@@ -188,7 +188,7 @@ export async function analyzeImageWithMemWal(
   clueIds.push((await writeAgentClue(memory, {
     agentId: "ai-detection-agent",
     severity: ai.score < 50 ? "critical" : "info",
-    message: `K-9 sniffer scored ${ai.score}/100 using ${inspectorBeforeAi.clues.length} MemWal context clues.`,
+    message: `AI sniffer scored ${ai.score}/100 using ${inspectorBeforeAi.clues.length} MemWal context clues.`,
     scoreImpact: ai.score - 70,
     metadata: { evidence: ai.evidence, injectedClueIds: clueIds },
   })).id);
