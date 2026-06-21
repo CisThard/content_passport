@@ -129,11 +129,11 @@ async function geminiDetect(
       project: process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT,
       location: process.env.GCP_REGION || "us-central1",
     });
-    model = vertex("gemini-1.5-flash");
+    model = vertex("gemini-2.5-flash");
     providerName = "Vertex AI (Keyless)";
   } else {
     const { google } = (await import("@ai-sdk/google" as string)) as any;
-    model = google("gemini-1.5-flash");
+    model = google("gemini-2.5-flash");
   }
 
   const { object } = await generateObject({
@@ -143,6 +143,13 @@ async function geminiDetect(
       confidence: z.number().min(0).max(100),
       reason: z.string(),
     }),
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          thinkingBudget: 2048,
+        },
+      },
+    },
     messages: [
       { role: "system", content: "You are an image forensics detector. Use the provided local clues and the image to score authenticity (100=real photo, 0=AI/manipulated)." },
       {
