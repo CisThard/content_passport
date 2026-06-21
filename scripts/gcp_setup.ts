@@ -141,7 +141,9 @@ async function main() {
     { name: "GOOGLE_GENERATIVE_AI_API_KEY", value: process.env.GOOGLE_GENERATIVE_AI_API_KEY },
     { name: "AUTH_SECRET", value: process.env.AUTH_SECRET },
     { name: "AUTH_GOOGLE_ID", value: process.env.AUTH_GOOGLE_ID },
-    { name: "AUTH_GOOGLE_SECRET", value: process.env.AUTH_GOOGLE_SECRET }
+    { name: "AUTH_GOOGLE_SECRET", value: process.env.AUTH_GOOGLE_SECRET },
+    { name: "ZKLOGIN_SALT_MASTER_SEED", value: process.env.ZKLOGIN_SALT_MASTER_SEED },
+    { name: "MEMWAL_ACCOUNT_ID", value: process.env.MEMWAL_ACCOUNT_ID }
   ];
 
   for (const secret of secretsToSync) {

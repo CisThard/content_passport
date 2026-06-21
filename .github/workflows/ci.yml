@@ -87,6 +87,11 @@ jobs:
             GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
             GCP_REGION=${{ env.GCP_REGION }}
           secrets: |
+            AUTH_GOOGLE_ID=AUTH_GOOGLE_ID:latest
+            AUTH_GOOGLE_SECRET=AUTH_GOOGLE_SECRET:latest
+            AUTH_SECRET=AUTH_SECRET:latest
+            ZKLOGIN_SALT_MASTER_SEED=ZKLOGIN_SALT_MASTER_SEED:latest
             SUI_PRIVATE_KEY=SUI_PRIVATE_KEY:latest
             MEMWAL_PRIVATE_KEY=MEMWAL_PRIVATE_KEY:latest
+            MEMWAL_ACCOUNT_ID=MEMWAL_ACCOUNT_ID:latest
             GOOGLE_GENERATIVE_AI_API_KEY=GOOGLE_GENERATIVE_AI_API_KEY:latest

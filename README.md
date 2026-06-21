@@ -236,3 +236,6 @@ This automated setup script [[scripts/gcp_setup.ts](file:///Users/charles/Projec
 3. **Configure WIF & Service Accounts**: Create service accounts and bind secure OpenID Connect permissions allowing keyless deployments from your GitHub Actions runner.
 4. **Synchronize Secrets**: Safely upload local `.env` secrets directly into GCP Secret Manager.
 5. **Set GitHub Repository Secrets**: Register the WIF provider URLs and project IDs into GitHub secrets using `gh` CLI commands.
+
+Required Cloud Run Secret Manager bindings include:
+`AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_SECRET`, `ZKLOGIN_SALT_MASTER_SEED`, `SUI_PRIVATE_KEY`, `MEMWAL_ACCOUNT_ID`, `MEMWAL_PRIVATE_KEY`, and `GOOGLE_GENERATIVE_AI_API_KEY`.
