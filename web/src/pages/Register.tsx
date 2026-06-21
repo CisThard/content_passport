@@ -20,8 +20,9 @@ function decodeJwt(token: string) {
   if (parts.length !== 3) {
     throw new Error('Invalid JWT format')
   }
-  const payload = parts[1]
-  const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+  const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+  const padded = payload.padEnd(payload.length + ((4 - (payload.length % 4)) % 4), '=')
+  const decoded = atob(padded)
   return JSON.parse(decoded)
 }
 

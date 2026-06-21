@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { ConnectButton, useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
 import { buildCreateAndFundPolicyTx, buildDistributeRoyaltiesTx } from '../../../src/sui'
+import { SuiProviders } from '../lib/SuiProviders'
 import {
   CONTENT_RIGHT_PACKAGE_ID,
   SUI_CHAIN,
@@ -22,7 +23,7 @@ interface VisualCoin {
   color: string
 }
 
-export default function Blueprint() {
+function BlueprintContent() {
   // State for Remix Chain Simulator
   const [anyaFee, setAnyaFee] = useState<number>(30)
   const [benFee, setBenFee] = useState<number>(50)
@@ -927,5 +928,13 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
         }
       `}</style>
     </div>
+  )
+}
+
+export default function Blueprint() {
+  return (
+    <SuiProviders>
+      <BlueprintContent />
+    </SuiProviders>
   )
 }

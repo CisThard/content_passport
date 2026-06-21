@@ -62,6 +62,17 @@ app.get("/api/health", async (_req, res) => {
 });
 
 type VerifyEvent = (event: string, data: Record<string, unknown>) => void;
+const AUTH_CONFIG_CACHE_MS = 30_000;
+let authConfigCache:
+  | {
+      expiresAt: number;
+      value: {
+        googleClientId: string;
+        packageId: string;
+        epoch: number;
+      };
+    }
+  | undefined;
 
 function getWalrusClient(): WalrusClient | undefined {
   const configuredPublisher = process.env.WALRUS_PUBLISHER || process.env.WALRUS_PUBLISHER_URL;
@@ -341,6 +352,12 @@ function getZkLoginSalt(): string {
   return salt;
 }
 
+function decodeJwtPayload(jwt: string): Record<string, any> {
+  const payload = jwt.split(".")[1];
+  if (!payload) throw new Error("Invalid JWT: missing payload");
+  return JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+}
+
 // GET /api/auth/callback/google
 app.get("/api/auth/callback/google", (req, res) => {
   res.sendFile(path.join(webDistPath, "index.html"));
@@ -353,6 +370,11 @@ app.get("/login-callback", (req, res) => {
 
 // GET /api/auth/config
 app.get("/api/auth/config", async (req, res) => {
+  if (authConfigCache && authConfigCache.expiresAt > Date.now()) {
+    res.json(authConfigCache.value);
+    return;
+  }
+
   const rpcUrl = process.env.SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
   const network = (process.env.SUI_NETWORK || "testnet") as any;
   const suiClient = new SuiJsonRpcClient({ url: rpcUrl, network });
@@ -364,11 +386,13 @@ app.get("/api/auth/config", async (req, res) => {
     console.warn("[Server] Failed to fetch current epoch from RPC:", e);
   }
 
-  res.json({
+  const value = {
     googleClientId: process.env.AUTH_GOOGLE_ID || "",
     packageId: process.env.CONTENT_RIGHT_PACKAGE_ID || process.env.SUI_PACKAGE_ID || "",
     epoch,
-  });
+  };
+  authConfigCache = { value, expiresAt: Date.now() + AUTH_CONFIG_CACHE_MS };
+  res.json(value);
 });
 
 // POST /api/auth/zklogin
@@ -379,24 +403,43 @@ app.post("/api/auth/zklogin", async (req, res) => {
       res.status(400).json({ success: false, error: "Missing jwt or ephemeralPublicKeyB64" });
       return;
     }
+    if (!Number.isSafeInteger(Number(maxEpoch)) || Number(maxEpoch) <= 0 || !randomness) {
+      res.status(400).json({ success: false, error: "Missing or invalid maxEpoch/randomness" });
+      return;
+    }
 
     const salt = getZkLoginSalt();
     const proverUrl = process.env.ZKLOGIN_PROVER_URL || "https://prover-dev.zklogin.sui.io/v1";
     const { jwtToAddress, genAddressSeed } = await import("@mysten/sui/zklogin");
-    const decodedJwt = JSON.parse(Buffer.from(jwt.split(".")[1] ?? "", "base64url").toString("utf8"));
+    const decodedJwt = decodeJwtPayload(jwt);
+    if (!decodedJwt.sub || !decodedJwt.aud || !decodedJwt.iss) {
+      res.status(400).json({ success: false, error: "JWT is missing required zkLogin claims" });
+      return;
+    }
 
-    const response = await fetch(proverUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jwt,
-        extendedEphemeralPublicKey: ephemeralPublicKeyB64,
-        maxEpoch,
-        jwtRandomness: randomness,
-        salt,
-        keyClaimName: "sub",
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch(proverUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(Number(process.env.ZKLOGIN_PROVER_TIMEOUT_MS || 15_000)),
+        body: JSON.stringify({
+          jwt,
+          extendedEphemeralPublicKey: ephemeralPublicKeyB64,
+          maxEpoch: Number(maxEpoch),
+          jwtRandomness: randomness,
+          salt,
+          keyClaimName: "sub",
+        }),
+      });
+    } catch (error: any) {
+      res.status(502).json({
+        success: false,
+        error: "zkLogin prover is unreachable",
+        detail: error.message || String(error),
+      });
+      return;
+    }
 
     if (!response.ok) {
       const text = await response.text().catch(() => "");

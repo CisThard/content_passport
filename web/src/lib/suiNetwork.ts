@@ -1,16 +1,6 @@
-import { createNetworkConfig } from '@mysten/dapp-kit'
-import { getJsonRpcFullnodeUrl } from '@mysten/sui/jsonRpc'
-
 export const SUI_NETWORK = (import.meta.env.VITE_SUI_NETWORK || 'testnet') as 'testnet' | 'mainnet' | 'devnet' | 'localnet'
 export const SUI_CHAIN = `sui:${SUI_NETWORK}`
 export const CONTENT_RIGHT_PACKAGE_ID = import.meta.env.VITE_CONTENT_RIGHT_PACKAGE_ID || import.meta.env.VITE_SUI_PACKAGE_ID || ''
-
-export const { networkConfig } = createNetworkConfig({
-  testnet: { url: getJsonRpcFullnodeUrl('testnet') },
-  mainnet: { url: getJsonRpcFullnodeUrl('mainnet') },
-  devnet: { url: getJsonRpcFullnodeUrl('devnet') },
-  localnet: { url: getJsonRpcFullnodeUrl('localnet') },
-})
 
 export function suiscanTxUrl(digest: string) {
   const networkPath = SUI_NETWORK === 'mainnet' ? 'mainnet' : SUI_NETWORK

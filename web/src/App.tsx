@@ -8,8 +8,6 @@ const Vault = lazy(() => import('./pages/Vault'))
 const Chat = lazy(() => import('./pages/Chat'))
 const Blueprint = lazy(() => import('./pages/Blueprint'))
 const Journey = lazy(() => import('./pages/Journey'))
-import { getOrSetEphemeralSession, buildGoogleAuthUrl } from './lib/zklogin'
-import { generateNonce } from '@mysten/sui/zklogin'
 import './styles.css'
 
 function Navigation() {
@@ -85,11 +83,15 @@ function MainAppShell() {
     window.location.href = '/'
   }
 
-  const handleHeaderLogin = () => {
+  const handleHeaderLogin = async () => {
     if (!googleClientId) {
       window.location.href = '/register'
       return
     }
+    const [{ getOrSetEphemeralSession, buildGoogleAuthUrl }, { generateNonce }] = await Promise.all([
+      import('./lib/zklogin'),
+      import('@mysten/sui/zklogin'),
+    ])
     const session = getOrSetEphemeralSession(currentEpoch)
     const nonce = generateNonce(session.keypair.getPublicKey(), session.maxEpoch, session.randomness)
     const redirectUri = window.location.origin + '/login-callback'
