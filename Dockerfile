@@ -1,7 +1,7 @@
 FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY package*.json ./
+COPY package*.json .npmrc ./
 RUN npm ci
 COPY web/package*.json ./web/
 RUN npm --prefix web ci
