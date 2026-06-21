@@ -453,8 +453,8 @@ export default function Register() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           {passportData ? (
             <div className="holo-passport-container" style={{ animation: 'fadeInUp 0.6s ease' }}>
-              <div className="holo-passport certified scanning" style={{ backgroundImage: "url('/digital-passport.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                <div className="holo-laser-scanner"></div>
+              <div className={`holo-passport certified ${isMinting ? 'scanning' : ''}`} style={{ backgroundImage: "url('/digital-passport.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                {isMinting && <div className="holo-laser-scanner"></div>}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontFamily: 'var(--sans)', fontSize: '10px', fontWeight: 800, color: 'var(--neon-gold)', letterSpacing: '1px' }}>
                     SUI CREATOR PASSPORT
@@ -486,11 +486,13 @@ export default function Register() {
                       <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px', whiteSpace: 'nowrap' }}>{passportData.issuedAt}</div>
                     </div>
                     {passportData.txDigest !== 'mock' && passportData.explorerUrl !== '#' ? (
-                      <a href={passportData.explorerUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--neon-cyan)', fontSize: '9px', fontFamily: 'var(--mono)' }}>
-                        Suiscan
+                      <a href={passportData.explorerUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', color: 'var(--neon-cyan)', fontSize: '8px', fontFamily: 'var(--mono)', border: '1px solid rgba(14, 165, 233, 0.3)', borderRadius: '4px', padding: '2px 6px', background: 'rgba(14, 165, 233, 0.05)' }}>
+                        Suiscan 🔗
                       </a>
                     ) : (
-                      <span style={{ color: 'var(--neon-gold)', fontSize: '9px', fontFamily: 'var(--mono)' }}>Mocknet</span>
+                      <span style={{ color: 'var(--neon-gold)', fontSize: '8px', fontFamily: 'var(--mono)', border: '1px solid rgba(234, 179, 8, 0.3)', borderRadius: '4px', padding: '2px 6px', background: 'rgba(234, 179, 8, 0.05)' }}>
+                        Mock Sandbox
+                      </span>
                     )}
                   </div>
                 </div>
