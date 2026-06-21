@@ -72,7 +72,7 @@ jobs:
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
-          service: content-passport
+          service: ${{ secrets.GCP_SERVICE_NAME || 'content-passport-service' }}
           region: ${{ env.GCP_REGION }}
           image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/content-passport-repo/app:${{ github.sha }}
           env_vars: |

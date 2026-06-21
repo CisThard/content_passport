@@ -2,7 +2,7 @@ import { execSync, spawn } from "node:child_process";
 
 const PROJECT_ID = "project-71ed5c01-e218-4969-862";
 const PROJECT_NUMBER = "682352132130";
-const REGION = "asia-northeast3";
+const REGION = "us-central1";
 const REPO_NAME = "content-passport-repo";
 const POOL_NAME = "github-pool";
 const PROVIDER_NAME = "github-provider";
@@ -55,13 +55,19 @@ async function main() {
   console.log("=== 4. Creating Workload Identity Provider ===");
   try {
     run(`gcloud iam workload-identity-pools providers describe ${PROVIDER_NAME} --workload-identity-pool=${POOL_NAME} --location=global --project=${PROJECT_ID}`, true);
-    console.log(`Workload Identity Provider ${PROVIDER_NAME} already exists.`);
+    console.log(`Workload Identity Provider ${PROVIDER_NAME} already exists. Updating attribute-condition...`);
+    run(`gcloud iam workload-identity-pools providers update-oidc ${PROVIDER_NAME} \
+      --workload-identity-pool=${POOL_NAME} \
+      --location=global \
+      --attribute-condition="assertion.repository == '${GITHUB_REPO}'" \
+      --project=${PROJECT_ID} --quiet`);
   } catch {
     run(`gcloud iam workload-identity-pools providers create-oidc ${PROVIDER_NAME} \
       --workload-identity-pool=${POOL_NAME} \
       --location=global \
       --issuer-uri="https://token.actions.githubusercontent.com" \
       --attribute-mapping="google.subject=assertion.subject,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+      --attribute-condition="assertion.repository == '${GITHUB_REPO}'" \
       --project=${PROJECT_ID}`);
   }
 
@@ -174,6 +180,7 @@ async function main() {
     { name: "GCP_WIF_PROVIDER", value: `projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_NAME}/providers/${PROVIDER_NAME}` },
     { name: "GCP_WIF_SERVICE_ACCOUNT", value: SA_EMAIL },
     { name: "GCP_REGION", value: REGION },
+    { name: "GCP_SERVICE_NAME", value: "content-passport-service" },
     { name: "GCP_VERTEX_AI_ENABLED", value: "true" }
   ];
 
