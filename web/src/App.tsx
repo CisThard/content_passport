@@ -44,11 +44,31 @@ function MainAppShell() {
   const [walrusStatus, setWalrusStatus] = useState<{ healthy: boolean; latencyMs: number } | null>(null)
   const location = useLocation()
   const [zkUserAddress, setZkUserAddress] = useState<string | null>(null)
+  const [zkUserPicture, setZkUserPicture] = useState<string | null>(null)
+  const [zkUserName, setZkUserName] = useState<string | null>(null)
+  const [showDropdown, setShowDropdown] = useState(false)
 
   useEffect(() => {
     const savedAddress = sessionStorage.getItem('cp_zk_address')
+    const savedPicture = sessionStorage.getItem('cp_zk_picture')
+    const savedName = sessionStorage.getItem('cp_zk_name')
     setZkUserAddress(savedAddress)
+    setZkUserPicture(savedPicture)
+    setZkUserName(savedName)
   }, [location])
+
+  const handleHeaderLogout = () => {
+    sessionStorage.removeItem('cp_zk_jwt')
+    sessionStorage.removeItem('cp_zk_address')
+    sessionStorage.removeItem('cp_zk_proof')
+    sessionStorage.removeItem('cp_zk_picture')
+    sessionStorage.removeItem('cp_zk_name')
+    setZkUserAddress(null)
+    setZkUserPicture(null)
+    setZkUserName(null)
+    setShowDropdown(false)
+    window.location.href = '/'
+  }
 
   // 2. Real passport count — passports issued/verified on this device (localStorage).
   useEffect(() => {
@@ -109,19 +129,73 @@ function MainAppShell() {
         {/* Header navigation */}
         <Navigation />
 
-        <div className="hud-status-node">
+        <div className="hud-status-node" style={{ position: 'relative' }}>
           {zkUserAddress ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', padding: '6px 12px' }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--neon-emerald)', display: 'block' }}>
-                <circle cx="12" cy="12" r="10" fill="currentColor" />
-              </svg>
-              <span style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: 'var(--text-secondary)' }}>
-                Google: {zkUserAddress.slice(0, 6)}...{zkUserAddress.slice(-4)}
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div 
+                onClick={() => setShowDropdown(!showDropdown)} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  borderRadius: '20px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {zkUserPicture ? (
+                  <img 
+                    src={zkUserPicture} 
+                    alt="Profile" 
+                    referrerPolicy="no-referrer"
+                    style={{ width: '22px', height: '22px', borderRadius: '50%', border: '1px solid var(--neon-cyan)', objectFit: 'cover' }} 
+                  />
+                ) : (
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--neon-indigo)', color: '#fff', fontSize: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--mono)' }}>
+                    U
+                  </div>
+                )}
+                <span style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: 'var(--text-secondary)' }}>
+                  {zkUserName || (zkUserAddress ? `${zkUserAddress.slice(0, 6)}...${zkUserAddress.slice(-4)}` : '')}
+                </span>
+              </div>
+
+              {showDropdown && (
+                <div style={{ 
+                  position: 'absolute', 
+                  top: '38px', 
+                  right: '0', 
+                  background: 'rgba(13, 16, 38, 0.95)', 
+                  border: '1px solid rgba(255, 255, 255, 0.1)', 
+                  borderRadius: '8px', 
+                  padding: '12px', 
+                  minWidth: '150px',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+                  backdropFilter: 'blur(10px)',
+                  zIndex: 1000,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <div style={{ fontSize: '9px', color: 'var(--text-muted)', wordBreak: 'break-all', fontFamily: 'var(--mono)' }}>
+                    {zkUserAddress ? `${zkUserAddress.slice(0, 8)}...${zkUserAddress.slice(-6)}` : ''}
+                  </div>
+                  <button 
+                    onClick={handleHeaderLogout} 
+                    className="cyber-btn cyber-btn-rose"
+                    style={{ padding: '6px 12px', fontSize: '11px', width: '100%' }}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <Link to="/register" className="cyber-btn cyber-btn-indigo" style={{ padding: '6px 12px', fontSize: '11px', textDecoration: 'none', lineHeight: '1.2' }}>
-              Sign In with Google
+              Login
             </Link>
           )}
         </div>
@@ -135,6 +209,7 @@ function MainAppShell() {
             <Route path="/journey" element={<Journey />} />
             <Route path="/register" element={<Register />} />
             <Route path="/api/auth/callback/google" element={<Register />} />
+            <Route path="/login-callback" element={<Register />} />
             <Route path="/verify" element={<Verify />} />
             <Route path="/vault" element={<Vault />} />
             <Route path="/blueprint" element={<Blueprint />} />

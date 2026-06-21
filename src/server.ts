@@ -338,6 +338,11 @@ app.get("/api/auth/callback/google", (req, res) => {
   res.sendFile(path.join(webDistPath, "index.html"));
 });
 
+// GET /login-callback
+app.get("/login-callback", (req, res) => {
+  res.sendFile(path.join(webDistPath, "index.html"));
+});
+
 // GET /api/auth/config
 app.get("/api/auth/config", async (req, res) => {
   const rpcUrl = process.env.SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";

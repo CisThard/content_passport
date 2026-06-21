@@ -79,6 +79,13 @@ export default function Register() {
       window.history.replaceState({}, document.title, '/register')
       setJwt(urlJwt)
       sessionStorage.setItem('cp_zk_jwt', urlJwt)
+      try {
+        const decoded = decodeJwt(urlJwt)
+        if (decoded.picture) sessionStorage.setItem('cp_zk_picture', decoded.picture)
+        if (decoded.name) sessionStorage.setItem('cp_zk_name', decoded.name)
+      } catch (e) {
+        console.warn('Failed to extract Google user metadata:', e)
+      }
       handleZkLogin(urlJwt)
     }
   }, [currentEpoch])
@@ -136,7 +143,7 @@ export default function Register() {
     }
     const session = getOrSetEphemeralSession(currentEpoch)
     const nonce = generateNonce(session.keypair.getPublicKey(), session.maxEpoch, session.randomness)
-    const redirectUri = window.location.origin + '/api/auth/callback/google'
+    const redirectUri = window.location.origin + '/login-callback'
 
     const authUrl = buildGoogleAuthUrl({
       clientId: googleClientId,
@@ -153,6 +160,8 @@ export default function Register() {
     sessionStorage.removeItem('cp_zk_jwt')
     sessionStorage.removeItem('cp_zk_address')
     sessionStorage.removeItem('cp_zk_proof')
+    sessionStorage.removeItem('cp_zk_picture')
+    sessionStorage.removeItem('cp_zk_name')
     setZkUserAddress(null)
     setZkProof(null)
     setJwt(null)
