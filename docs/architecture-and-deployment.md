@@ -43,7 +43,7 @@ graph TD
 2. **Metadata Agent (EXIF 헤더 감사):**
    * Exifr를 통해 카메라 제조사(Make), 기종(Model), 생성 일시 및 소프트웨어 시그니처를 읽어 들이며, Stable Diffusion, Photoshop 등 인공지능 또는 편집 툴의 디지털 서명이 존재하거나 타임스탬프 왜곡이 있을 시 신뢰 지수를 차감합니다.
 3. **AI Detection Agent (Gemini Cognitive Sniffer):**
-   * 구글 제미나이 플래시 모델(`gemini-3.5-flash`)을 연동하여 이미지 내의 미세한 구조적 아티팩트와 광원 왜곡을 실시간으로 추론하고 진위 감정 지수(0~100)를 Zod 스키마 구조로 획득합니다.
+   * 구글 제미나이 플래시 모델(`gemini-1.5-flash`)을 연동하여 이미지 내의 미세한 구조적 아티팩트와 광원 왜곡을 실시간으로 추론하고 진위 감정 지수(0~100)를 Zod 스키마 구조로 획득합니다.
 4. **Memory Bonus Agent (MemWal 레저 대조):**
    * 해당 이미지 해시와 매칭되는 단서가 MemWal 분산 원장에 이미 등록되어 있는지 확인하고 신뢰도를 가산합니다.
 

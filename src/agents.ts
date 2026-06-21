@@ -129,11 +129,11 @@ async function geminiDetect(
       project: process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT,
       location: process.env.GCP_REGION || "us-central1",
     });
-    model = vertex("gemini-3.5-flash");
+    model = vertex("gemini-1.5-flash");
     providerName = "Vertex AI (Keyless)";
   } else {
     const { google } = (await import("@ai-sdk/google" as string)) as any;
-    model = google("gemini-3.5-flash");
+    model = google("gemini-1.5-flash");
   }
 
   const { object } = await generateObject({
