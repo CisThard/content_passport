@@ -185,7 +185,7 @@ To enable Google social login and gas-sponsored minting without subscribing to t
 *   `AUTH_GOOGLE_SECRET`: Your Google Cloud Console OAuth 2.0 Client Secret.
 *   `ZKLOGIN_SALT_MASTER_SEED`: Private master seed for the built-in zkLogin salt service. The server derives a stable per-user 16-byte salt from `iss/aud/sub` using HKDF, matching Sui's recommended salt-service pattern. Generate with `openssl rand -hex 32`, back it up, and keep Testnet/Mainnet seeds separate.
 *   `ZKLOGIN_USER_SALT` (or `ZKLOGIN_SALT`): Legacy numeric static salt for testnet-only experiments. Prefer `ZKLOGIN_SALT_MASTER_SEED` so every OAuth subject receives a distinct stable salt.
-*   `ZKLOGIN_PROVER_URL` (optional): Sui zkLogin prover endpoint. Defaults to `https://prover-dev.zklogin.sui.io/v1`.
+*   `ZKLOGIN_PROVER_URL` (optional): Sui zkLogin prover endpoint. Defaults to `https://prover-dev.mystenlabs.com/v1`.
 *   `ZKLOGIN_PROVER_TIMEOUT_MS` (optional): Prover request timeout in milliseconds. Defaults to `15000`.
 *   `SUI_SPONSOR_SECRET_KEY` (or `SPONSOR_SECRET`): The 32-byte hex private key of the backend Sponsor Wallet. This wallet must be funded with SUI on the target network to pay transaction gas fees for users.
 

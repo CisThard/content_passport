@@ -425,7 +425,7 @@ app.post("/api/auth/zklogin", async (req, res) => {
       return;
     }
 
-    const proverUrl = process.env.ZKLOGIN_PROVER_URL || "https://prover-dev.zklogin.sui.io/v1";
+    const proverUrl = process.env.ZKLOGIN_PROVER_URL || "https://prover-dev.mystenlabs.com/v1";
     const { jwtToAddress, genAddressSeed } = await import("@mysten/sui/zklogin");
 
     let response: Response;
