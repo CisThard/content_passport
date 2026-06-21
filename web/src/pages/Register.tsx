@@ -134,7 +134,7 @@ export default function Register() {
     }
     const session = getOrSetEphemeralSession(currentEpoch)
     const nonce = generateNonce(session.keypair.getPublicKey(), session.maxEpoch, session.randomness)
-    const redirectUri = window.location.origin + '/register'
+    const redirectUri = window.location.origin + '/api/auth/callback/google'
 
     const authUrl = buildGoogleAuthUrl({
       clientId: googleClientId,

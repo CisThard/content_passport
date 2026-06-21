@@ -333,6 +333,28 @@ function getSponsorKeypair(): Ed25519Keypair | undefined {
   }
 }
 
+// GET /api/auth/callback/google
+app.get("/api/auth/callback/google", (req, res) => {
+  res.send(`
+    <html>
+      <body style="background: #0b0d19; color: #a5b4fc; font-family: monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+        <div style="text-align: center; border: 1px solid rgba(99,102,241,0.2); padding: 30px; border-radius: 12px; background: rgba(255,255,255,0.01); backdrop-filter: blur(10px);">
+          <div style="font-size: 14px; letter-spacing: 1px; margin-bottom: 10px;">OIDC AUTHENTICATION IN PROGRESS</div>
+          <div style="color: #6366f1; font-size: 11px;">Redirecting identity gate handshake...</div>
+        </div>
+        <script>
+          const hash = window.location.hash;
+          if (hash) {
+            window.location.href = "/register" + hash;
+          } else {
+            window.location.href = "/register";
+          }
+        </script>
+      </body>
+    </html>
+  `);
+});
+
 // GET /api/auth/config
 app.get("/api/auth/config", async (req, res) => {
   const rpcUrl = process.env.SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
