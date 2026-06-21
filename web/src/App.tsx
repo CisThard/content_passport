@@ -1,6 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
-import { ConnectButton } from '@mysten/dapp-kit'
 import Landing from './pages/Landing'
 // Route-level code splitting: non-home pages load on demand (smaller initial bundle).
 const Register = lazy(() => import('./pages/Register'))
@@ -43,6 +42,13 @@ function Navigation() {
 function MainAppShell() {
   const [passportsCount, setPassportsCount] = useState(0)
   const [walrusStatus, setWalrusStatus] = useState<{ healthy: boolean; latencyMs: number } | null>(null)
+  const location = useLocation()
+  const [zkUserAddress, setZkUserAddress] = useState<string | null>(null)
+
+  useEffect(() => {
+    const savedAddress = sessionStorage.getItem('cp_zk_address')
+    setZkUserAddress(savedAddress)
+  }, [location])
 
   // 2. Real passport count — passports issued/verified on this device (localStorage).
   useEffect(() => {
@@ -103,9 +109,21 @@ function MainAppShell() {
         {/* Header navigation */}
         <Navigation />
 
-        {/* Global status panels */}
         <div className="hud-status-node">
-          <ConnectButton />
+          {zkUserAddress ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', padding: '6px 12px' }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--neon-emerald)', display: 'block' }}>
+                <circle cx="12" cy="12" r="10" fill="currentColor" />
+              </svg>
+              <span style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: 'var(--text-secondary)' }}>
+                Google: {zkUserAddress.slice(0, 6)}...{zkUserAddress.slice(-4)}
+              </span>
+            </div>
+          ) : (
+            <Link to="/register" className="cyber-btn cyber-btn-indigo" style={{ padding: '6px 12px', fontSize: '11px', textDecoration: 'none', lineHeight: '1.2' }}>
+              Sign In with Google
+            </Link>
+          )}
         </div>
       </header>
 
