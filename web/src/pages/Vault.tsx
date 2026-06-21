@@ -65,7 +65,7 @@ export default function Vault() {
   return (
     <div className="dashboard-container" style={{ maxWidth: '1100px' }}>
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <span className="header-badge badge-emerald">Shamir Chamber</span>
+        <span className="header-badge badge-emerald">Chapter II · Sealed Vault</span>
         <h2 className="cyber-title">Threshold Security Vault (SEAL)</h2>
         <p className="cyber-subtitle" style={{ margin: '10px auto 0' }}>
           Lock and protect raw master files using Shamir\'s Secret Sharing (3/5) cryptography integrated on decentralized Walrus storage nodes.

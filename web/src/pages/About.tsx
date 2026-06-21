@@ -86,12 +86,12 @@ export default function About() {
   const CHAPTERS = [
     {
       id: 'gate',
-      title: 'Prologue: Gate 2.7',
-      subtitle: 'Hidden gate · blank passport',
+      title: 'Prologue: Identity Gate',
+      subtitle: 'Identity gate · blank passport',
       icon: '',
-      story: 'Step through the hidden gate and you’re issued a blank Content Passport — claim your sovereign name and start signing gaslessly.',
+      story: 'Step through the identity gate and you’re issued a blank Content Passport — claim your sovereign name and start signing gaslessly.',
       tech: 'genesis_passport.move mints the Passport NFT; SuiNS + ephemeral Ed25519 session keys enable gasless transactions.',
-      linkText: 'Enter Gate 2.7',
+      linkText: 'Enter Identity Gate',
       linkPath: '/register',
       glowClass: 'cyber-card-glow-indigo'
     },
@@ -217,7 +217,7 @@ export default function About() {
           <span style={{ fontSize: '36px', display: 'block', marginBottom: '16px' }}></span>
           <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', marginBottom: '10px' }}>Epilogue: Sovereign by Default</h3>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '650px', margin: '0 auto 24px', fontStyle: 'italic' }}>
-            "Creative provenance, bound to the immutable Sui ledger. Pass through Gate 2.7, prove your work, and own your sovereignty forever."
+            "Creative provenance, bound to the immutable Sui ledger. Pass through the Identity Gate, prove your work, and own your sovereignty forever."
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>

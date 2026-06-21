@@ -297,8 +297,8 @@ export default function Verify() {
   return (
     <div className="dashboard-container" style={{ maxWidth: '1200px' }}>
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <span className="header-badge badge-rose">Aurelius Lab</span>
-        <h2 className="cyber-title">AI Media Authenticity Checkpoint</h2>
+        <span className="header-badge badge-rose">Chapter I · Authenticity Audit</span>
+        <h2 className="cyber-title">Media Authenticity Checkpoint</h2>
         <p className="cyber-subtitle" style={{ margin: '10px auto 0' }}>
           Evaluate media artifacts using Error Level Analysis (ELA) pixel compression metrics, EXIF hardware consistency verification, and Gemini 3.5 Flash Vision cognitive sniffer audits.
         </p>

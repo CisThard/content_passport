@@ -121,7 +121,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
   const PORTALS = [
     {
       id: 0,
-      title: 'Gate 2.7 Chamber',
+      title: 'Identity Gate',
       badge: 'Identity Registry',
       desc: 'Declare your sovereign SuiNS identity, establish ephemeral cryptographic session keys, and mint an immutable, tamper-proof creator passport NFT.',
       icon: '',

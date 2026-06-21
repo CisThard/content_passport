@@ -17,14 +17,14 @@ function Navigation() {
   const path = location.pathname
 
   const NAV_ITEMS = [
-    { label: 'Home Orbit', path: '/' },
-    { label: 'Odyssey Story', path: '/about' },
+    { label: 'Home', path: '/' },
+    { label: 'Odyssey', path: '/about' },
+    { label: 'Identity Gate', path: '/register' },
+    { label: 'Authenticity Audit', path: '/verify' },
+    { label: 'Sealed Vault', path: '/vault' },
+    { label: 'Automated Royalties', path: '/blueprint' },
     { label: 'Judge Mode', path: '/journey' },
-    { label: 'Co-Creation Model', path: '/blueprint' },
-    { label: 'Register Identity', path: '/register' },
-    { label: 'Forensics Lab', path: '/verify' },
-    { label: 'Secret Vault', path: '/vault' },
-    { label: 'K-9 AI Chat', path: '/chat' }
+    { label: 'K-9 Chat', path: '/chat' }
   ]
 
   return (
@@ -43,19 +43,8 @@ function Navigation() {
 }
 
 function MainAppShell() {
-  const [systemTime, setSystemTime] = useState('00:00:00')
   const [passportsCount, setPassportsCount] = useState(0)
   const [walrusStatus, setWalrusStatus] = useState<{ healthy: boolean; latencyMs: number } | null>(null)
-
-  // 1. Ticking System Clock
-  useEffect(() => {
-    const updateTime = () => {
-      setSystemTime(new Date().toLocaleTimeString('en-US', { hour12: false }))
-    }
-    updateTime()
-    const interval = setInterval(updateTime, 1000)
-    return () => clearInterval(interval)
-  }, [])
 
   // 2. Real passport count — passports issued/verified on this device (localStorage).
   useEffect(() => {
@@ -119,14 +108,6 @@ function MainAppShell() {
         {/* Global status panels */}
         <div className="hud-status-node">
           <ConnectButton />
-          <div className="hud-terminal-pill">
-            <span className="status-dot"></span>
-            <span>BASECAMP_ACTIVE</span>
-          </div>
-          <div className="hud-terminal-pill" style={{ color: '#fff' }}>
-            <span>SYS_TIME:</span>
-            <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{systemTime}</strong>
-          </div>
         </div>
       </header>
 
