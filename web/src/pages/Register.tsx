@@ -125,7 +125,11 @@ export default function Register() {
 
   const handleGoogleLogin = () => {
     if (!googleClientId) {
-      alert('Google OAuth client ID not configured on the backend.')
+      setMintLogs((prev) => [...prev, '[SANDBOX] Google Client ID not configured. Simulating mock OIDC login...'])
+      const mockJwt = 'mock.jwt.token'
+      sessionStorage.setItem('cp_zk_jwt', mockJwt)
+      setJwt(mockJwt)
+      handleZkLogin(mockJwt)
       return
     }
     const session = getOrSetEphemeralSession(currentEpoch)
@@ -329,7 +333,7 @@ export default function Register() {
               ) : (
                 <button 
                   onClick={handleGoogleLogin} 
-                  disabled={isLoggingIn || !googleClientId}
+                  disabled={isLoggingIn}
                   className="cyber-btn cyber-btn-indigo"
                   style={{ 
                     padding: '10px 20px', 
