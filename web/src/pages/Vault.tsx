@@ -542,14 +542,18 @@ export default function Vault({ sharedFile, setSharedFile }: { sharedFile?: File
 
   // Auto-load last verified file from previous page
   useEffect(() => {
+    if (selectedFile || vaultState !== 'idle') return
+
     if (sharedFile) {
       processFile(sharedFile)
+      setSharedFile?.(null)
     } else {
       const lastVer = localStorage.getItem('cr:lastVerification')
       if (lastVer) {
         try {
           const parsed = JSON.parse(lastVer)
-          if (parsed.filename && parsed.success) {
+          const isApproved = parsed.assessment?.recreateReady || parsed.success
+          if (parsed.filename && isApproved) {
             const sample = SAMPLE_MEDIAS.find(s => s.name === parsed.filename)
             if (sample) {
               setConsoleLogs(prev => [...prev, `Auto-loading last audited specimen: ${sample.name}...`])
@@ -569,7 +573,7 @@ export default function Vault({ sharedFile, setSharedFile }: { sharedFile?: File
         }
       }
     }
-  }, [sharedFile])
+  }, [sharedFile, selectedFile, vaultState, setSharedFile])
 
   const triggerUpload = () => {
     fileInputRef.current?.click()
@@ -817,7 +821,7 @@ export default function Vault({ sharedFile, setSharedFile }: { sharedFile?: File
             borderRadius: '8px', 
             border: '1px solid rgba(255, 255, 255, 0.05)', 
             background: 'rgba(255, 255, 255, 0.02)',
-            opacity: vaultState === 'idle' ? 0.4 : 1,
+            opacity: (vaultState === 'idle' && consoleLogs.length === 0) ? 0.4 : 1,
             transition: 'opacity 0.3s ease'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
@@ -829,7 +833,7 @@ export default function Vault({ sharedFile, setSharedFile }: { sharedFile?: File
             </p>
 
             {vaultState !== 'idle' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   {vaultState === 'locked' && (
                     <button 
@@ -860,19 +864,23 @@ export default function Vault({ sharedFile, setSharedFile }: { sharedFile?: File
                     </button>
                   )}
                 </div>
+              </div>
+            )}
 
-                {/* Inner log console */}
-                <div style={{ marginTop: '8px' }}>
-                  <span className="header-badge" style={{ marginBottom: '8px', fontSize: '9px', display: 'inline-block' }}>Vault Security Logs</span>
-                  <div className="console-container" style={{ height: '120px', fontSize: '10.5px' }}>
-                    {consoleLogs.map((log, idx) => (
-                      <div key={idx} className="console-line">
-                        <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
-                        <span className="console-tag tag-success">[SEAL]</span>
-                        <span>{log}</span>
-                      </div>
-                    ))}
-                  </div>
+            {/* Inner log console */}
+            {(vaultState !== 'idle' || consoleLogs.length > 0) && (
+              <div style={{ marginTop: '8px' }}>
+                <span className="header-badge" style={{ marginBottom: '8px', fontSize: '9px', display: 'inline-block' }}>Vault Security Logs</span>
+                <div className="console-container" style={{ height: '120px', fontSize: '10.5px' }}>
+                  {consoleLogs.map((log, idx) => (
+                    <div key={idx} className="console-line">
+                      <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
+                      <span className={`console-tag ${log.includes('[ERROR]') ? 'tag-rose' : 'tag-success'}`} style={{ color: log.includes('[ERROR]') ? 'var(--neon-rose)' : 'var(--neon-emerald)' }}>
+                        {log.includes('[ERROR]') ? '[FAIL]' : '[SEAL]'}
+                      </span>
+                      <span>{log}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
