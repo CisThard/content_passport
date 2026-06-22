@@ -69,6 +69,9 @@ export default function Register() {
 
   // Handle URL redirect or session restoration
   useEffect(() => {
+    // Wait until the system configuration (epoch) has finished loading
+    if (currentEpoch === 100) return
+
     const savedAddress = sessionStorage.getItem('cp_zk_address')
     const savedProof = sessionStorage.getItem('cp_zk_proof')
     const savedAddressSeed = sessionStorage.getItem('cp_zk_address_seed')
@@ -146,8 +149,8 @@ export default function Register() {
   }
 
   const handleGoogleLogin = () => {
-    if (!googleClientId) {
-      setMintLogs((prev) => [...prev, '[CONFIG] AUTH_GOOGLE_ID is required for real Google zkLogin. Mock login is disabled.'])
+    if (!googleClientId || currentEpoch === 100) {
+      setMintLogs((prev) => [...prev, '[CONFIG] System configuration is still loading. Please try again in a moment.'])
       return
     }
     const session = getOrSetEphemeralSession(currentEpoch)
