@@ -118,7 +118,7 @@ async function encryptData(data: Uint8Array): Promise<{ ciphertext: Uint8Array; 
     true,
     ['encrypt', 'decrypt']
   )
-  const iv = window.crypto.subtle.getRandomValues(new Uint8Array(12))
+  const iv = window.crypto.getRandomValues(new Uint8Array(12))
   const ciphertextBuffer = await window.crypto.subtle.encrypt(
     { name: 'AES-GCM', iv },
     key,
