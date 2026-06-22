@@ -53,7 +53,7 @@ function MainAppShell() {
   const [zkUserName, setZkUserName] = useState<string | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
   const [googleClientId, setGoogleClientId] = useState('')
-  const [currentEpoch, setCurrentEpoch] = useState(100)
+  const [currentEpoch, setCurrentEpoch] = useState<number | null>(null)
   const [sharedFile, setSharedFile] = useState<File | null>(null)
 
   useEffect(() => {
@@ -101,7 +101,22 @@ function MainAppShell() {
       import('./lib/zklogin'),
       import('@mysten/sui/zklogin'),
     ])
-    const session = getOrSetEphemeralSession(currentEpoch)
+
+    let epoch = currentEpoch
+    if (epoch === null) {
+      try {
+        const res = await fetch('/api/auth/config')
+        const data = await res.json()
+        if (data.epoch) {
+          epoch = data.epoch
+          setCurrentEpoch(epoch)
+        }
+      } catch (err) {
+        console.error('Failed to load epoch on demand in App:', err)
+      }
+    }
+
+    const session = getOrSetEphemeralSession(epoch)
     const nonce = generateNonce(session.keypair.getPublicKey(), session.maxEpoch, session.randomness)
     const redirectUri = window.location.origin + '/login-callback'
 

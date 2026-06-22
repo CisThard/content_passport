@@ -45,7 +45,7 @@ export default function Register() {
   const [googleClientId, setGoogleClientId] = useState('')
   const [serverPackageId, setServerPackageId] = useState('')
   const [zkLoginSaltStrategy, setZkLoginSaltStrategy] = useState('not-configured')
-  const [currentEpoch, setCurrentEpoch] = useState(100)
+  const [currentEpoch, setCurrentEpoch] = useState<number | null>(null)
   const [zkUserAddress, setZkUserAddress] = useState<string | null>(null)
   const [zkProof, setZkProof] = useState<any | null>(null)
   const [zkAddressSeed, setZkAddressSeed] = useState<string | null>(null)
@@ -70,7 +70,7 @@ export default function Register() {
   // Handle URL redirect or session restoration
   useEffect(() => {
     // Wait until the system configuration (epoch) has finished loading
-    if (currentEpoch === 100) return
+    if (currentEpoch === null) return
 
     const savedAddress = sessionStorage.getItem('cp_zk_address')
     const savedProof = sessionStorage.getItem('cp_zk_proof')
@@ -148,12 +148,32 @@ export default function Register() {
     }
   }
 
-  const handleGoogleLogin = () => {
-    if (!googleClientId || currentEpoch === 100) {
-      setMintLogs((prev) => [...prev, '[CONFIG] System configuration is still loading. Please try again in a moment.'])
+  const handleGoogleLogin = async () => {
+    if (!googleClientId) return
+
+    let epoch = currentEpoch
+    if (epoch === null) {
+      setMintLogs((prev) => [...prev, '[CONFIG] System configuration is loading. Retrying...'])
+      try {
+        const res = await fetch('/api/auth/config')
+        const data = await res.json()
+        if (data.epoch) {
+          epoch = data.epoch
+          setCurrentEpoch(epoch)
+        }
+      } catch (err) {
+        setMintLogs((prev) => [...prev, '[ERROR] Failed to load configuration on demand.'])
+        console.error(err)
+        return
+      }
+    }
+
+    if (epoch === null) {
+      setMintLogs((prev) => [...prev, '[ERROR] Epoch configuration is missing. Cannot login.'])
       return
     }
-    const session = getOrSetEphemeralSession(currentEpoch)
+
+    const session = getOrSetEphemeralSession(epoch)
     const nonce = generateNonce(session.keypair.getPublicKey(), session.maxEpoch, session.randomness)
     const redirectUri = window.location.origin + '/login-callback'
 

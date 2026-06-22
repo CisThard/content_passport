@@ -16,13 +16,14 @@ export interface EphemeralSession {
  * Loads the existing ephemeral session keypair from sessionStorage or generates a new one.
  * The session is valid for the current epoch + 10 (approx. 24h validity).
  */
-export function getOrSetEphemeralSession(currentEpoch = 100): EphemeralSession {
+export function getOrSetEphemeralSession(currentEpoch: number | null = 100): EphemeralSession {
   const storedKey = sessionStorage.getItem(EPHEMERAL_KEY_KEY)
   const storedRandomness = sessionStorage.getItem(RANDOMNESS_KEY)
   const storedMaxEpoch = sessionStorage.getItem(MAX_EPOCH_KEY)
 
   const parsedMaxEpoch = Number.parseInt(storedMaxEpoch || '', 10)
-  if (storedKey && storedRandomness && Number.isSafeInteger(parsedMaxEpoch) && parsedMaxEpoch > currentEpoch) {
+  const epochToCheck = currentEpoch ?? 100
+  if (storedKey && storedRandomness && Number.isSafeInteger(parsedMaxEpoch) && parsedMaxEpoch > epochToCheck) {
     try {
       const keypair = Ed25519Keypair.fromSecretKey(storedKey)
       return {
@@ -40,7 +41,7 @@ export function getOrSetEphemeralSession(currentEpoch = 100): EphemeralSession {
   // Create new session keypair
   const keypair = new Ed25519Keypair()
   const randomness = generateRandomness()
-  const maxEpoch = currentEpoch + 10
+  const maxEpoch = epochToCheck + 10
 
   sessionStorage.setItem(EPHEMERAL_KEY_KEY, keypair.getSecretKey())
   sessionStorage.setItem(RANDOMNESS_KEY, randomness)
