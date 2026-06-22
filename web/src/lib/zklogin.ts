@@ -1,6 +1,8 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519'
 import { generateNonce, generateRandomness } from '@mysten/sui/zklogin'
 
+import { clearZkLoginSessionStorage, emitZkLoginSessionChanged } from './authSession'
+
 // Session Storage keys
 const EPHEMERAL_KEY_KEY = 'content_passport_ephemeral_key'
 const RANDOMNESS_KEY = 'content_passport_zklogin_randomness'
@@ -84,4 +86,6 @@ export function clearEphemeralSession(): void {
   sessionStorage.removeItem(EPHEMERAL_KEY_KEY)
   sessionStorage.removeItem(RANDOMNESS_KEY)
   sessionStorage.removeItem(MAX_EPOCH_KEY)
+  clearZkLoginSessionStorage()
+  emitZkLoginSessionChanged()
 }
