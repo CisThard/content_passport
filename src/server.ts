@@ -331,7 +331,7 @@ app.get("/api/vault/download/:blobId", async (req, res) => {
 // ==========================================
 
 function getSponsorKeypair(): Ed25519Keypair | undefined {
-  const secret = process.env.SUI_SPONSOR_SECRET_KEY || process.env.SPONSOR_SECRET;
+  const secret = process.env.SUI_SPONSOR_SECRET_KEY || process.env.SPONSOR_SECRET || process.env.SUI_PRIVATE_KEY;
   if (!secret) return undefined;
   try {
     return Ed25519Keypair.fromSecretKey(Buffer.from(secret, "hex"));
