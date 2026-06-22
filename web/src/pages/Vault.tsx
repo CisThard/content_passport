@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 // ==========================================
 // 🛡️ GF(256) & Shamir's Secret Sharing (3/5)
@@ -641,8 +642,8 @@ export default function Vault() {
       </div>
 
       <div className="grid-layout-2">
-        {/* Left Column: Dropzone & Terminal Logs */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+        {/* Left Column: Sequential Step Panels */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           <input
             type="file"
@@ -651,165 +652,230 @@ export default function Vault() {
             style={{ display: 'none' }}
           />
 
-          {vaultState === 'idle' ? (
-            <div 
-              className="runic-zone" 
-              onClick={triggerUpload}
-              style={{
-                backgroundImage: 'linear-gradient(rgba(13, 16, 38, 0.85), rgba(13, 16, 38, 0.85)), url("/cryptoseal.jpg")',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                border: '1px dashed var(--neon-emerald)',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                minHeight: '220px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '30px',
-                borderRadius: '12px'
-              }}
-            >
-              <div 
-                className="runic-zone-icon"
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  backgroundImage: 'url("/cryptoseal.jpg")',
-                  backgroundSize: 'cover',
-                  borderRadius: '50%',
-                  boxShadow: '0 0 15px var(--neon-emerald)',
-                  marginBottom: '16px'
-                }}
-              ></div>
-              <h4>Upload master draft file to encrypt & seal</h4>
-              <p style={{ textAlign: 'center', maxWidth: '400px', fontSize: '13px' }}>
-                Drag & drop or click to upload. Files are securely split using threshold cryptography before being dispatched to the Walrus network.
-              </p>
+          {/* STEP 1: Upload Master Draft File */}
+          <div className="linear-card-recessed" style={{ 
+            padding: '20px', 
+            borderRadius: '8px', 
+            border: '1px solid rgba(255, 255, 255, 0.05)', 
+            background: 'rgba(255, 255, 255, 0.02)',
+            opacity: vaultState !== 'idle' && vaultState !== 'encrypting' ? 0.6 : 1
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <span className="header-badge badge-emerald" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 1</span>
+              <strong style={{ color: '#fff', fontSize: '13px' }}>Select & Upload Master Draft</strong>
             </div>
-          ) : (
-            <div className="cyber-card" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+              Choose the high-resolution master file to protect. The file will be encrypted locally using AES-256-GCM before dispatching the ciphertext payload to the decentralized Walrus storage network.
+            </p>
+
+            {vaultState === 'idle' ? (
+              <div 
+                className="runic-zone" 
+                onClick={triggerUpload}
+                style={{
+                  backgroundImage: 'linear-gradient(rgba(13, 16, 38, 0.85), rgba(13, 16, 38, 0.85)), url("/cryptoseal.jpg")',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  border: '1px dashed var(--neon-emerald)',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  minHeight: '140px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: '20px',
+                  borderRadius: '8px'
+                }}
+              >
+                <strong style={{ fontSize: '12px', color: 'var(--neon-emerald)', display: 'block', marginBottom: '6px' }}>
+                  Drag & Drop or Click to Upload Master Draft
+                </strong>
+                <p style={{ textAlign: 'center', maxWidth: '350px', fontSize: '10.5px', color: 'var(--text-muted)', margin: 0 }}>
+                  Raw assets are split using threshold cryptography before on-chain registration.
+                </p>
+              </div>
+            ) : (
+              <div className="linear-card-recessed" style={{ padding: '12px 16px', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h4 style={{ color: '#fff', fontSize: '15px', fontWeight: 700 }}>
-                    {selectedFile?.name}
-                  </h4>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>
-                    AES-GCM 256 / Shamir Shards (k=3, n=5)
+                  <strong style={{ color: '#fff', fontSize: '12px' }}>{selectedFile?.name}</strong>
+                  <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', marginTop: '2px' }}>
+                    {(selectedFile?.size ? selectedFile.size / 1024 : 0).toFixed(2)} KB • AES-GCM-256 Encrypted
                   </span>
                 </div>
-                <span 
-                  className={`header-badge ${
-                    vaultState === 'encrypting' ? 'badge-blue' :
-                    vaultState === 'locked' ? 'badge-red' :
-                    vaultState === 'aggregating' ? 'badge-orange' : 'badge-emerald'
-                  }`}
-                  style={{ margin: 0 }}
-                >
-                  {vaultState === 'encrypting' && 'ENCRYPTING'}
-                  {vaultState === 'locked' && 'SEAL LOCKED'}
-                  {vaultState === 'aggregating' && 'INTERPOLATING'}
-                  {vaultState === 'unlocked' && 'UNLOCKED'}
-                </span>
+                <span className="header-badge badge-emerald" style={{ margin: 0, fontSize: '9px' }}>✓ SEALED</span>
               </div>
+            )}
+          </div>
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-                {vaultState === 'locked' && (
-                  <button 
-                    onClick={handleUnlockVault} 
-                    className={`cyber-btn ${approvedCount >= 3 ? 'cyber-btn-emerald' : 'cyber-btn-secondary'}`}
-                    style={{ flex: 1 }}
-                  >
-                    Assemble Key Shares ({approvedCount}/3)
-                  </button>
-                )}
-                {vaultState === 'unlocked' && decryptedFileUrl && (
-                  <a 
-                    href={decryptedFileUrl} 
-                    download={decryptedFileName}
-                    className="cyber-btn cyber-btn-emerald"
-                    style={{ flex: 1, textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-                  >
-                    📥 Download Decrypted File
-                  </a>
-                )}
-                {(vaultState === 'unlocked' || vaultState === 'locked') && (
-                  <button onClick={handleResetVault} className="cyber-btn cyber-btn-secondary">
-                    Reset Vault
-                  </button>
-                )}
-              </div>
-
-              {/* Inner log console */}
-              <span className="header-badge" style={{ marginBottom: '10px', fontSize: '9px' }}>Vault Security Logs</span>
-              <div className="console-container" style={{ height: '180px' }}>
-                {consoleLogs.map((log, idx) => (
-                  <div key={idx} className="console-line">
-                    <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
-                    <span className="console-tag tag-success">[SEAL]</span>
-                    <span>{log}</span>
-                  </div>
-                ))}
-              </div>
+          {/* STEP 2: Shamir Secret Shard Distribution (3/5) */}
+          <div className="linear-card-recessed" style={{ 
+            padding: '20px', 
+            borderRadius: '8px', 
+            border: '1px solid rgba(255, 255, 255, 0.05)', 
+            background: 'rgba(255, 255, 255, 0.02)',
+            opacity: vaultState === 'idle' ? 0.4 : 1,
+            transition: 'opacity 0.3s ease'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <span className={`header-badge ${vaultState !== 'idle' ? 'badge-emerald' : 'badge-secondary'}`} style={{ padding: '2px 8px', fontSize: '9px' }}>Step 2</span>
+              <strong style={{ color: '#fff', fontSize: '13px' }}>Shamir Secret Shard Distribution</strong>
             </div>
-          )}
+            <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+              The symmetric AES key is split into 5 cryptographic shards using Shamir's Secret Sharing (k=3, n=5). Each shard is held by a decentralized guardian node.
+            </p>
 
-          {/* 🌐 Decentralized Guardian Nodes Grid */}
-          {vaultState !== 'idle' && (
-            <div className="cyber-card" style={{ padding: '24px' }}>
-              <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '16px' }}>
-                Decentralized Key Node Guardians
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
-                {nodes.map((node) => (
+            {vaultState !== 'idle' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                {nodes.map((node, idx) => (
                   <div 
                     key={node.id} 
                     style={{ 
-                      background: 'rgba(255, 255, 255, 0.02)',
+                      background: 'rgba(0, 0, 0, 0.3)',
                       border: `1px solid ${node.approved ? 'var(--neon-emerald)' : 'rgba(255,255,255,0.06)'}`,
-                      borderRadius: '8px',
-                      padding: '16px',
+                      borderRadius: '6px',
+                      padding: '10px',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '8px',
+                      gap: '4px',
                       position: 'relative',
-                      boxShadow: node.approved ? '0 0 10px rgba(0, 245, 160, 0.15)' : 'none',
+                      boxShadow: node.approved ? '0 0 8px rgba(0, 245, 160, 0.1)' : 'none',
                       transition: 'all 0.3s ease'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff', fontFamily: 'var(--mono)' }}>{node.id}</span>
-                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{node.latency}ms</span>
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', fontFamily: 'var(--mono)' }}>Node-0{idx+1}</span>
+                      <span style={{ fontSize: '8px', color: 'var(--text-muted)' }}>{node.latency}ms</span>
                     </div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{node.location}</div>
-                    
-                    <div style={{ fontSize: '10px', fontFamily: 'var(--mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: 'rgba(0,0,0,0.3)', padding: '4px', borderRadius: '4px', marginTop: '4px' }}>
-                      {node.shard ? `Share: ${node.shard.slice(0, 12)}...` : 'No share assigned'}
+                    <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{node.location}</div>
+                    <div style={{ fontSize: '8px', fontFamily: 'var(--mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: 'rgba(0,0,0,0.5)', padding: '2px 4px', borderRadius: '3px', marginTop: '2px' }}>
+                      {node.shard ? `Share: ${node.shard.slice(0, 8)}...` : 'Assigning...'}
                     </div>
-
                     <button
                       disabled={vaultState !== 'locked'}
                       onClick={() => toggleNodeApproval(node.id)}
                       style={{
-                        marginTop: '8px',
+                        marginTop: '6px',
                         background: node.approved ? 'var(--neon-emerald)' : 'rgba(255,255,255,0.05)',
                         border: 'none',
                         color: node.approved ? '#0d1026' : '#fff',
-                        fontSize: '11px',
+                        fontSize: '9px',
                         fontWeight: 600,
-                        padding: '6px',
-                        borderRadius: '4px',
+                        padding: '4px 0',
+                        borderRadius: '3px',
                         cursor: vaultState === 'locked' ? 'pointer' : 'not-allowed',
                         transition: 'all 0.2s ease'
                       }}
                     >
-                      {node.approved ? '✓ Approved' : 'Approve Share'}
+                      {node.approved ? '✓ Approved' : 'Grant Signature'}
                     </button>
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+
+          {/* STEP 3: Lagrange Threshold Reconstruction */}
+          <div className="linear-card-recessed" style={{ 
+            padding: '20px', 
+            borderRadius: '8px', 
+            border: '1px solid rgba(255, 255, 255, 0.05)', 
+            background: 'rgba(255, 255, 255, 0.02)',
+            opacity: vaultState === 'idle' ? 0.4 : 1,
+            transition: 'opacity 0.3s ease'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <span className={`header-badge ${vaultState !== 'idle' ? 'badge-emerald' : 'badge-secondary'}`} style={{ padding: '2px 8px', fontSize: '9px' }}>Step 3</span>
+              <strong style={{ color: '#fff', fontSize: '13px' }}>Lagrange Threshold Reconstruction Handshake</strong>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+              Select at least 3 active guardian nodes in Step 2 to grant signature approvals. Then, reconstruct the AES symmetric decryption key and unlock your master draft file.
+            </p>
+
+            {vaultState !== 'idle' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {vaultState === 'locked' && (
+                    <button 
+                      onClick={handleUnlockVault} 
+                      className={`cyber-btn ${approvedCount >= 3 ? 'cyber-btn-emerald' : 'cyber-btn-secondary'}`}
+                      style={{ flex: 1, padding: '10px 0', fontSize: '11px', fontWeight: 'bold' }}
+                    >
+                      Assemble Key Shares ({approvedCount}/3)
+                    </button>
+                  )}
+                  {vaultState === 'unlocked' && decryptedFileUrl && (
+                    <a 
+                      href={decryptedFileUrl} 
+                      download={decryptedFileName}
+                      className="cyber-btn cyber-btn-emerald"
+                      style={{ flex: 1, textDecoration: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px 0', fontSize: '11px', fontWeight: 'bold' }}
+                    >
+                      📥 Download Decrypted File
+                    </a>
+                  )}
+                  {(vaultState === 'unlocked' || vaultState === 'locked') && (
+                    <button 
+                      onClick={handleResetVault} 
+                      className="cyber-btn cyber-btn-secondary"
+                      style={{ padding: '10px 16px', fontSize: '11px' }}
+                    >
+                      Reset Vault
+                    </button>
+                  )}
+                </div>
+
+                {/* Inner log console */}
+                <div style={{ marginTop: '8px' }}>
+                  <span className="header-badge" style={{ marginBottom: '8px', fontSize: '9px', display: 'inline-block' }}>Vault Security Logs</span>
+                  <div className="console-container" style={{ height: '120px', fontSize: '10.5px' }}>
+                    {consoleLogs.map((log, idx) => (
+                      <div key={idx} className="console-line">
+                        <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
+                        <span className="console-tag tag-success">[SEAL]</span>
+                        <span>{log}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* STEP 4: Next Stage Flow Link */}
+          {blobId && (
+            <div className="linear-card-recessed" style={{ 
+              padding: '20px', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(16, 185, 129, 0.25)', 
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(14, 165, 233, 0.06) 100%)',
+              animation: 'fadeIn 0.5s ease'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <span className="header-badge badge-emerald" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 4</span>
+                <strong style={{ color: 'var(--neon-emerald)', fontSize: '13px' }}>Master Draft Secured (SEAL)</strong>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+                Your master draft has been split via Shamir Cryptography and uploaded to the Walrus network. Proceed to **Automated Royalties** to establish co-creation weights and register them on-chain.
+              </p>
+              <Link 
+                to="/blueprint" 
+                className="cyber-btn cyber-btn-emerald"
+                style={{ 
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  padding: '10px 16px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  letterSpacing: '0.5px',
+                  textDecoration: 'none'
+                }}
+              >
+                💰 Proceed to Automated Royalties (Blueprint)
+              </Link>
             </div>
           )}
         </div>

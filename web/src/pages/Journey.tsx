@@ -479,10 +479,10 @@ export default function Journey() {
           <span className="header-badge badge-rose">60-second Judge Run</span>
           <h3 className="card-title" style={{ marginTop: '14px' }}>Demo Script</h3>
           <div className="judge-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '14px' }}>
-            <Link to="/verify" className="cyber-btn cyber-btn-indigo" style={{ textDecoration: 'none', textAlign: 'center' }}>1. Verify Content</Link>
-            <Link to="/register" className="cyber-btn cyber-btn-indigo" style={{ textDecoration: 'none', textAlign: 'center' }}>2. Mint Passport</Link>
-            <Link to="/blueprint" className="cyber-btn cyber-btn-indigo" style={{ textDecoration: 'none', textAlign: 'center' }}>3. Escrow Royalties</Link>
-            <Link to="/vault" className="cyber-btn cyber-btn-emerald" style={{ textDecoration: 'none', textAlign: 'center' }}>4. Sealed Vault</Link>
+            <Link to="/register" className="cyber-btn cyber-btn-indigo" style={{ textDecoration: 'none', textAlign: 'center' }}>1. Mint Passport</Link>
+            <Link to="/verify" className="cyber-btn cyber-btn-indigo" style={{ textDecoration: 'none', textAlign: 'center' }}>2. Verify Content</Link>
+            <Link to="/vault" className="cyber-btn cyber-btn-indigo" style={{ textDecoration: 'none', textAlign: 'center' }}>3. Sealed Vault</Link>
+            <Link to="/blueprint" className="cyber-btn cyber-btn-emerald" style={{ textDecoration: 'none', textAlign: 'center' }}>4. Escrow Royalties</Link>
           </div>
           <div className="linear-card-recessed" style={{ padding: '14px', marginTop: '18px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>CURRENT PROOF SUMMARY</div>

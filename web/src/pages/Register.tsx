@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import {
   getOrSetEphemeralSession,
   buildGoogleAuthUrl,
@@ -335,28 +335,44 @@ export default function Register() {
 
       <div className="grid-layout-2">
         {/* Registration Form & Console */}
-        <div className="cyber-card">
-          <h3 className="card-title">Passport Authority Form</h3>
-          <p className="card-subtitle">Authenticate via Google and the system will auto-fund the on-chain mint transaction.</p>
+        <div className="cyber-card" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div>
+            <h3 className="card-title">Passport Authority Form</h3>
+            <p className="card-subtitle" style={{ margin: '4px 0 0 0' }}>Follow the sequential pipeline below to establish your sovereign creator identity.</p>
+          </div>
 
-          <div className="linear-card-recessed" style={{ padding: '16px 20px', marginBottom: '20px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)', background: 'rgba(255, 255, 255, 0.02)', backdropFilter: 'blur(10px)' }}>
+          {/* STEP 1: Google Identity Verification */}
+          <div className="linear-card-recessed" style={{ 
+            padding: '20px', 
+            borderRadius: '8px', 
+            border: '1px solid rgba(255, 255, 255, 0.05)', 
+            background: 'rgba(255, 255, 255, 0.02)',
+            opacity: isMinting ? 0.6 : 1
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <span className="header-badge badge-indigo" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 1</span>
+              <strong style={{ color: '#fff', fontSize: '13px' }}>Google Identity Verification (zkLogin)</strong>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+              Authenticate with your Google account. The system generates an ephemeral session key pair in browser memory and maps your Google ID securely to a derived Sui address on-chain.
+            </p>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', letterSpacing: '1px', textTransform: 'uppercase' }}>Google OIDC Identity</div>
-                <strong style={{ color: zkUserAddress ? 'var(--neon-emerald)' : 'var(--neon-rose)', fontSize: '14px', fontFamily: 'var(--mono)', display: 'block', marginTop: '4px' }}>
-                  {zkUserAddress ? `Google User: ${shortId(zkUserAddress)}` : 'Google Authentication Required'}
+                <strong style={{ color: zkUserAddress ? 'var(--neon-emerald)' : 'var(--neon-rose)', fontSize: '12px', fontFamily: 'var(--mono)', display: 'block' }}>
+                  {zkUserAddress ? `✓ Verified: ${shortId(zkUserAddress)}` : '✗ Authentication Required'}
                 </strong>
-                <div style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '4px' }}>
-                  {zkUserAddress ? 'Gas sponsored by Content Passport ($0.00 Gas fee)' : 'Mint sponsored passports with zero wallet or gas friction'}
-                  <br />
-                  Salt service: {zkLoginSaltStrategy === 'hkdf-master-seed' ? 'per-user HKDF' : zkLoginSaltStrategy}
-                </div>
+                {zkUserAddress && (
+                  <div style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '4px', fontFamily: 'var(--mono)' }}>
+                    Salt Service: {zkLoginSaltStrategy === 'hkdf-master-seed' ? 'Per-User HKDF' : zkLoginSaltStrategy}
+                  </div>
+                )}
               </div>
               {zkUserAddress ? (
                 <button 
                   onClick={handleLogout} 
+                  disabled={isMinting}
                   className="cyber-btn cyber-btn-rose"
-                  style={{ padding: '8px 16px', fontSize: '12px' }}
+                  style={{ padding: '8px 16px', fontSize: '11px' }}
                 >
                   Logout
                 </button>
@@ -366,20 +382,18 @@ export default function Register() {
                   disabled={isLoggingIn}
                   className="cyber-btn cyber-btn-indigo"
                   style={{ 
-                    padding: '10px 20px', 
-                    fontSize: '12px', 
+                    padding: '10px 18px', 
+                    fontSize: '11px', 
                     fontWeight: 700, 
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '8px',
-                    boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)'
+                    boxShadow: '0 0 15px rgba(99, 102, 241, 0.3)'
                   }}
                 >
-                  {isLoggingIn ? (
-                    'Processing...'
-                  ) : (
+                  {isLoggingIn ? 'Connecting...' : (
                     <>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
@@ -393,71 +407,134 @@ export default function Register() {
             </div>
           </div>
 
-          <div className="cyber-input-wrap">
-            <label>Declare SuiNS Identity Name</label>
-            <div style={{ display: 'flex', gap: '12px' }}>
+          {/* STEP 2: Choose SuiNS Name */}
+          <div className="linear-card-recessed" style={{ 
+            padding: '20px', 
+            borderRadius: '8px', 
+            border: '1px solid rgba(255, 255, 255, 0.05)', 
+            background: 'rgba(255, 255, 255, 0.02)',
+            opacity: !zkUserAddress || isMinting ? 0.5 : 1
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <span className={`header-badge ${zkUserAddress ? 'badge-indigo' : 'badge-secondary'}`} style={{ padding: '2px 8px', fontSize: '9px' }}>Step 2</span>
+              <strong style={{ color: '#fff', fontSize: '13px' }}>Identity Name Selection (SuiNS)</strong>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+              Provide a username/alias. The system registers this name as a unique SuiNS identity mapping on the blockchain, representing your creative signature.
+            </p>
+            <div className="cyber-input-wrap" style={{ margin: 0 }}>
               <input
                 type="text"
                 placeholder="e.g. charles.sui"
                 value={suinsName}
                 onChange={(e) => setSuinsName(e.target.value)}
                 disabled={isMinting || !zkUserAddress}
-                style={{ flex: 1 }}
+                style={{ width: '100%', padding: '10px 14px' }}
               />
-              <button
-                onClick={handleMintPassport}
-                disabled={isMinting || !suinsName.trim() || !zkUserAddress}
-                className="cyber-btn cyber-btn-indigo"
-                style={{ padding: '0 28px', whiteSpace: 'nowrap' }}
-              >
-                {isMinting ? 'Signing On-chain...' : 'Mint Passport'}
-              </button>
             </div>
           </div>
 
-          {/* Hologram Terminal Logs */}
-          {(isMinting || mintLogs.length > 0) && (
-            <div style={{ marginTop: '30px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <span className="header-badge" style={{ fontSize: '9px' }}>Minting Terminal</span>
-                {isMinting && (
-                  <span style={{ fontSize: '11px', color: 'var(--neon-cyan)', fontFamily: 'var(--mono)', fontWeight: 'bold' }}>
-                    {mintStatusText} ({mintProgress}% Completed)
-                  </span>
-                )}
-              </div>
-              
-              {isMinting && (
-                <div style={{ marginBottom: '20px', background: 'rgba(255, 255, 255, 0.02)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)' }}>
-                  <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div 
-                      style={{ 
-                        width: `${mintProgress}%`, 
-                        height: '100%', 
-                        background: 'linear-gradient(90deg, var(--neon-cyan) 0%, var(--neon-emerald) 100%)', 
-                        boxShadow: '0 0 12px var(--neon-cyan)', 
-                        transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)' 
-                      }} 
-                    />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', marginTop: '8px', letterSpacing: '0.5px' }}>
-                    <span>ESTIMATED TIME REMAINING: {mintProgress < 100 ? '~3.0 SECONDS' : 'SUCCESS'}</span>
-                    <span>PIPELINE: {mintProgress < 35 ? 'BUILDING' : mintProgress < 75 ? 'SIGNING' : mintProgress < 100 ? 'BROADCASTING' : 'FINISHED'}</span>
-                  </div>
-                </div>
-              )}
+          {/* STEP 3: Sponsored Passport Mint */}
+          <div className="linear-card-recessed" style={{ 
+            padding: '20px', 
+            borderRadius: '8px', 
+            border: '1px solid rgba(255, 255, 255, 0.05)', 
+            background: 'rgba(255, 255, 255, 0.02)',
+            opacity: !zkUserAddress || !suinsName.trim() || isMinting ? 0.5 : 1
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+              <span className={`header-badge ${zkUserAddress && suinsName.trim() ? 'badge-indigo' : 'badge-secondary'}`} style={{ padding: '2px 8px', fontSize: '9px' }}>Step 3</span>
+              <strong style={{ color: '#fff', fontSize: '13px' }}>Sovereign Passport Minting (Gasless)</strong>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+              Construct and broadcast the on-chain minting transaction. The backend sponsor wallet pays 100% of the gas fee ($0.00 cost for you).
+            </p>
+            <button
+              onClick={handleMintPassport}
+              disabled={isMinting || !suinsName.trim() || !zkUserAddress}
+              className="cyber-btn cyber-btn-indigo"
+              style={{ width: '100%', padding: '12px 0', fontWeight: 'bold', fontSize: '12px' }}
+            >
+              {isMinting ? 'Minting in progress...' : 'Mint Creator Passport'}
+            </button>
 
-              <div className="console-container" style={{ height: '200px' }}>
-                {mintLogs.map((log, idx) => (
-                  <div key={idx} className="console-line">
-                    <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
-                    <span className={`console-tag ${log.startsWith('[ERROR]') ? 'tag-rose' : log.includes('SUCCESS') || log.includes('confirmed') || log.includes('object created') ? 'tag-success' : 'tag-system'}`}>
-                      {log.startsWith('[ERROR]') ? '[FAIL]' : log.includes('SUCCESS') || log.includes('confirmed') || log.includes('object created') ? '[TX]' : '[PROCESS]'}
+            {/* Hologram Terminal Logs inside Step 3 */}
+            {(isMinting || mintLogs.length > 0) && (
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span className="header-badge" style={{ fontSize: '9px' }}>Minting Terminal</span>
+                  {isMinting && (
+                    <span style={{ fontSize: '10px', color: 'var(--neon-cyan)', fontFamily: 'var(--mono)', fontWeight: 'bold' }}>
+                      {mintStatusText} ({mintProgress}%)
                     </span>
-                    <span>{log}</span>
+                  )}
+                </div>
+                
+                {isMinting && (
+                  <div style={{ marginBottom: '12px', background: 'rgba(255, 255, 255, 0.02)', padding: '8px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                      <div 
+                        style={{ 
+                          width: `${mintProgress}%`, 
+                          height: '100%', 
+                          background: 'linear-gradient(90deg, var(--neon-cyan) 0%, var(--neon-emerald) 100%)', 
+                          boxShadow: '0 0 8px var(--neon-cyan)', 
+                          transition: 'width 0.4s ease' 
+                        }} 
+                      />
+                    </div>
                   </div>
-                ))}
+                )}
+
+                <div className="console-container" style={{ height: '140px', fontSize: '10.5px' }}>
+                  {mintLogs.map((log, idx) => (
+                    <div key={idx} className="console-line">
+                      <span className="console-time">[{new Date().toLocaleTimeString()}]</span>
+                      <span className={`console-tag ${log.startsWith('[ERROR]') ? 'tag-rose' : log.includes('SUCCESS') || log.includes('confirmed') || log.includes('object created') ? 'tag-success' : 'tag-system'}`}>
+                        {log.startsWith('[ERROR]') ? '[FAIL]' : log.includes('SUCCESS') || log.includes('confirmed') || log.includes('object created') ? '[TX]' : '[PROCESS]'}
+                      </span>
+                      <span>{log}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
+            )}
+          </div>
+
+          {/* STEP 4: Next Stage Flow Link */}
+          {passportData && (
+            <div className="linear-card-recessed" style={{ 
+              padding: '20px', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(16, 185, 129, 0.25)', 
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(14, 165, 233, 0.06) 100%)',
+              animation: 'fadeIn 0.5s ease'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <span className="header-badge badge-emerald" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 4</span>
+                <strong style={{ color: 'var(--neon-emerald)', fontSize: '13px' }}>Identity Registry SUCCESS</strong>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+                Your sovereign Sui Creator Passport is minted! Proceed to the **Authenticity Audit** stage to audit your media files (images) and establish their on-chain provenance.
+              </p>
+              <Link 
+                to="/verify" 
+                className="cyber-btn cyber-btn-emerald"
+                style={{ 
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  padding: '10px 16px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  letterSpacing: '0.5px',
+                  textDecoration: 'none'
+                }}
+              >
+                🔍 Proceed to Authenticity Audit (Verify)
+              </Link>
             </div>
           )}
         </div>

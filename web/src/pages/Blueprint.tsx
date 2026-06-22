@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { ConnectButton, useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@mysten/dapp-kit'
 import { buildCreateAndFundPolicyTx, buildDistributeRoyaltiesTx } from '../../../src/sui'
 import { SuiProviders } from '../lib/SuiProviders'
@@ -541,17 +542,64 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
             </div>
           </div>
 
-          {/* Right Column: Simulator Inputs */}
-          <div className="cyber-card" style={{ padding: '30px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <h4 style={{ fontSize: '15px', color: '#fff', fontWeight: 700, marginBottom: '8px' }}>Remix Value Configurator</h4>
-              <p className="card-subtitle" style={{ marginBottom: '25px' }}>Adjust licensing fees of the collaborators to see how the total price and smart contract weights adapt.</p>
+          {/* Right Column: Step-by-Step Economic Architecture Control */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            
+            {/* STEP 1: Wallet Connection & Creator Identity */}
+            <div className="linear-card-recessed" style={{ 
+              padding: '20px', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(255, 255, 255, 0.05)', 
+              background: 'rgba(255, 255, 255, 0.02)',
+              opacity: chainBusy ? 0.6 : 1
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <span className="header-badge badge-gold" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 1</span>
+                <strong style={{ color: '#fff', fontSize: '13px' }}>Wallet Connection & Creator Passport</strong>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+                Connect your active Sui wallet and bind your on-chain GenesisPassport NFT to verify creator authority.
+              </p>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+                <span style={{ fontSize: '10px', fontFamily: 'var(--mono)', color: currentAccount ? 'var(--neon-emerald)' : 'var(--neon-rose)', fontWeight: 'bold' }}>
+                  {currentAccount ? `✓ WALLET: ${shortId(currentAccount.address)}` : '✗ WALLET DISCONNECTED'}
+                </span>
+                <ConnectButton />
+              </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div className="cyber-input-wrap">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600, color: 'var(--neon-gold)' }}>
-                    <span> Anya's Template Base Fee</span>
-                    <span>{anyaFee} SUI</span>
+              <div className="cyber-input-wrap" style={{ margin: 0 }}>
+                <label>GenesisPassport Object ID</label>
+                <input 
+                  value={passportId} 
+                  onChange={(e) => setPassportId(e.target.value)} 
+                  placeholder="Mint passport in prologue, or paste object ID here" 
+                  disabled={chainBusy}
+                />
+              </div>
+            </div>
+
+            {/* STEP 2: Configure Licensing Added Values */}
+            <div className="linear-card-recessed" style={{ 
+              padding: '20px', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(255, 255, 255, 0.05)', 
+              background: 'rgba(255, 255, 255, 0.02)',
+              opacity: chainBusy ? 0.6 : 1
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <span className="header-badge badge-gold" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 2</span>
+                <strong style={{ color: '#fff', fontSize: '13px' }}>License Fee Configuration (Weights)</strong>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+                Adjust each collaborator's licensing value contribution to dynamically determine royalty split vectors.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="cyber-input-wrap" style={{ margin: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 600, color: 'var(--neon-gold)' }}>
+                    <span>Anya (Origin Template Creator)</span>
+                    <span>{anyaFee} SUI ({anyaRemixWeight}%)</span>
                   </div>
                   <input
                     type="range"
@@ -559,13 +607,14 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                     max="100"
                     value={anyaFee}
                     onChange={(e) => setAnyaFee(parseRangeValue(e.target.value, anyaFee))}
+                    disabled={chainBusy}
                   />
                 </div>
 
-                <div className="cyber-input-wrap">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600, color: 'var(--neon-cyan)' }}>
-                    <span> Ben's Design Added Value</span>
-                    <span>{benFee} SUI</span>
+                <div className="cyber-input-wrap" style={{ margin: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 600, color: 'var(--neon-cyan)' }}>
+                    <span>Ben (Remix Overlay Designer)</span>
+                    <span>{benFee} SUI ({benRemixWeight}%)</span>
                   </div>
                   <input
                     type="range"
@@ -573,13 +622,14 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                     max="100"
                     value={benFee}
                     onChange={(e) => setBenFee(parseRangeValue(e.target.value, benFee))}
+                    disabled={chainBusy}
                   />
                 </div>
 
-                <div className="cyber-input-wrap">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600, color: 'var(--neon-rose)' }}>
-                    <span> Chloe's Sound Added Value</span>
-                    <span>{chloeFee} SUI</span>
+                <div className="cyber-input-wrap" style={{ margin: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 600, color: 'var(--neon-rose)' }}>
+                    <span>Chloe (Sound FX Composer)</span>
+                    <span>{chloeFee} SUI ({chloeRemixWeight}%)</span>
                   </div>
                   <input
                     type="range"
@@ -587,89 +637,118 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                     max="100"
                     value={chloeFee}
                     onChange={(e) => setChloeFee(parseRangeValue(e.target.value, chloeFee))}
+                    disabled={chainBusy}
                   />
                 </div>
               </div>
             </div>
 
-            <div className="linear-card-recessed" style={{ padding: '15px', marginTop: '20px', fontSize: '11.5px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Contract Total Value:</span>
-                <strong style={{ color: '#fff' }}>{totalRemixCost} SUI</strong>
+            {/* STEP 3: Map On-Chain Recipient Addresses */}
+            <div className="linear-card-recessed" style={{ 
+              padding: '20px', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(255, 255, 255, 0.05)', 
+              background: 'rgba(255, 255, 255, 0.02)',
+              opacity: chainBusy ? 0.6 : 1
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <span className="header-badge badge-gold" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 3</span>
+                <strong style={{ color: '#fff', fontSize: '13px' }}>Collaborator Recipient Addresses</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Dynamic Weight Vector:</span>
-                <span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--neon-gold)', fontWeight: 600 }}>
-                  [{anyaRemixWeight}%, {benRemixWeight}%, {chloeRemixWeight}%]
-                </span>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+                Specify destination SUI wallet addresses to map the computed royalty weight slices.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="cyber-input-wrap" style={{ margin: 0 }}>
+                  <input value={participantA} onChange={(e) => setParticipantA(e.target.value)} placeholder={`Anya Address (${anyaRemixWeight}%)`} disabled={chainBusy} />
+                </div>
+                <div className="cyber-input-wrap" style={{ margin: 0 }}>
+                  <input value={participantB} onChange={(e) => setParticipantB(e.target.value)} placeholder={`Ben Address (${benRemixWeight}%)`} disabled={chainBusy} />
+                </div>
+                <div className="cyber-input-wrap" style={{ margin: 0 }}>
+                  <input value={participantC} onChange={(e) => setParticipantC(e.target.value)} placeholder={`Chloe Address (${chloeRemixWeight}%)`} disabled={chainBusy} />
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: participantTotal === 100 ? 'var(--neon-emerald)' : 'var(--neon-gold)', fontFamily: 'var(--mono)', marginTop: '4px' }}>
+                  <span>Weight Sum: {participantTotal}%</span>
+                  <span>{liveParticipants.length === 0 ? '(Paste at least one address)' : ''}</span>
+                </div>
               </div>
             </div>
 
-            {/* Live On-Chain Parameters & Dry Run Terminal Container */}
-            <div className="linear-card-recessed" style={{ padding: '18px', marginTop: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
-                <div>
-                  <span className="header-badge" style={{ fontSize: '9px' }}>LIVE ON-CHAIN CONTROL</span>
-                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.4, margin: '8px 0 0' }}>
-                    Executes real Sui PTBs: create/fund co-creation policy and distribute escrow royalties.
-                  </p>
-                </div>
-                <ConnectButton />
+            {/* STEP 4: PTB Escrow & Settlement */}
+            <div className="linear-card-recessed" style={{ 
+              padding: '20px', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(255, 255, 255, 0.05)', 
+              background: 'rgba(255, 255, 255, 0.02)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <span className="header-badge badge-gold" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 4</span>
+                <strong style={{ color: '#fff', fontSize: '13px' }}>PTB Deployment & SUI Royalty Splits</strong>
               </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+                Deploy the co-creation policy shared object with locked SUI funding, and distribute splits atomically via Programmable Transaction Blocks.
+              </p>
 
-              <div className="cyber-input-wrap">
-                <label>GenesisPassport Object ID</label>
-                <input value={passportId} onChange={(e) => setPassportId(e.target.value)} placeholder="Mint on Register, or paste object id" />
-              </div>
-              <div className="cyber-input-wrap">
+              <div className="cyber-input-wrap" style={{ marginBottom: '12px' }}>
                 <label>CoCreationPolicy Object ID</label>
-                <input value={policyId} onChange={(e) => setPolicyId(e.target.value)} placeholder="Created policy id appears here" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
-                <input value={participantA} onChange={(e) => setParticipantA(e.target.value)} placeholder={`Anya recipient (${anyaRemixWeight}%)`} />
-                <input value={participantB} onChange={(e) => setParticipantB(e.target.value)} placeholder={`Ben recipient (${benRemixWeight}%)`} />
-                <input value={participantC} onChange={(e) => setParticipantC(e.target.value)} placeholder={`Chloe recipient (${chloeRemixWeight}%)`} />
-              </div>
-              
-              <div style={{ fontSize: '10px', color: participantTotal === 100 ? 'var(--neon-emerald)' : 'var(--neon-gold)', fontFamily: 'var(--mono)' }}>
-                Active participant weight total: {participantTotal}% {liveParticipants.length === 0 ? '(paste at least one address)' : ''}
+                <input value={policyId} onChange={(e) => setPolicyId(e.target.value)} placeholder="Deployed policy ID appears here" disabled={chainBusy} />
               </div>
 
               {!CONTENT_RIGHT_PACKAGE_ID && (
-                <div style={{ fontSize: '10px', color: 'var(--neon-gold)' }}>Set VITE_CONTENT_RIGHT_PACKAGE_ID before live package calls.</div>
+                <div style={{ fontSize: '10px', color: 'var(--neon-gold)', fontFamily: 'var(--mono)', marginBottom: '10px' }}>
+                  Set VITE_CONTENT_RIGHT_PACKAGE_ID before calling live blockchain.
+                </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <button className="cyber-btn cyber-btn-indigo" disabled={!canCreatePolicy || chainBusy} onClick={handleCreatePolicy}>
-                  {chainBusy ? 'Executing...' : 'Create + Fund Policy'}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                <button 
+                  className="cyber-btn cyber-btn-indigo" 
+                  disabled={!canCreatePolicy || chainBusy} 
+                  onClick={handleCreatePolicy}
+                  style={{ fontSize: '11px', fontWeight: 'bold' }}
+                >
+                  {chainBusy ? 'Deploying...' : 'Deploy & Fund Policy'}
                 </button>
-                <button className="cyber-btn cyber-btn-rose" disabled={!currentAccount || !CONTENT_RIGHT_PACKAGE_ID || !policyId.trim() || chainBusy} onClick={handleDistributeRoyalties}>
+                <button 
+                  className="cyber-btn cyber-btn-rose" 
+                  disabled={!currentAccount || !CONTENT_RIGHT_PACKAGE_ID || !policyId.trim() || chainBusy} 
+                  onClick={handleDistributeRoyalties}
+                  style={{ fontSize: '11px', fontWeight: 'bold' }}
+                >
                   Distribute Royalties
                 </button>
               </div>
 
               {lastDigest && (
-                <a href={suiscanTxUrl(lastDigest)} target="_blank" rel="noreferrer" style={{ color: 'var(--neon-cyan)', fontSize: '11px', fontFamily: 'var(--mono)' }}>
-                  Latest Suiscan transaction: {shortId(lastDigest, 12, 8)}
+                <a 
+                  href={suiscanTxUrl(lastDigest)} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  style={{ color: 'var(--neon-cyan)', fontSize: '10px', fontFamily: 'var(--mono)', display: 'block', marginBottom: '12px', textDecoration: 'none' }}
+                >
+                  Suiscan Tx: {shortId(lastDigest, 14, 10)} 🔗
                 </a>
               )}
 
-              {/* 🛠️ SUI PTB Terminal Inspector Tabs */}
-              <div style={{ display: 'flex', gap: '10px', marginTop: '15px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              {/* 🛠️ SUI PTB Terminal Tabs */}
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <button 
                   onClick={() => setActiveTerminalTab('dryrun')}
                   style={{
                     background: 'none',
                     border: 'none',
                     color: activeTerminalTab === 'dryrun' ? 'var(--neon-gold)' : 'var(--text-muted)',
-                    fontSize: '11px',
+                    fontSize: '10px',
                     fontWeight: 600,
-                    paddingBottom: '6px',
+                    paddingBottom: '4px',
                     borderBottom: activeTerminalTab === 'dryrun' ? '2px solid var(--neon-gold)' : 'none',
                     cursor: 'pointer'
                   }}
                 >
-                  [Sui PTB Dry Run Inspector]
+                  [PTB Dry Run]
                 </button>
                 <button 
                   onClick={() => setActiveTerminalTab('logs')}
@@ -677,14 +756,14 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                     background: 'none',
                     border: 'none',
                     color: activeTerminalTab === 'logs' ? 'var(--neon-emerald)' : 'var(--text-muted)',
-                    fontSize: '11px',
+                    fontSize: '10px',
                     fontWeight: 600,
-                    paddingBottom: '6px',
+                    paddingBottom: '4px',
                     borderBottom: activeTerminalTab === 'logs' ? '2px solid var(--neon-emerald)' : 'none',
                     cursor: 'pointer'
                   }}
                 >
-                  [Chain Console Logs]
+                  [Console Logs]
                 </button>
               </div>
 
@@ -693,20 +772,20 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                 <div 
                   className="console-container" 
                   style={{ 
-                    height: '180px', 
+                    height: '130px', 
                     whiteSpace: 'pre-wrap', 
                     fontFamily: 'var(--mono)', 
-                    fontSize: '10px', 
-                    lineHeight: '1.4', 
+                    fontSize: '9.5px', 
+                    lineHeight: '1.3', 
                     color: 'rgba(255,255,255,0.85)',
                     background: 'rgba(5, 5, 12, 0.9)',
-                    padding: '12px'
+                    padding: '8px'
                   }}
                 >
                   {generatePtbDryRun()}
                 </div>
               ) : (
-                <div className="console-container" style={{ height: '180px' }}>
+                <div className="console-container" style={{ height: '130px', fontSize: '9.5px' }}>
                   {chainLogs.length > 0 ? (
                     chainLogs.map((log, idx) => (
                       <div key={idx} className="console-line">
@@ -718,14 +797,50 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                       </div>
                     ))
                   ) : (
-                    <div style={{ color: 'var(--text-muted)', fontSize: '11px', textAlign: 'center', marginTop: '60px' }}>
-                      No on-chain events triggered in this session yet.
+                    <div style={{ color: 'var(--text-muted)', fontSize: '10px', textAlign: 'center', marginTop: '40px' }}>
+                      No on-chain events triggered yet.
                     </div>
                   )}
                 </div>
               )}
-
             </div>
+
+            {/* STEP 5: Proceed to Journey (Judge Mode) */}
+            {policyId && policyId.startsWith('0x') && (
+              <div className="linear-card-recessed" style={{ 
+                padding: '20px', 
+                borderRadius: '8px', 
+                border: '1px solid rgba(16, 185, 129, 0.25)', 
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(245, 158, 11, 0.06) 100%)',
+                animation: 'fadeIn 0.5s ease'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <span className="header-badge badge-emerald" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 5</span>
+                  <strong style={{ color: 'var(--neon-emerald)', fontSize: '13px' }}>Royalty Policy Registered</strong>
+                </div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+                  Your co-creation royalty policy is registered and active on SUI. Proceed to the **Passport Journey Timeline** to verify and audit the complete E2E execution history.
+                </p>
+                <Link 
+                  to="/journey" 
+                  className="cyber-btn cyber-btn-emerald"
+                  style={{ 
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '10px 16px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    letterSpacing: '0.5px',
+                    textDecoration: 'none'
+                  }}
+                >
+                  ⚖️ Proceed to Judge Mode (Journey)
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>

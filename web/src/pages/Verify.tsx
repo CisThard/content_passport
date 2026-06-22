@@ -315,55 +315,68 @@ export default function Verify() {
 
       <div className="grid-layout-2">
         {/* Verification Controls & Visualizer */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Sample Select & File Upload */}
-          <div className="cyber-card">
-            <h3 className="card-title">Select Audit Specimen</h3>
-            <p className="card-subtitle">Choose a test specimen image to trigger the verification agents.</p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-              {SAMPLE_MEDIAS.map((sample) => (
-                <div
-                  key={sample.id}
-                  onClick={() => {
-                    if (!isVerifying) {
-                      setSelectedSampleId(sample.id)
-                      if (customFileUrl) {
-                        URL.revokeObjectURL(customFileUrl)
-                        setCustomFileUrl(null)
-                      }
-                      setCustomFile(null)
-                      setVerdictResult(null)
-                      setProgressStep(null)
-                      setConsoleLogs([])
-                    }
-                  }}
-                  className="cyber-card"
-                  style={{
-                    padding: '20px',
-                    margin: 0,
-                    cursor: isVerifying ? 'not-allowed' : 'pointer',
-                    borderColor: selectedSampleId === sample.id ? 'var(--neon-indigo)' : 'var(--border-light)',
-                    background: selectedSampleId === sample.id ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-panel)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: sample.type === 'real' ? 'var(--neon-emerald)' : 'var(--neon-rose)' }}>
-                      {sample.type === 'real' ? ' CAMERA RAW' : ' GENERATED AI'}
-                    </span>
-                    <span style={{ fontSize: '14px' }}>{sample.type === 'real' ? '' : ''}</span>
-                  </div>
-                  <strong style={{ fontSize: '13px', color: '#fff', display: 'block', marginBottom: '4px' }}>{sample.title}</strong>
-                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>{sample.name}</span>
-                </div>
-              ))}
+          <div className="cyber-card" style={{ display: 'flex', flexDirection: 'column', gap: '24px', margin: 0 }}>
+            <div>
+              <h3 className="card-title">Authenticity Audit Station</h3>
+              <p className="card-subtitle" style={{ margin: '4px 0 0 0' }}>Follow the sequential pipeline below to execute real-time forensic scanning.</p>
             </div>
 
-            {/* Custom file upload */}
-            <div style={{ borderTop: '1px dashed var(--border-light)', paddingTop: '20px', marginTop: '20px', marginBottom: '24px' }}>
-              <strong style={{ fontSize: '12px', color: '#fff', display: 'block', marginBottom: '8px' }}>
-                Or Upload Custom Specimen
-              </strong>
+            {/* STEP 1: Choose Audit Specimen */}
+            <div className="linear-card-recessed" style={{ 
+              padding: '20px', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(255, 255, 255, 0.05)', 
+              background: 'rgba(255, 255, 255, 0.02)',
+              opacity: isVerifying ? 0.6 : 1
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <span className="header-badge badge-rose" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 1</span>
+                <strong style={{ color: '#fff', fontSize: '13px' }}>Select Specimen Image</strong>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+                Choose a preset Camera RAW photograph vs. an AI-generated specimen to trigger the agents, or upload your own image.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                {SAMPLE_MEDIAS.map((sample) => (
+                  <div
+                    key={sample.id}
+                    onClick={() => {
+                      if (!isVerifying) {
+                        setSelectedSampleId(sample.id)
+                        if (customFileUrl) {
+                          URL.revokeObjectURL(customFileUrl)
+                          setCustomFileUrl(null)
+                        }
+                        setCustomFile(null)
+                        setVerdictResult(null)
+                        setProgressStep(null)
+                        setConsoleLogs([])
+                      }
+                    }}
+                    className="cyber-card"
+                    style={{
+                      padding: '16px',
+                      margin: 0,
+                      cursor: isVerifying ? 'not-allowed' : 'pointer',
+                      borderColor: selectedSampleId === sample.id ? 'var(--neon-rose)' : 'rgba(255,255,255,0.06)',
+                      background: selectedSampleId === sample.id ? 'rgba(236, 72, 153, 0.05)' : 'var(--bg-panel)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '9px', fontFamily: 'var(--mono)', color: sample.type === 'real' ? 'var(--neon-emerald)' : 'var(--neon-rose)' }}>
+                        {sample.type === 'real' ? 'CAMERA RAW' : 'GENERATED AI'}
+                      </span>
+                    </div>
+                    <strong style={{ fontSize: '12px', color: '#fff', display: 'block', marginBottom: '2px' }}>{sample.title}</strong>
+                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--mono)' }}>{sample.name}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Custom File Upload */}
               <input
                 type="file"
                 ref={fileInputRef}
@@ -389,27 +402,25 @@ export default function Verify() {
                 }}
                 className="linear-card-recessed"
                 style={{
-                  border: '1px dashed var(--border-light)',
-                  padding: '20px',
-                  borderRadius: '4px',
+                  border: '1px dashed rgba(255, 255, 255, 0.1)',
+                  padding: '16px',
+                  borderRadius: '6px',
                   textAlign: 'center',
                   cursor: isVerifying ? 'not-allowed' : 'pointer',
-                  borderColor: customFile ? 'var(--neon-indigo)' : 'var(--border-light)',
-                  background: customFile ? 'rgba(99, 102, 241, 0.03)' : 'transparent',
+                  borderColor: customFile ? 'var(--neon-rose)' : 'rgba(255, 255, 255, 0.1)',
+                  background: customFile ? 'rgba(236, 72, 153, 0.03)' : 'transparent',
                   transition: 'all 0.3s ease'
                 }}
               >
                 {customFile ? (
                   <div>
-                    <span style={{ fontSize: '20px', display: 'block', marginBottom: '6px' }}></span>
                     <strong style={{ fontSize: '12px', color: '#fff', display: 'block' }}>{customFile.name}</strong>
                     <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                      {(customFile.size / 1024 / 1024).toFixed(2)} MB • Click to change
+                      {(customFile.size / 1024 / 1024).toFixed(2)} MB • Click to replace
                     </span>
                   </div>
                 ) : (
                   <div>
-                    <span style={{ fontSize: '20px', display: 'block', marginBottom: '6px' }}></span>
                     <strong style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block' }}>
                       Drag & Drop or Click to Upload
                     </strong>
@@ -421,18 +432,30 @@ export default function Verify() {
               </div>
             </div>
 
-            <button
-              onClick={handleStartAudit}
-              disabled={isVerifying}
-              className={`cyber-btn ${
-                (customFile || (selectedSampleId && SAMPLE_MEDIAS.find(s => s.id === selectedSampleId)?.type === 'real')) 
-                  ? 'cyber-btn-indigo' 
-                  : 'cyber-btn-rose'
-              }`}
-              style={{ width: '100%' }}
-            >
-              {isVerifying ? 'Performing Forensics Audit...' : 'Start Audit'}
-            </button>
+            {/* STEP 2: Execute Multi-Agent Audit */}
+            <div className="linear-card-recessed" style={{ 
+              padding: '20px', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(255, 255, 255, 0.05)', 
+              background: 'rgba(255, 255, 255, 0.02)',
+              opacity: isVerifying ? 0.6 : 1
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <span className="header-badge badge-rose" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 2</span>
+                <strong style={{ color: '#fff', fontSize: '13px' }}>Execute Forensic Audit Pipeline</strong>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
+                Dispatch the verification request. The AASE engine coordinates ELA compression analysis, EXIF metadata integrity, and Gemini 2.5 Flash cognitive vision reasoning.
+              </p>
+              <button
+                onClick={handleStartAudit}
+                disabled={isVerifying}
+                className="cyber-btn cyber-btn-rose"
+                style={{ width: '100%', padding: '12px 0', fontWeight: 'bold', fontSize: '12px' }}
+              >
+                {isVerifying ? 'Performing Forensics Audit...' : 'Start Audit'}
+              </button>
+            </div>
           </div>
 
           {/* Interactive ELA Split Analyzer Overlay */}
