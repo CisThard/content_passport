@@ -61,7 +61,7 @@ export function buildGoogleAuthUrl(params: {
   url.searchParams.set('client_id', params.clientId)
   url.searchParams.set('redirect_uri', params.redirectUri)
   url.searchParams.set('response_type', 'id_token')
-  url.searchParams.set('scope', 'openid email')
+  url.searchParams.set('scope', 'openid email profile')
   url.searchParams.set('nonce', params.nonce)
   return url.toString()
 }
