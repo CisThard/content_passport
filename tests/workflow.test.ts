@@ -2,10 +2,10 @@ import {
   buildContentMemoryGraph,
   buildRecreateReadiness,
   InMemoryAuthenticityMemoryClient,
-  InMemoryWalrusClient,
   restoreContentMemoryGraph,
   sha256,
 } from "../src/index.js";
+import { InMemoryWalrusClient } from "./helpers.js";
 
 const scores = [
   { agentId: "forensic-agent" as const, score: 96, confidence: 0.95, evidence: ["ELA clean"] },

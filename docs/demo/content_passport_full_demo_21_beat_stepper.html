@@ -1,0 +1,699 @@
+<h2 class="sr-only">Full Content Passport demo as a 21-beat manual stepper, one panel per narration line across seven scenes: problem, identity, forensics with MemWal, Shamir vault, royalties, live journey, and closing.</h2>
+
+<style>
+* {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+#cp-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+  height: 100vh;
+  margin: 0 auto;
+  font-family: var(--font-sans, 'Outfit', sans-serif);
+  background-color: #030712;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+#cp-stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  outline: none;
+  background: radial-gradient(circle at 50% 50%, #0c1540 0%, #030511 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cp-backdrop {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(99, 102, 241, 0.05) 1.5px, transparent 1.5px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1.5px, transparent 1.5px);
+  background-size: 70px 70px;
+  mask-image: radial-gradient(circle at 50% 50%, #000 70%, transparent 100%);
+  z-index: 0;
+}
+
+.cp-glow-nebula {
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  filter: blur(180px);
+  opacity: 0.18;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.nebula-indigo {
+  background: #4f46e5;
+  top: -20%;
+  left: 15%;
+}
+
+.nebula-cyan {
+  background: #0891b2;
+  bottom: -20%;
+  right: 15%;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(0.96);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding: 0 6vw;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.scene.is-active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+/* Header Kick Label - Scaled up */
+.kick {
+  font-size: clamp(16px, 1.5vw, 24px);
+  letter-spacing: 5px;
+  font-weight: 800;
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+
+/* Bold Slide Title - Scaled up */
+.title-large {
+  font-size: clamp(44px, 5vw, 84px);
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  margin: 0 0 20px 0;
+  letter-spacing: -1.5px;
+}
+
+/* Medium Content Labels - Scaled up for sharpness */
+.desc-large {
+  font-size: clamp(24px, 2.6vw, 42px);
+  color: #e5e7eb;
+  font-weight: 600;
+  text-align: center;
+  max-width: 1100px;
+  margin: 0 0 44px 0;
+  line-height: 1.45;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Premium Styling Elements - Scaled up padding and border radius */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 32px;
+  padding: 44px 56px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+}
+
+.glow-rose { border-color: rgba(239, 68, 68, 0.35); box-shadow: 0 0 60px rgba(239, 68, 68, 0.08); }
+.glow-gold { border-color: rgba(245, 158, 11, 0.35); box-shadow: 0 0 60px rgba(245, 158, 11, 0.08); }
+.glow-indigo { border-color: rgba(99, 102, 241, 0.35); box-shadow: 0 0 60px rgba(99, 102, 241, 0.08); }
+.glow-teal { border-color: rgba(16, 185, 129, 0.35); box-shadow: 0 0 60px rgba(16, 185, 129, 0.08); }
+.glow-cyan { border-color: rgba(6, 182, 212, 0.35); box-shadow: 0 0 60px rgba(6, 182, 212, 0.08); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 700;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Verification tiles mock */
+.tile {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: 20px;
+  background-size: cover;
+  background-position: center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='9' fill='%230d1838'/%3E%3Ccircle cx='33' cy='15' r='5' fill='%23f2c14e'/%3E%3Cpath d='M5 41 L19 22 L29 33 L37 25 L45 41 Z' fill='%235dcaa5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+}
+
+/* Animations classes */
+.in, .inL, .inR, .inU, .flip { opacity: 0; transform: translateY(40px); transition: opacity 0.6s cubic-bezier(0.15, 0.85, 0.15, 1), transform 0.6s cubic-bezier(0.15, 0.85, 0.15, 1); }
+.scene.is-active .in { opacity: 1; transform: scale(1); transition-delay: var(--d, 0s); }
+.scene.is-active .inU { opacity: 1; transform: translateY(0); transition-delay: var(--d, 0s); }
+.scene.is-active .inL { opacity: 1; transform: translateX(0); transition-delay: var(--d, 0s); }
+.scene.is-active .inR { opacity: 1; transform: translateX(0); transition-delay: var(--d, 0s); }
+
+.rose { color: #f87171; }
+.gold { color: #fbbf24; }
+.teal { color: #34d399; }
+.cyan { color: #22d3ee; }
+.indigo { color: #818cf8; }
+</style>
+
+<div id="cp-wrap">
+  <div id="cp-stage" tabindex="0">
+    <div class="cp-backdrop"></div>
+    <div class="cp-glow-nebula nebula-indigo"></div>
+    <div class="cp-glow-nebula nebula-cyan"></div>
+
+    <!-- P1 -->
+    <div class="scene">
+      <div class="kick rose">THE PROBLEM</div>
+      <div class="inU" style="font-size: clamp(120px, 14vw, 190px); font-weight: 800; line-height: 0.85; background: linear-gradient(135deg, #ff5b5b, #ff8a8a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 60px rgba(255,91,91,0.3));"><span id="cp-pct">0</span>%+</div>
+      <div class="inU" style="--d: 0.3s; font-size: clamp(30px, 3.5vw, 52px); font-weight: 800; color: #f3f4f6; margin-top: 24px;">of images online are now AI-generated</div>
+      <div class="glass-card glow-rose inU" style="--d: 0.5s; padding: 16px 36px; font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: #ff8a8a; border-radius: 16px; margin-top: 44px;">
+        Source: Cisco Annual Report, 2026
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="scene">
+      <div class="kick rose">THE PROBLEM</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #ff8a8a;">Three Structural Cracks</div>
+      <div class="desc-large inU" style="--d: 0.2s;">The current web lacks native mechanisms for authentic content integrity.</div>
+      <div style="display: flex; gap: 32px; width: 100%; max-width: 1200px; justify-content: center; margin-top: 16px;">
+        <div class="glass-card glow-rose inU" style="--d: 0.3s; flex: 1; text-align: center; border-radius: 28px; padding: 40px 32px;">
+          <i class="ti ti-eye-off" style="font-size: 64px; color: #ff5b5b;"></i>
+          <h3 style="font-size: 30px; margin: 20px 0 10px 0; color: #fff; font-weight: 800;">No Proof</h3>
+          <p style="color: #d1d5db; font-size: 18px; line-height: 1.5; font-weight: 600; margin: 0;">Cannot verify a media file's original camera capture source.</p>
+        </div>
+        <div class="glass-card glow-rose inU" style="--d: 0.4s; flex: 1; text-align: center; border-radius: 28px; padding: 40px 32px;">
+          <i class="ti ti-lock-off" style="font-size: 64px; color: #ff5b5b;"></i>
+          <h3 style="font-size: 30px; margin: 20px 0 10px 0; color: #fff; font-weight: 800;">No Privacy</h3>
+          <p style="color: #d1d5db; font-size: 18px; line-height: 1.5; font-weight: 600; margin: 0;">Creators are forced to expose raw original assets publicly.</p>
+        </div>
+        <div class="glass-card glow-rose inU" style="--d: 0.5s; flex: 1; text-align: center; border-radius: 28px; padding: 40px 32px;">
+          <i class="ti ti-coin-off" style="font-size: 64px; color: #ff5b5b;"></i>
+          <h3 style="font-size: 30px; margin: 20px 0 10px 0; color: #fff; font-weight: 800;">No Payouts</h3>
+          <p style="color: #d1d5db; font-size: 18px; line-height: 1.5; font-weight: 600; margin: 0;">No built-in capability for automated, multi-party royalties.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3 -->
+    <div class="scene">
+      <div class="kick gold">THE ANSWER</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #f2c14e;">What if every creation had a passport?</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Introducing Content Passport — Live on-chain today.</div>
+      <div class="glass-card glow-gold in" style="--d: 0.4s; width: 380px; aspect-ratio: 5/7; border-radius: 32px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; border: 3px solid #d8a93b; background: radial-gradient(circle at 50% 25%, #18285c 0%, #0b1129 100%); box-shadow: 0 0 60px rgba(216, 169, 59, 0.3); padding: 48px 32px; box-sizing: border-box;">
+        <i class="ti ti-id-badge-2" style="font-size: 80px; color: #e7b94a;"></i>
+        <div style="text-align: center;">
+          <div style="font-size: 13px; letter-spacing: 6px; color: #e7b94a; font-weight: 800; margin-bottom: 8px;">GENESIS</div>
+          <div style="font-size: 26px; color: #fff; font-weight: 800; letter-spacing: 1.5px;">CONTENT PASSPORT</div>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 18px; color: #7fd4e8; background: rgba(127, 212, 232, 0.14); padding: 8px 24px; border-radius: 30px; border: 1.5px solid rgba(127, 212, 232, 0.4); font-weight: 700;">
+          content-passport.xyz
+        </div>
+      </div>
+    </div>
+
+    <!-- I1 -->
+    <div class="scene">
+      <div class="kick indigo">01 · ZERO-FRICTION IDENTITY</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #cdbffb;">Live Deployed Service</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Sign in with Google. No wallet extensions, seed phrases, or gas setup.</div>
+      <div class="glass-card glow-indigo inU" style="--d: 0.4s; width: 100%; max-width: 850px; padding: 56px; display: flex; flex-direction: column; align-items: center; gap: 36px;">
+        <div style="display: flex; align-items: center; gap: 18px; background: rgba(0,0,0,0.4); border: 1.5px solid rgba(255,255,255,0.1); padding: 18px 36px; border-radius: 20px; width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 24px; color: #9fd6e8; font-weight: 700;">
+          <i class="ti ti-lock" style="color: #5dcaa5; font-size: 26px;"></i>
+          <span>https://content-passport.xyz</span>
+        </div>
+        <div style="display: inline-flex; align-items: center; gap: 20px; background: #fff; color: #111827; padding: 22px 54px; border-radius: 60px; font-weight: 800; font-size: 26px; box-shadow: 0 20px 40px rgba(99,102,241,0.3); cursor: pointer;">
+          <i class="ti ti-brand-google" style="font-size: 32px; color: #ea4335;"></i>
+          <span>Sign in with Google</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- I2 -->
+    <div class="scene">
+      <div class="kick indigo">01 · ZERO-FRICTION IDENTITY</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #cdbffb;">zkLogin Mechanism</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Deriving a cryptographically secure Sui wallet address directly from a Google credential.</div>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 32px; width: 100%; max-width: 1050px; margin-top: 16px;">
+        <div class="glass-card glow-indigo inL" style="--d: 0.3s; flex: 1; text-align: center; padding: 36px 24px;">
+          <i class="ti ti-brand-google" style="font-size: 56px; color: #ea4335;"></i>
+          <h4 style="margin: 16px 0 6px 0; color: #fff; font-size: 22px; font-weight: 800;">Google Auth</h4>
+          <span style="font-size: 15px; color: #d1d5db; font-weight: 600;">OpenID Provider Receipt</span>
+        </div>
+        <i class="ti ti-arrow-right inU" style="--d: 0.4s; font-size: 44px; color: #9b8cf0;"></i>
+        <div class="glass-card glow-indigo in" style="--d: 0.5s; flex: 1.2; text-align: center; padding: 36px 24px; background: rgba(99, 102, 241, 0.08);">
+          <i class="ti ti-shield-lock" style="font-size: 56px; color: #a5b4fc;"></i>
+          <h4 style="margin: 16px 0 6px 0; color: #fff; font-size: 22px; font-weight: 800;">Zero-Knowledge</h4>
+          <span style="font-size: 15px; color: #d1d5db; font-weight: 600;">zkLogin Wallet Prover</span>
+        </div>
+        <i class="ti ti-arrow-right inU" style="--d: 0.6s; font-size: 44px; color: #9b8cf0;"></i>
+        <div class="glass-card glow-indigo inR" style="--d: 0.7s; flex: 1.5; text-align: center; padding: 36px 24px;">
+          <i class="ti ti-key" style="font-size: 56px; color: #5dcaa5;"></i>
+          <h4 style="margin: 16px 0 6px 0; color: #fff; font-size: 22px; font-weight: 800;">Sui Address Generated</h4>
+          <span style="font-family: var(--font-mono); font-size: 17px; color: #7fe0b8; font-weight: 700;">0x7a3f…b2c1</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- I3 -->
+    <div class="scene">
+      <div class="kick indigo">01 · ZERO-FRICTION IDENTITY</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #cdbffb;">Identity Genesis Passport</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Choose your unique name and mint your Genesis Passport NFT to register as a creator.</div>
+      <div class="glass-card glow-gold in" style="--d: 0.4s; display: flex; width: 100%; max-width: 800px; padding: 44px; gap: 40px; align-items: center; border: 3px solid #d8a93b; background: linear-gradient(135deg, #12215c 0%, #070d24 100%);">
+        <div style="width: 180px; aspect-ratio: 5/7; border-radius: 20px; border: 2.5px solid #d8a93b; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0b153b; box-shadow: 0 20px 45px rgba(0,0,0,0.6); flex-shrink: 0;">
+          <i class="ti ti-id-badge-2" style="font-size: 56px; color: #e7b94a; margin-bottom: 16px;"></i>
+          <span style="font-size: 11px; letter-spacing: 4px; color: #e7b94a; font-weight: 800;">PASSPORT</span>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 16px; text-align: left;">
+          <span style="font-size: 14px; letter-spacing: 5px; color: #e7b94a; font-weight: 800;">SUI NETWORK CREATOR</span>
+          <h3 style="font-size: 48px; margin: 0; color: #fff; font-weight: 800; line-height: 1;">charles.sui</h3>
+          <div style="font-family: var(--font-mono); font-size: 18px; color: #d1d5db; display: flex; flex-direction: column; gap: 8px; border-top: 1.5px solid rgba(255,255,255,0.1); padding-top: 18px; margin-top: 4px;">
+            <div>NFT Identity Status: <span style="color: #5dcaa5; font-weight: 800;">ACTIVE</span></div>
+            <div>Registry Address: <span style="color: #7fd4e8;">0xac28...61da</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I4 -->
+    <div class="scene">
+      <div class="kick indigo">01 · ZERO-FRICTION IDENTITY</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #cdbffb;">Zero On-Chain Onboarding Cost</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Sponsored transactions cover 100% of the blockchain network fees.</div>
+      <div class="glass-card glow-teal in" style="--d: 0.4s; display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 60px; background: rgba(16, 185, 129, 0.06); width: 100%; max-width: 700px;">
+        <div style="font-size: clamp(120px, 14vw, 200px); font-weight: 800; color: #34d399; text-shadow: 0 0 60px rgba(52, 211, 153, 0.35); line-height: 0.85; font-family: var(--font-mono);">$0.00</div>
+        <div class="chip" style="background: rgba(16, 185, 129, 0.18); border-color: #34d399; color: #6ee7b7; font-size: 20px; padding: 12px 36px; border-radius: 50px;">
+          <i class="ti ti-bolt" style="margin-right: 8px;"></i>Sponsored Transaction active
+        </div>
+      </div>
+    </div>
+
+    <!-- F1 -->
+    <div class="scene">
+      <div class="kick teal">02 · FORENSICS + MEMWAL</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #7fe0b8;">Content Verification Protocol</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Feeding a real camera photo vs an AI-generated clone to our audit system.</div>
+      <div style="display: flex; gap: 48px; justify-content: center; width: 100%; max-width: 1100px; margin-top: 16px;">
+        <div class="glass-card glow-teal inL" style="--d: 0.3s; flex: 1; text-align: center; padding: 36px;">
+          <div class="tile" style="border: 2px solid #10b981; box-shadow: 0 0 45px rgba(16,185,129,0.30);"></div>
+          <h4 style="margin: 22px 0 6px 0; font-size: 24px; color: #fff; font-weight: 800;">Camera Original</h4>
+          <span style="font-size: 18px; color: #34d399; font-weight: 700;">Authentic Sensor Data</span>
+        </div>
+        <div class="glass-card glow-rose inR" style="--d: 0.4s; flex: 1; text-align: center; padding: 36px;">
+          <div class="tile" style="border: 2px solid #ef4444; box-shadow: 0 0 45px rgba(239,68,68,0.30);"></div>
+          <h4 style="margin: 22px 0 6px 0; font-size: 24px; color: #fff; font-weight: 800;">AI-Generated</h4>
+          <span style="font-size: 18px; color: #ff8a8a; font-weight: 700;">Synthetic Pixels Checked</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- F2 -->
+    <div class="scene">
+      <div class="kick teal">02 · FORENSICS + MEMWAL</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #7fe0b8;">Multi-Agent Forensic Inquiry</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Four specialized AI agents inspect different security facets simultaneously.</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 100%; max-width: 1100px; margin-top: 16px;">
+        <div class="glass-card glow-gold inL" style="--d: 0.3s; padding: 32px 40px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h4 style="margin: 0; color: #fff; font-size: 22px; font-weight: 800;">Forensic Agent (ELA)</h4>
+            <span style="font-size: 15px; color: #d1d5db; font-weight: 600;">Pixel Recompression Ratios</span>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 24px; font-weight: 800; color: #fbbf24;">23 / 100</span>
+        </div>
+        <div class="glass-card glow-cyan inR" style="--d: 0.4s; padding: 32px 40px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h4 style="margin: 0; color: #fff; font-size: 22px; font-weight: 800;">Metadata Agent (EXIF)</h4>
+            <span style="font-size: 15px; color: #d1d5db; font-weight: 600;">Header Consistency Index</span>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 24px; font-weight: 800; color: #22d3ee;">45 / 100</span>
+        </div>
+        <div class="glass-card glow-indigo inL" style="--d: 0.5s; padding: 32px 40px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h4 style="margin: 0; color: #fff; font-size: 22px; font-weight: 800;">AI Sniffer (Gemini 2.5)</h4>
+            <span style="font-size: 15px; color: #d1d5db; font-weight: 600;">Visual Pattern Probability</span>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 24px; font-weight: 800; color: #818cf8;">12 / 100</span>
+        </div>
+        <div class="glass-card glow-teal inR" style="--d: 0.6s; padding: 32px 40px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h4 style="margin: 0; color: #fff; font-size: 22px; font-weight: 800;">Memory Agent (MemWal)</h4>
+            <span style="font-size: 15px; color: #d1d5db; font-weight: 600;">Walrus Cross-Reference Check</span>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 24px; font-weight: 800; color: #34d399;">100 / 100</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- F3 -->
+    <div class="scene">
+      <div class="kick teal">02 · FORENSICS + MEMWAL</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #ff5b5b;">Audit Verification Verdict</div>
+      <div class="desc-large inU" style="--d: 0.2s;">The collective assessment flags the file as an unverified artificial generation.</div>
+      <div class="glass-card glow-rose in" style="--d: 0.4s; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 64px; background: rgba(239, 68, 68, 0.07); width: 100%; max-width: 700px; border-radius: 36px;">
+        <div style="width: 130px; height: 130px; border-radius: 50%; background: rgba(239,68,68,0.22); border: 5px solid #f87171; display: flex; align-items: center; justify-content: center; font-size: 72px; font-weight: 800; color: #f87171; box-shadow: 0 0 60px rgba(239,68,68,0.4);">F</div>
+        <div style="font-size: 34px; font-weight: 800; color: #fff; letter-spacing: 2px;">SYNTHETIC CONTENT DETECTED</div>
+      </div>
+    </div>
+
+    <!-- F4 -->
+    <div class="scene">
+      <div class="kick teal">02 · FORENSICS + MEMWAL</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #7fe0b8;">MemWal: Decentrally Remembered Audits</div>
+      <div class="desc-large inU" style="--d: 0.2s;">MemWal indexes metadata on Walrus. Evidence remains permanent and immutable.</div>
+      <div class="glass-card glow-cyan inU" style="--d: 0.4s; display: flex; flex-direction: column; width: 100%; max-width: 900px; padding: 44px; background: radial-gradient(circle at 50% 50%, #0d223a 0%, #060e1d 100%); border-radius: 36px;">
+        <div style="display: flex; align-items: center; gap: 20px; border-bottom: 1.5px solid rgba(255,255,255,0.1); padding-bottom: 28px; margin-bottom: 28px;">
+          <div style="width: 70px; height: 70px; border-radius: 18px; background: rgba(6,182,212,0.22); display: flex; align-items: center; justify-content: center; color: #22d3ee; font-size: 38px;">🐳</div>
+          <div>
+            <h4 style="margin: 0; color: #fff; font-size: 26px; font-weight: 800;">MemWal Memory Index</h4>
+            <span style="font-size: 16px; color: #d1d5db; font-family: var(--font-mono); font-weight: 600;">Registry ID: 0xd9e5...d67e</span>
+          </div>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 22px; color: #f3f4f6; line-height: 1.7; display: flex; flex-direction: column; gap: 12px; text-align: left; padding: 0 10px;">
+          <div>📡 Accessing Walrus decentralized store...</div>
+          <div style="color: #fbbf24; font-weight: 700;">⚠️ Cross-Reference Found: 3 prior audits matched pattern</div>
+          <div style="color: #34d399; font-size: 30px; font-weight: 800; margin-top: 12px; display: flex; align-items: center; gap: 16px;">
+            <span>87% Similarity Match</span>
+            <span style="font-size: 16px; background: rgba(52,211,153,0.15); padding: 6px 16px; border-radius: 8px; border: 1.5px solid rgba(52,211,153,0.45); font-weight: 800;">FLAGGED AI</span>
+          </div>
+          <div style="color: #d1d5db; font-size: 16px; margin-top: 6px; font-weight: 600; font-family: var(--font-sans);">Prior synthetic traces securely locked on Walrus block registry.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V1 -->
+    <div class="scene">
+      <div class="kick gold">03 · SHAMIR THRESHOLD VAULT</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #f2c14e;">In-Browser Client-Side Encryption</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Before uploading, assets are encrypted client-side using industry-standard cryptography.</div>
+      <div class="glass-card glow-rose in" style="--d: 0.4s; display: flex; align-items: center; gap: 40px; padding: 56px; width: 100%; max-width: 800px; background: rgba(244, 63, 94, 0.04); border-radius: 36px;">
+        <i class="ti ti-lock" style="font-size: 110px; color: #f43f5e; filter: drop-shadow(0 0 30px rgba(244,63,94,0.4)); flex-shrink: 0;"></i>
+        <div style="text-align: left;">
+          <h4 style="margin: 0 0 12px 0; color: #fff; font-size: 32px; font-weight: 800;">AES-256-GCM Encryption</h4>
+          <p style="margin: 0; color: #d1d5db; font-size: 20px; line-height: 1.5; font-weight: 600;">The original masterpiece file is sealed in your browser. The host server never acquires plaintext access.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- V2 -->
+    <div class="scene">
+      <div class="kick gold">03 · SHAMIR THRESHOLD VAULT</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #f2c14e;">Shamir Key Splitting</div>
+      <div class="desc-large inU" style="--d: 0.2s;">The symmetric decryption key splits into 5 independent cryptographic shards.</div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 36px; margin-top: 24px; width: 100%;">
+        <div style="display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;">
+          <div class="in" style="--d: 0.3s; background: rgba(99,102,241,0.18); border: 3px solid #6366f1; padding: 16px 36px; border-radius: 20px; font-family: var(--font-mono); font-weight: 800; color: #fff; font-size: 20px; box-shadow: 0 0 30px rgba(99,102,241,0.2);">Shard 1</div>
+          <div class="in" style="--d: 0.4s; background: rgba(99,102,241,0.18); border: 3px solid #6366f1; padding: 16px 36px; border-radius: 20px; font-family: var(--font-mono); font-weight: 800; color: #fff; font-size: 20px; box-shadow: 0 0 30px rgba(99,102,241,0.2);">Shard 2</div>
+          <div class="in" style="--d: 0.5s; background: rgba(99,102,241,0.18); border: 3px solid #6366f1; padding: 16px 36px; border-radius: 20px; font-family: var(--font-mono); font-weight: 800; color: #fff; font-size: 20px; box-shadow: 0 0 30px rgba(99,102,241,0.2);">Shard 3</div>
+          <div class="in" style="--d: 0.6s; background: rgba(99,102,241,0.18); border: 3px solid #6366f1; padding: 16px 36px; border-radius: 20px; font-family: var(--font-mono); font-weight: 800; color: #fff; font-size: 20px; box-shadow: 0 0 30px rgba(99,102,241,0.2);">Shard 4</div>
+          <div class="in" style="--d: 0.7s; background: rgba(99,102,241,0.18); border: 3px solid #6366f1; padding: 16px 36px; border-radius: 20px; font-family: var(--font-mono); font-weight: 800; color: #fff; font-size: 20px; box-shadow: 0 0 30px rgba(99,102,241,0.2);">Shard 5</div>
+        </div>
+        <div class="glass-card glow-gold inU" style="--d: 0.8s; font-family: var(--font-mono); font-size: 24px; font-weight: 800; color: #fbbf24; padding: 20px 56px; border-radius: 50px;">
+          Configuration: k = 3, n = 5 over Galois Field GF(256)
+        </div>
+      </div>
+    </div>
+
+    <!-- V3 -->
+    <div class="scene">
+      <div class="kick gold">03 · SHAMIR THRESHOLD VAULT</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #f2c14e;">Decentralized Shard Distribution</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Each shard travels to a separate global node and persists as a permanent Walrus Blob.</div>
+      <div style="display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 950px; margin-top: 24px;">
+        <div class="glass-card glow-cyan in" style="--d: 0.3s; padding: 20px 32px; border-radius: 20px; display: flex; align-items: center; gap: 16px;">
+          <span style="width: 14px; height: 14px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 12px #10b981;"></span>
+          <span style="font-weight: 800; font-size: 18px;">Frankfurt, DE</span>
+          <span style="color: #d1d5db; font-family: var(--font-mono); font-size: 15px; font-weight: 700;">🐳 Walrus Blob</span>
+        </div>
+        <div class="glass-card glow-cyan in" style="--d: 0.4s; padding: 20px 32px; border-radius: 20px; display: flex; align-items: center; gap: 16px;">
+          <span style="width: 14px; height: 14px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 12px #10b981;"></span>
+          <span style="font-weight: 800; font-size: 18px;">Singapore, SG</span>
+          <span style="color: #d1d5db; font-family: var(--font-mono); font-size: 15px; font-weight: 700;">🐳 Walrus Blob</span>
+        </div>
+        <div class="glass-card glow-cyan in" style="--d: 0.5s; padding: 20px 32px; border-radius: 20px; display: flex; align-items: center; gap: 16px;">
+          <span style="width: 14px; height: 14px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 12px #10b981;"></span>
+          <span style="font-weight: 800; font-size: 18px;">Oregon, US</span>
+          <span style="color: #d1d5db; font-family: var(--font-mono); font-size: 15px; font-weight: 700;">🐳 Walrus Blob</span>
+        </div>
+        <div class="glass-card glow-cyan in" style="--d: 0.6s; padding: 20px 32px; border-radius: 20px; display: flex; align-items: center; gap: 16px;">
+          <span style="width: 14px; height: 14px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 12px #10b981;"></span>
+          <span style="font-weight: 800; font-size: 18px;">Tokyo, JP</span>
+          <span style="color: #d1d5db; font-family: var(--font-mono); font-size: 15px; font-weight: 700;">🐳 Walrus Blob</span>
+        </div>
+        <div class="glass-card glow-cyan in" style="--d: 0.7s; padding: 20px 32px; border-radius: 20px; display: flex; align-items: center; gap: 16px;">
+          <span style="width: 14px; height: 14px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 12px #10b981;"></span>
+          <span style="font-weight: 800; font-size: 18px;">São Paulo, BR</span>
+          <span style="color: #d1d5db; font-family: var(--font-mono); font-size: 15px; font-weight: 700;">🐳 Walrus Blob</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- V4 -->
+    <div class="scene">
+      <div class="kick gold">03 · SHAMIR THRESHOLD VAULT</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #f2c14e;">Lagrange Key Reconstruction</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Approval of any 3 of the 5 nodes initiates Lagrange interpolation to decrypt the original asset.</div>
+      <div style="display: flex; align-items: center; gap: 40px; margin-top: 24px;">
+        <div class="glass-card glow-gold inL" style="--d: 0.3s; padding: 32px 48px; text-align: center; border-radius: 24px;">
+          <div style="font-size: 52px; font-weight: 800; color: #fbbf24; line-height: 1;">3 / 5</div>
+          <span style="font-size: 16px; color: #d1d5db; font-weight: 700; margin-top: 8px; display: inline-block;">Node Signatures</span>
+        </div>
+        <i class="ti ti-arrow-right inU" style="--d: 0.4s; font-size: 48px; color: #fbbf24;"></i>
+        <div class="glass-card glow-teal inR" style="--d: 0.5s; padding: 32px 48px; text-align: center; background: rgba(16,185,129,0.06); border-radius: 24px;">
+          <i class="ti ti-lock-open" style="font-size: 48px; color: #34d399; margin-bottom: 8px;"></i>
+          <h5 style="margin: 0; font-size: 22px; color: #fff; font-weight: 800;">Plaintext Rebuilt</h5>
+        </div>
+      </div>
+    </div>
+
+    <!-- R1 -->
+    <div class="scene">
+      <div class="kick gold">04 · AUTOMATED ROYALTIES</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #f2c14e;">Dynamic Payout Configurator</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Set custom contribution splits that settle programmatically at the protocol level.</div>
+      <div class="glass-card glow-indigo inU" style="--d: 0.4s; width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 28px; padding: 44px 56px; border-radius: 36px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; color: #c7d2fe; font-size: 24px;">Anya (Creative Director)</span>
+          <span style="font-family: var(--font-mono); font-size: 24px; font-weight: 800; color: #a5b4fc;">50%</span>
+        </div>
+        <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.06); border-radius: 6px; overflow: hidden;">
+          <div style="width: 50%; height: 100%; background: #6366f1; box-shadow: 0 0 10px #6366f1;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; color: #a5f3fc; font-size: 24px;">Ben (Visual Animator)</span>
+          <span style="font-family: var(--font-mono); font-size: 24px; font-weight: 800; color: #22d3ee;">30%</span>
+        </div>
+        <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.06); border-radius: 6px; overflow: hidden;">
+          <div style="width: 30%; height: 100%; background: #06b6d4; box-shadow: 0 0 10px #06b6d4;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; color: #fecdd3; font-size: 24px;">Chloe (Content Publisher)</span>
+          <span style="font-family: var(--font-mono); font-size: 24px; font-weight: 800; color: #f43f5e;">20%</span>
+        </div>
+        <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.06); border-radius: 6px; overflow: hidden;">
+          <div style="width: 20%; height: 100%; background: #e11d48; box-shadow: 0 0 10px #e11d48;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- R2 -->
+    <div class="scene">
+      <div class="kick gold">04 · AUTOMATED ROYALTIES</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #f2c14e;">Instantaneous Split Settlement</div>
+      <div class="desc-large inU" style="--d: 0.2s;">SUI flows along the chain of contribution automatically upon receipt of payments.</div>
+      <div style="display: flex; gap: 40px; justify-content: center; width: 100%; max-width: 900px; margin-top: 24px;">
+        <div class="glass-card glow-gold inL" style="--d: 0.3s; padding: 40px 32px; text-align: center; flex: 1; border-radius: 28px;">
+          <i class="ti ti-coins" style="font-size: 56px; color: #fbbf24; margin-bottom: 16px; filter: drop-shadow(0 0 20px rgba(251,191,36,0.35));"></i>
+          <h4 style="margin: 0; font-size: 32px; font-weight: 800; color: #fff;"><span id="cp-sui">0</span> SUI</h4>
+          <span style="font-size: 15px; color: #d1d5db; font-weight: 700; margin-top: 6px; display: inline-block;">Royalty Escrow Inflow</span>
+        </div>
+        <div class="glass-card glow-indigo inR" style="--d: 0.5s; padding: 40px; flex: 1.5; display: flex; flex-direction: column; gap: 20px; justify-content: center; border-radius: 28px;">
+          <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800;">
+            <span style="color: #c7d2fe;">Anya (Creative)</span>
+            <span style="color: #34d399; font-family: var(--font-mono);">+50 SUI</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; border-top: 1.5px solid rgba(255,255,255,0.08); padding-top: 16px;">
+            <span style="color: #a5f3fc;">Ben (Visual)</span>
+            <span style="color: #34d399; font-family: var(--font-mono);">+30 SUI</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; border-top: 1.5px solid rgba(255,255,255,0.08); padding-top: 16px;">
+            <span style="color: #fecdd3;">Chloe (Publish)</span>
+            <span style="color: #34d399; font-family: var(--font-mono);">+20 SUI</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- R3 -->
+    <div class="scene">
+      <div class="kick gold">04 · AUTOMATED ROYALTIES</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #f2c14e;">Sui Programmable Transaction Blocks</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Settle multi-party distributions in a single execution. Safe, atomic, and cost-efficient.</div>
+      <div class="glass-card glow-indigo inU" style="--d: 0.4s; display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 48px 64px; background: rgba(99, 102, 241, 0.05); width: 100%; max-width: 700px; border-radius: 36px;">
+        <i class="ti ti-file-code" style="font-size: 64px; color: #818cf8;"></i>
+        <h4 style="margin: 0; font-size: 26px; color: #fff; font-weight: 800;">Single Atomic Block Execution (PTB)</h4>
+        <div style="display: flex; gap: 20px; margin-top: 12px;">
+          <span style="font-size: 16px; color: #e5e7eb; background: rgba(255,255,255,0.08); padding: 10px 24px; border-radius: 20px; font-weight: 700; border: 1.5px solid rgba(255,255,255,0.1);">Remix Chains</span>
+          <span style="font-size: 16px; color: #e5e7eb; background: rgba(255,255,255,0.08); padding: 10px 24px; border-radius: 20px; font-weight: 700; border: 1.5px solid rgba(255,255,255,0.1);">Bounty Quests</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- J1 -->
+    <div class="scene">
+      <div class="kick cyan">05 · LIVE JOURNEY GRAPH</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #22d3ee;">Judge Mode: Live Ledger Roadmap</div>
+      <div class="desc-large inU" style="--d: 0.2s;">The six main operational milestones of Content Passport are committed directly on-chain.</div>
+      <div style="display: flex; gap: 18px; justify-content: center; width: 100%; max-width: 1050px; margin-top: 24px;">
+        <div class="glass-card glow-indigo in" style="--d: 0.3s; padding: 24px 16px; text-align: center; flex: 1; border-radius: 20px;">
+          <div style="font-size: 16px; font-weight: 800; color: #c7d2fe; margin-bottom: 10px;">Identity</div>
+          <i class="ti ti-id-badge-2" style="font-size: 32px; color: #818cf8;"></i>
+        </div>
+        <div class="glass-card glow-cyan in" style="--d: 0.4s; padding: 24px 16px; text-align: center; flex: 1; border-radius: 20px;">
+          <div style="font-size: 16px; font-weight: 800; color: #a5f3fc; margin-bottom: 10px;">Audit</div>
+          <i class="ti ti-search" style="font-size: 32px; color: #22d3ee;"></i>
+        </div>
+        <div class="glass-card glow-teal in" style="--d: 0.5s; padding: 24px 16px; text-align: center; flex: 1; border-radius: 20px;">
+          <div style="font-size: 16px; font-weight: 800; color: #a7f3d0; margin-bottom: 10px;">Seal</div>
+          <i class="ti ti-lock" style="font-size: 32px; color: #34d399;"></i>
+        </div>
+        <div class="glass-card glow-gold in" style="--d: 0.6s; padding: 24px 16px; text-align: center; flex: 1; border-radius: 20px;">
+          <div style="font-size: 16px; font-weight: 800; color: #fde047; margin-bottom: 10px;">Rights</div>
+          <i class="ti ti-file-text" style="font-size: 32px; color: #fbbf24;"></i>
+        </div>
+        <div class="glass-card glow-gold in" style="--d: 0.7s; padding: 24px 16px; text-align: center; flex: 1; border-radius: 20px;">
+          <div style="font-size: 16px; font-weight: 800; color: #fde047; margin-bottom: 10px;">Settle</div>
+          <i class="ti ti-coins" style="font-size: 32px; color: #fbbf24;"></i>
+        </div>
+        <div class="glass-card glow-cyan in" style="--d: 0.8s; padding: 24px 16px; text-align: center; flex: 1; border-radius: 20px;">
+          <div style="font-size: 16px; font-weight: 800; color: #a5f3fc; margin-bottom: 10px;">Archive</div>
+          <i class="ti ti-archive" style="font-size: 32px; color: #22d3ee;"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- J2 -->
+    <div class="scene">
+      <div class="kick cyan">05 · LIVE JOURNEY GRAPH</div>
+      <div class="title-large inU" style="--d: 0.1s; color: #22d3ee;">On-Chain Verifiable Proof</div>
+      <div class="desc-large inU" style="--d: 0.2s;">Verify execution instantly. Every ledger transition exposes its receipt.</div>
+      <div class="glass-card glow-cyan inU" style="--d: 0.4s; width: 100%; max-width: 800px; padding: 44px 56px; text-align: center; background: rgba(6, 182, 212, 0.05); border-radius: 36px;">
+        <i class="ti ti-external-link" style="font-size: 56px; color: #22d3ee; margin-bottom: 16px;"></i>
+        <h4 style="margin: 0; font-size: 26px; color: #fff; font-weight: 800;">Live Query on Suiscan Explorer</h4>
+        <div style="font-family: var(--font-mono); font-size: 17px; color: #22d3ee; margin: 20px 0 28px 0; background: rgba(0,0,0,0.4); padding: 12px 24px; border-radius: 12px; font-weight: 700;">
+          0xac28432a557d52d7079930a82a5c1732a3709da3c6cb2991ce0332b0704061da
+        </div>
+        <div style="font-size: 20px; font-weight: 800; color: #34d399; letter-spacing: 2px;">VERIFIED · IMMUTABLE · TRANSPARENT</div>
+      </div>
+    </div>
+
+    <!-- C1 -->
+    <div class="scene">
+      <i class="ti ti-id-badge-2 inU" style="--d: 0.1s; font-size: 110px; color: #fbbf24; filter: drop-shadow(0 0 35px rgba(245,158,11,0.4));"></i>
+      <h1 class="inU" style="--d: 0.2s; font-size: clamp(64px, 7.5vw, 110px); font-weight: 800; margin: 24px 0 12px 0; background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -2px; line-height: 1;">Content Passport</h1>
+      <p class="inU" style="--d: 0.4s; font-size: clamp(26px, 3vw, 42px); color: #ffd875; font-style: italic; font-weight: 500; margin: 0 0 32px 0;">Your content. Your rules. Your borders.</p>
+      <div class="chip inU" style="--d: 0.6s; background: rgba(6, 182, 212, 0.15); border-color: #22d3ee; color: #22d3ee; font-size: 22px; padding: 14px 44px; font-weight: 800; border-radius: 50px;">
+        content-passport.xyz
+      </div>
+      <div class="inU" style="--d: 0.8s; color: #64748b; font-size: 18px; margin-top: 48px; font-weight: 700; letter-spacing: 3px;">
+        SUI OVERFLOW 2026 · WALRUS TRACK
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden triggers inside display: none to maintain script event handlers -->
+  <div style="display: none;">
+    <audio id="cp-audio" preload="auto" src="Top Narrator VO PRO June 21 2026.mp3"></audio>
+    <button id="cp-prev" aria-label="Prev"></button>
+    <button id="cp-next" aria-label="Next"></button>
+    <button id="cp-replay" aria-label="Replay"></button>
+    <button id="cp-play"><span id="cp-play-label">▶ Play</span></button>
+    <span id="cp-idx">1</span>
+    <span id="cp-timer">0.0</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  var stage=document.getElementById('cp-stage');
+  var scenes=Array.prototype.slice.call(stage.querySelectorAll('.scene'));
+  var idxEl=document.getElementById('cp-idx'),timerEl=document.getElementById('cp-timer');
+  var audio=document.getElementById('cp-audio');
+  var playLabel=document.getElementById('cp-play-label');
+  var i=0,t0=Date.now();
+  var playing=false;
+
+  var cues=[0,8.5,22,34.9,44.5,52.6,59,64.3,71.4,84.9,88.4,104.2,116.2,124.3,131.8,142.5,150,157,166.5,178.5,187.1];
+
+  function countUp(id,target,step,ms){var el=document.getElementById(id);if(!el)return;if(el._iv)clearInterval(el._iv);var n=0;el.textContent='0';el._iv=setInterval(function(){n+=step;if(n>=target){n=target;clearInterval(el._iv);}el.textContent=n;},ms);}
+  function onEnter(n){ if(n===0) countUp('cp-pct',60,3,28); if(n===16) countUp('cp-sui',100,4,26); }
+  function render(){scenes.forEach(function(s,j){s.classList.toggle('is-active',j===i);});idxEl.textContent=(i+1);t0=Date.now();onEnter(i);}
+  function go(n){var c=Math.max(0,Math.min(scenes.length-1,n));if(c===i){return;}i=c;render();}
+  function replay(){var cur=scenes[i];cur.classList.remove('is-active');void stage.offsetWidth;cur.classList.add('is-active');t0=Date.now();onEnter(i);}
+
+  function stopPlay(){
+    audio.pause();playing=false;
+    playLabel.textContent='\u25B6 Play';
+  }
+  function startPlay(){
+    audio.currentTime=cues[i];
+    audio.play().catch(function(e){console.log(e);});
+    playing=true;
+    playLabel.textContent='\u23F8 Pause';
+  }
+  function togglePlay(){
+    if(playing){stopPlay();}else{startPlay();}
+    stage.focus();
+  }
+
+  function syncBeat(){
+    if(!playing)return;
+    var t=audio.currentTime;
+    if(t>=198.6){stopPlay();return;}
+    var next=i;
+    for(var j=cues.length-1;j>=0;j--){if(t>=cues[j]){next=j;break;}}
+    if(next!==i){i=next;render();}
+    timerEl.textContent=t.toFixed(1);
+  }
+
+  audio.addEventListener('timeupdate',syncBeat);
+  audio.addEventListener('ended',stopPlay);
+
+  document.getElementById('cp-play').addEventListener('click',togglePlay);
+  document.getElementById('cp-next').addEventListener('click',function(){if(playing)stopPlay();go(i+1);stage.focus();});
+  document.getElementById('cp-prev').addEventListener('click',function(){if(playing)stopPlay();go(i-1);stage.focus();});
+  document.getElementById('cp-replay').addEventListener('click',function(){replay();stage.focus();});
+  stage.addEventListener('click',function(){stage.focus();});
+  window.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();if(playing)stopPlay();go(i+1);}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();if(playing)stopPlay();go(i-1);}
+    else if(e.key===' '){e.preventDefault();togglePlay();}
+    else if(e.key==='r'||e.key==='R'){replay();}
+  });
+  setInterval(function(){if(!playing)timerEl.textContent=((Date.now()-t0)/1000).toFixed(1);},100);
+  render();
+  setTimeout(function(){try{stage.focus();}catch(_){}},50);
+})();
+</script>

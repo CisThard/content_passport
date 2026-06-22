@@ -3,12 +3,12 @@ import {
   buildMemWalInspectorSnapshot,
   decryptProofOfEffort,
   InMemoryAuthenticityMemoryClient,
-  InMemoryWalrusClient,
   issueGenesisPassport,
   sha256,
   stampVisa,
   writeAgentClue,
 } from "../src/index.js";
+import { InMemoryWalrusClient } from "./helpers.js";
 
 const authenticScores = [
   { agentId: "forensic-agent" as const, score: 96, confidence: 0.95 },

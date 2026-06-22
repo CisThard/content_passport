@@ -275,6 +275,27 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
         <p className="cyber-subtitle" style={{ margin: '20px auto 0', fontSize: '16px' }}>
           Content Passport is an integrated creator protection ecosystem merging on-chain identity, cryptographic sharded storage, and multi-agent AI verification. Step into any chamber below to pilot the sub-systems.
         </p>
+        <div style={{
+          margin: '40px auto 0',
+          maxWidth: '720px',
+          width: '100%',
+          aspectRatio: '16/9',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 10px 40px rgba(99, 102, 241, 0.15)',
+          background: '#000'
+        }}>
+          <iframe
+            width="100%"
+            height="100%"
+            src="https://www.youtube.com/embed/RcnUwCv1lic"
+            title="Content Passport Demo"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        </div>
       </div>
 
       {/* Grid of 4 Portal Chambers */}

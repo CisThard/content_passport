@@ -4,6 +4,20 @@ Content Passport is an ultra-premium, verifiable decentralized border control an
 
 The project is deployed and fully operational at **`https://content-passport.xyz/`**.
 
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=RcnUwCv1lic" target="_blank">
+    <img src="https://img.youtube.com/vi/RcnUwCv1lic/maxresdefault.jpg" alt="Content Passport Video Demo" width="100%" style="max-width: 800px; border-radius: 12px; border: 1px solid #30363d;" />
+  </a>
+  <br />
+  <sub>🎬 Latest Demo Video (Click the image to watch on YouTube)</sub>
+</div>
+
+> [!IMPORTANT]
+> **Sui Testnet Package & Account Information**  
+> * **Submitted Package ID (Registered in Submission Form):** `0x78565dfbeb2ac903d135324ec0ecdb3d4a96458d71ea9ac8c6aa869a6a914b1d` (This is our **Developer & Gas Sponsor Wallet Address**).
+> * **Active & Verified Contract Package ID:** [`0xed3b51821840c9cbba9b898ed09dde50a61155dd8fc00e8977278c8628036f22`](https://testnet.suivision.xyz/package/0xed3b51821840c9cbba9b898ed09dde50a61155dd8fc00e8977278c8628036f22)
+> * *Due to periodic Sui Testnet resets, the smart contract was redeployed under a fresh Package ID. Please use the Active Package ID to view modules, transaction blocks, and onchain actions.*
+
 ---
 
 ## ⚡ Core Pillars & Capabilities
@@ -195,10 +209,6 @@ To enable Google social login and gas-sponsored minting without subscribing to t
 > *   **Production:** `https://content-passport.xyz/login-callback`
 > *   **Local Dev:** `http://localhost:3000/login-callback`
 *   `SUI_RPC_URL`: The Sui JSON-RPC node endpoint (defaults to `https://fullnode.testnet.sui.io:443`).
-
-> [!TIP]
-> **Testnet Sponsor Sandbox Mode:**
-> If `SUI_SPONSOR_SECRET_KEY` is left blank, only the final sponsored transaction broadcast operates in **Mock Sponsor Mode**. Google OAuth, per-user salt derivation, zkLogin proof generation, and privacy-safe MemWal auth receipts remain real and will fail if `AUTH_GOOGLE_ID`, redirect URIs, `ZKLOGIN_SALT_MASTER_SEED`, or the Sui prover are not configured correctly.
 
 ### 4. Build Verification & Compilation
 Verify that the TypeScript server SDK and the Vite frontend compile without any type errors:

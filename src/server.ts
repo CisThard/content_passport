@@ -9,7 +9,7 @@ import { calculateAASE } from "./aase.js";
 import { loadMemWalConfig, MemWalSemanticMemoryClient } from "./memwal.js";
 import { getAuthenticityMemoryClient } from "./memory.js";
 import { objectiveForensics } from "./forensics.js";
-import { HttpWalrusClient, InMemoryWalrusClient, WalrusClient } from "./walrus.js";
+import { HttpWalrusClient, WalrusClient } from "./walrus.js";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { getContentRightConfig, buildIssueGenesisPassportTx } from "./sui.js";
@@ -283,11 +283,7 @@ app.post("/api/vault/upload", upload.single("file"), async (req, res) => {
 
     let walrus = getWalrusClient();
     if (!walrus) {
-      console.log("[Server] WALRUS_PUBLISHER is not configured. Falling back to InMemoryWalrusClient.");
-      if (!app.get("mockWalrus")) {
-        app.set("mockWalrus", new InMemoryWalrusClient());
-      }
-      walrus = app.get("mockWalrus");
+      throw new Error("Walrus client is not configured on the server. Please set WALRUS_PUBLISHER.");
     }
 
     const fileBuffer = new Uint8Array(req.file.buffer);
@@ -313,10 +309,7 @@ app.get("/api/vault/download/:blobId", async (req, res) => {
     const { blobId } = req.params;
     let walrus = getWalrusClient();
     if (!walrus) {
-      if (!app.get("mockWalrus")) {
-        app.set("mockWalrus", new InMemoryWalrusClient());
-      }
-      walrus = app.get("mockWalrus");
+      throw new Error("Walrus client is not configured on the server. Please set WALRUS_AGGREGATOR.");
     }
 
     const data = await walrus!.readBlob(blobId);
@@ -543,12 +536,7 @@ app.post("/api/gas/build-mint", async (req, res) => {
     tx.setSender(sender);
 
     if (!sponsorKeypair) {
-      console.log("[Server] SUI_SPONSOR_SECRET_KEY not set. Operating in MOCK SPONSOR MODE.");
-      res.json({
-        success: true,
-        mockMode: true,
-        txBytesB64: Buffer.from("MOCK_TX_BYTES_DUMMY").toString("base64"),
-      });
+      res.status(500).json({ success: false, error: "SUI_SPONSOR_SECRET_KEY is not configured on the server. Transaction sponsorship is unavailable." });
       return;
     }
 
@@ -586,13 +574,7 @@ app.post("/api/gas/sponsor", async (req, res) => {
     const sponsorKeypair = getSponsorKeypair();
 
     if (!sponsorKeypair) {
-      console.log("[Server] SUI_SPONSOR_SECRET_KEY not set. Operating in MOCK SPONSOR MODE.");
-      res.json({
-        success: true,
-        mockMode: true,
-        digest: "E2E_MOCK_SPONSOR_TX_DIGEST_" + Math.random().toString(36).substring(7).toUpperCase(),
-        message: "Simulated Sponsor Sign & Broadcast SUCCESS."
-      });
+      res.status(500).json({ success: false, error: "SUI_SPONSOR_SECRET_KEY is not configured on the server. Transaction sponsorship is unavailable." });
       return;
     }
 
