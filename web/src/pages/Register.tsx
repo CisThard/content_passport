@@ -380,7 +380,7 @@ export default function Register() {
                 <button 
                   onClick={handleGoogleLogin} 
                   disabled={isLoggingIn}
-                  className="cyber-btn cyber-btn-indigo"
+                  className={`cyber-btn ${isLoggingIn ? 'cyber-btn-connecting' : 'cyber-btn-indigo'}`}
                   style={{ 
                     padding: '10px 18px', 
                     fontSize: '11px', 
@@ -388,10 +388,21 @@ export default function Register() {
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '8px',
-                    boxShadow: '0 0 15px rgba(99, 102, 241, 0.3)'
+                    boxShadow: isLoggingIn ? '0 0 20px rgba(0, 245, 160, 0.4)' : '0 0 15px rgba(99, 102, 241, 0.3)',
+                    cursor: isLoggingIn ? 'wait' : 'pointer',
+                    background: isLoggingIn ? 'rgba(0, 245, 160, 0.12)' : undefined,
+                    borderColor: isLoggingIn ? 'var(--neon-emerald)' : undefined,
+                    opacity: 1,
+                    color: isLoggingIn ? 'var(--neon-emerald)' : '#fff',
+                    animation: isLoggingIn ? 'connectingPulse 1.5s infinite alternate' : 'none'
                   }}
                 >
-                  {isLoggingIn ? 'Connecting...' : (
+                  {isLoggingIn ? (
+                    <>
+                      <span className="connecting-spinner"></span>
+                      Connecting to Google...
+                    </>
+                  ) : (
                     <>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -611,6 +622,30 @@ export default function Register() {
           )}
         </div>
       </div>
+      <style>{`
+        @keyframes connectingPulse {
+          0% {
+            box-shadow: 0 0 8px rgba(0, 245, 160, 0.2);
+            border-color: rgba(0, 245, 160, 0.4);
+          }
+          100% {
+            box-shadow: 0 0 20px rgba(0, 245, 160, 0.6);
+            border-color: rgba(0, 245, 160, 1);
+          }
+        }
+        @keyframes spinnerRotation {
+          to { transform: rotate(360deg); }
+        }
+        .connecting-spinner {
+          display: inline-block;
+          width: 10px;
+          height: 10px;
+          border: 2px solid rgba(0, 245, 160, 0.3);
+          border-top-color: var(--neon-emerald);
+          border-radius: 50%;
+          animation: spinnerRotation 0.8s linear infinite;
+        }
+      `}</style>
     </div>
   )
 }
