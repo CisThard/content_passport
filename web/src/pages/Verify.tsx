@@ -176,7 +176,7 @@ function ElaSplitSlider({ imageUrl, type }: { imageUrl: string; type: 'real' | '
 
 const API_BASE = window.location.origin.includes('localhost') ? 'http://localhost:3000' : '';
 
-export default function Verify() {
+export default function Verify({ setSharedFile }: { setSharedFile?: (file: File | null) => void } = {}) {
   const [selectedSampleId, setSelectedSampleId] = useState<string | null>(SAMPLE_MEDIAS[0].id)
   const [customFile, setCustomFile] = useState<File | null>(null)
   const [customFileUrl, setCustomFileUrl] = useState<string | null>(null)
@@ -191,6 +191,7 @@ export default function Verify() {
     setIsVerifying(true)
     setVerdictResult(null)
     setConsoleLogs([])
+    setSharedFile?.(null)
 
     try {
       let fileToUpload: File | Blob
@@ -212,8 +213,12 @@ export default function Verify() {
         fileName = sample.name
       }
 
+      const finalFile = fileToUpload instanceof File 
+        ? fileToUpload 
+        : new File([fileToUpload], fileName, { type: 'image/jpeg' })
+
       const formData = new FormData()
-      formData.append('file', fileToUpload, fileName)
+      formData.append('file', finalFile, fileName)
 
       const apiResponse = await fetch(`${API_BASE}/api/verify/stream`, {
         method: 'POST',
@@ -228,7 +233,7 @@ export default function Verify() {
         throw new Error('This browser cannot stream verification events.')
       }
 
-      await readVerificationStream(apiResponse.body)
+      await readVerificationStream(apiResponse.body, finalFile)
     } catch (err: any) {
       console.error(err)
       setProgressStep({ status: 'complete', progress: 100, logLine: `Error during verification: ${err.message || String(err)}` })
@@ -256,7 +261,7 @@ export default function Verify() {
   const syntheticArtifactScore = objective?.frequency?.syntheticArtifactScore ?? 0;
   const duplicateRisk = objective?.perceptualHash?.duplicateRisk || 'low';
 
-  const readVerificationStream = async (body: ReadableStream<Uint8Array>) => {
+  const readVerificationStream = async (body: ReadableStream<Uint8Array>, finalFile: File) => {
     const reader = body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
@@ -286,6 +291,11 @@ export default function Verify() {
             localStorage.setItem('cr:hashes', JSON.stringify(Array.from(new Set([payload.objective.sha256, ...hashes])).slice(0, 50)))
           }
           setVerdictResult(payload)
+
+          // Propagate the verified file to Sealed Vault if audit succeeds
+          if (payload.assessment?.recreateReady && setSharedFile) {
+            setSharedFile(finalFile)
+          }
         }
 
         if (event === 'error') {

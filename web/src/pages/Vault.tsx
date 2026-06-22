@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { SAMPLE_MEDIAS } from '../samples'
 
 // ==========================================
 // 🛡️ GF(256) & Shamir's Secret Sharing (3/5)
@@ -163,7 +164,7 @@ interface EncryptedPackage {
   mimeType: string
 }
 
-export default function Vault() {
+export default function Vault({ sharedFile, setSharedFile }: { sharedFile?: File | null; setSharedFile?: (f: File | null) => void } = {}) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [vaultState, setVaultState] = useState<'idle' | 'encrypting' | 'locked' | 'aggregating' | 'unlocked'>('idle')
   const [blobId, setBlobId] = useState<string | null>(null)
@@ -464,9 +465,7 @@ export default function Vault() {
   // ==========================================
   // ⚙️ Cryptographic E2E Actions
   // ==========================================
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return
-    const file = e.target.files[0]
+  const processFile = async (file: File) => {
     setSelectedFile(file)
     setVaultState('encrypting')
     setConsoleLogs([])
@@ -534,6 +533,43 @@ export default function Vault() {
       setVaultState('idle')
     }
   }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    const file = e.target.files[0]
+    processFile(file)
+  }
+
+  // Auto-load last verified file from previous page
+  useEffect(() => {
+    if (sharedFile) {
+      processFile(sharedFile)
+    } else {
+      const lastVer = localStorage.getItem('cr:lastVerification')
+      if (lastVer) {
+        try {
+          const parsed = JSON.parse(lastVer)
+          if (parsed.filename && parsed.success) {
+            const sample = SAMPLE_MEDIAS.find(s => s.name === parsed.filename)
+            if (sample) {
+              setConsoleLogs(prev => [...prev, `Auto-loading last audited specimen: ${sample.name}...`])
+              fetch(`/samples/${sample.name}`)
+                .then(res => res.blob())
+                .then(blob => {
+                  const file = new File([blob], sample.name, { type: 'image/jpeg' })
+                  processFile(file)
+                })
+                .catch(err => {
+                  console.warn("Failed to auto-fetch preset sample in Vault:", err)
+                })
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to parse last verification:", e)
+        }
+      }
+    }
+  }, [sharedFile])
 
   const triggerUpload = () => {
     fileInputRef.current?.click()

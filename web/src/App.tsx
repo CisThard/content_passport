@@ -54,6 +54,7 @@ function MainAppShell() {
   const [showDropdown, setShowDropdown] = useState(false)
   const [googleClientId, setGoogleClientId] = useState('')
   const [currentEpoch, setCurrentEpoch] = useState(100)
+  const [sharedFile, setSharedFile] = useState<File | null>(null)
 
   useEffect(() => {
     const syncSession = () => {
@@ -263,8 +264,8 @@ function MainAppShell() {
             <Route path="/register" element={<Register />} />
             <Route path="/api/auth/callback/google" element={<Register />} />
             <Route path="/login-callback" element={<Register />} />
-            <Route path="/verify" element={<Verify />} />
-            <Route path="/vault" element={<Vault />} />
+            <Route path="/verify" element={<Verify setSharedFile={setSharedFile} />} />
+            <Route path="/vault" element={<Vault sharedFile={sharedFile} setSharedFile={setSharedFile} />} />
             <Route path="/blueprint" element={<Blueprint />} />
             <Route path="/chat" element={<Chat />} />
           </Routes>
