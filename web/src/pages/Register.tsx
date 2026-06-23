@@ -228,15 +228,19 @@ export default function Register() {
       // Decode JWT for diagnostics
       let sub = ''
       let aud = ''
+      let jwtNonce = ''
       if (jwt) {
         try {
           const decoded = decodeJwt(jwt)
           sub = decoded.sub || ''
           aud = decoded.aud || ''
+          jwtNonce = decoded.nonce || ''
         } catch {}
       }
 
-      // Print diagnostics log right before starting (Requirement 8)
+      const expectedNonce = generateNonce(session.keypair.getPublicKey(), session.maxEpoch, session.randomness)
+
+      // Print diagnostics log right before starting (Requirement 8 & Nonce Check)
       console.log('=== ZKLOGIN MINT TRANSACTION DIAGNOSTICS ===', {
         currentEpoch: freshEpoch,
         maxEpoch: session.maxEpoch,
@@ -245,6 +249,8 @@ export default function Register() {
         salt: '(kept private on server)',
         sub,
         aud,
+        jwtNonce,
+        expectedNonce,
       })
 
       setMintLogs((prev) => [
@@ -256,12 +262,19 @@ export default function Register() {
         `Address Seed: ${zkAddressSeed}`,
         `Subject (sub): ${sub}`,
         `Audience (aud): ${aud}`,
+        `JWT Nonce: ${jwtNonce}`,
+        `Expected Nonce: ${expectedNonce}`,
         '========================',
       ])
 
       // 2. Epoch validation: check if the session is expired (Requirement 1 & 2)
       if (freshEpoch > session.maxEpoch) {
         throw new Error(`zkLogin proof has expired (current network epoch ${freshEpoch} is greater than proof maxEpoch ${session.maxEpoch}). Please logout and login again to refresh your session.`)
+      }
+
+      // 3. Nonce validation: check if nonces match (Requirement 6)
+      if (jwtNonce !== expectedNonce) {
+        throw new Error(`Nonce mismatch: The JWT nonce (${jwtNonce}) does not match the ephemeral key nonce (${expectedNonce}). This happens if the ephemeral key, maxEpoch, or randomness changed. Please logout and login again to refresh your session.`)
       }
 
       setMintProgress(10)
