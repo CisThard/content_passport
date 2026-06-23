@@ -115,10 +115,11 @@ $$S = f(0) = \sum_{i=1}^{k} y_i \prod_{j \neq i} \frac{-x_j}{x_i - x_j} \pmod{p}
 
 ## 📁 Repository Directory Structure
 
-*   [docs/](file:///Users/charles/Projects/content_passport/docs): Design systems, execution roadmaps, and business model papers
-    *   [gcp_cicd_proposal.md](file:///Users/charles/Projects/content_passport/docs/gcp_cicd_proposal.md): **[Upgraded]** Detailed GCP architecture, CI/CD, and self-hosting proposal
-    *   [architecture-and-deployment.md](file:///Users/charles/Projects/content_passport/docs/architecture-and-deployment.md): GCP Cloud Run deployment & API configurations
-    *   [co-creation-business-model-ko.md](file:///Users/charles/Projects/content_passport/docs/co-creation-business-model-ko.md): Dynamic royalty splits & bounty quest specs
+*   [docs/](file:///Users/charles/Projects/content_passport/docs): Design documents, release notes, and technical reports
+    *   [releases/](file:///Users/charles/Projects/content_passport/docs/releases): Version history and release notes (v0.9.0 ~ v0.9.2)
+    *   [proposals/](file:///Users/charles/Projects/content_passport/docs/proposals): Architecture, deployment, and upgrade proposal documents
+    *   [reports/](file:///Users/charles/Projects/content_passport/docs/reports): Infrastructure verification and alignment reports
+    *   [official-docs/](file:///Users/charles/Projects/content_passport/docs/official-docs): Sui, Walrus, and Enoki official technical specs
 *   [contracts/](file:///Users/charles/Projects/content_passport/contracts): Sui Move Smart Contracts
     *   `Move.toml`: Package configuration
     *   `sources/genesis_passport.move`: Issues Content Passports with AAA-C grades
