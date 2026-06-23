@@ -622,7 +622,7 @@ app.post("/api/gas/sponsor", async (req, res) => {
     const suiClient = new SuiJsonRpcClient({ url: rpcUrl, network: networkName as any });
 
     // Retrieve transaction details with retries to account for fullnode indexing lag
-    let executionResult;
+    let executionResult: any = null;
     for (let i = 0; i < 6; i++) {
       try {
         executionResult = await suiClient.getTransactionBlock({
@@ -637,6 +637,10 @@ app.post("/api/gas/sponsor", async (req, res) => {
         if (i === 5) throw err;
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
+    }
+
+    if (!executionResult) {
+      throw new Error("Failed to retrieve transaction block effects from Sui RPC node");
     }
 
     res.json({
