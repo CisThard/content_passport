@@ -370,7 +370,7 @@ export default function Register() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            txBytesB64: buildData.txBytesB64,
+            digest: buildData.digest,
             userSignature: userZkSignature,
           })
         })

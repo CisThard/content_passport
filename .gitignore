@@ -5,3 +5,5 @@ contracts/build/
 .env
 .DS_Store
 .vercel
+scratch/
+

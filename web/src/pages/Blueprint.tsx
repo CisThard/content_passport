@@ -25,7 +25,7 @@ interface VisualCoin {
 }
 
 function parseRangeValue(value: string, fallback: number): number {
-  const next = Number.parseInt(value, 10)
+  const next = Number.parseFloat(value)
   return Number.isFinite(next) ? next : fallback
 }
 
@@ -35,9 +35,9 @@ function clamp(value: number, min: number, max: number): number {
 
 function BlueprintContent() {
   // State for Remix Chain Simulator
-  const [anyaFee, setAnyaFee] = useState<number>(30)
-  const [benFee, setBenFee] = useState<number>(50)
-  const [chloeFee, setChloeFee] = useState<number>(20)
+  const [anyaFee, setAnyaFee] = useState<number>(0.3)
+  const [benFee, setBenFee] = useState<number>(0.5)
+  const [chloeFee, setChloeFee] = useState<number>(0.2)
 
   // State for Bounty Quest Simulator
   const [totalBounty, setTotalBounty] = useState<number>(120)
@@ -53,6 +53,7 @@ function BlueprintContent() {
   const [chainLogs, setChainLogs] = useState<string[]>([])
   const [chainBusy, setChainBusy] = useState(false)
   const [lastDigest, setLastDigest] = useState('')
+  const [serverPackageId, setServerPackageId] = useState('')
   
   // Tab control for dry-run terminal vs chain logs
   const [activeTerminalTab, setActiveTerminalTab] = useState<'dryrun' | 'logs'>('dryrun')
@@ -101,11 +102,20 @@ function BlueprintContent() {
   const [floatingBen, setFloatingBen] = useState<string | null>(null)
   const [floatingChloe, setFloatingChloe] = useState<string | null>(null)
 
+  const activePackageId = serverPackageId || CONTENT_RIGHT_PACKAGE_ID
+
   useEffect(() => {
     const state = readOnchainState()
     setPassportId(state.passportId || '')
     setPolicyId(state.policyId || '')
     setLastDigest(state.policyTxDigest || state.settlementTxDigest || '')
+
+    fetch('/api/auth/config')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.packageId) setServerPackageId(data.packageId)
+      })
+      .catch((err) => console.error('Failed to load auth config in Blueprint:', err))
   }, [])
 
   useEffect(() => {
@@ -126,7 +136,7 @@ function BlueprintContent() {
 
   const participantTotal = liveParticipants.reduce((sum, participant) => sum + participant.weight, 0)
   const canCreatePolicy =
-    Boolean(currentAccount && CONTENT_RIGHT_PACKAGE_ID && passportId.trim() && liveParticipants.length > 0 && participantTotal === 100)
+    Boolean(currentAccount && activePackageId && passportId.trim() && liveParticipants.length > 0 && participantTotal === 100)
 
   const appendChainLog = (message: string) => {
     setChainLogs((prev) => [...prev, message])
@@ -147,9 +157,9 @@ function BlueprintContent() {
 
     // Nodes positions mapping
     const nodeEscrow = { x: width / 2, y: height - 60, name: 'Sui Escrow', color: '#00f5a0' }
-    const nodeAnya = { x: 70, y: 60, name: 'Anya (Origin)', color: '#f59e0b', weight: anyaRemixWeight, val: ((totalRemixCost * anyaRemixWeight) / 100).toFixed(1) }
-    const nodeBen = { x: width / 2, y: 60, name: 'Ben (Remix)', color: '#06b6d4', weight: benRemixWeight, val: ((totalRemixCost * benRemixWeight) / 100).toFixed(1) }
-    const nodeChloe = { x: width - 70, y: 60, name: 'Chloe (Sound)', color: '#ec4899', weight: chloeRemixWeight, val: ((totalRemixCost * chloeRemixWeight) / 100).toFixed(1) }
+    const nodeAnya = { x: 70, y: 60, name: 'Anya (Origin)', color: '#f59e0b', weight: anyaRemixWeight, val: ((totalRemixCost * anyaRemixWeight) / 100).toFixed(2) }
+    const nodeBen = { x: width / 2, y: 60, name: 'Ben (Remix)', color: '#06b6d4', weight: benRemixWeight, val: ((totalRemixCost * benRemixWeight) / 100).toFixed(2) }
+    const nodeChloe = { x: width - 70, y: 60, name: 'Chloe (Sound)', color: '#ec4899', weight: chloeRemixWeight, val: ((totalRemixCost * chloeRemixWeight) / 100).toFixed(2) }
 
     const updateFrame = () => {
       ctx.clearRect(0, 0, width, height)
@@ -336,9 +346,9 @@ Command 1: MoveCall(
       chloe.sui -> "${participantC ? shortId(participantC, 8, 6) : '0xchloe_address'}"
     ]
     Arg 3: Vector<u64> [
-      Anya Weight  -> ${anyaRemixWeight} (representing ${((totalRemixCost * anyaRemixWeight) / 100).toFixed(1)} SUI),
-      Ben Weight   -> ${benRemixWeight} (representing ${((totalRemixCost * benRemixWeight) / 100).toFixed(1)} SUI),
-      Chloe Weight -> ${chloeRemixWeight} (representing ${((totalRemixCost * chloeRemixWeight) / 100).toFixed(1)} SUI)
+      Anya Weight  -> ${anyaRemixWeight} (representing ${((totalRemixCost * anyaRemixWeight) / 100).toFixed(2)} SUI),
+      Ben Weight   -> ${benRemixWeight} (representing ${((totalRemixCost * benRemixWeight) / 100).toFixed(2)} SUI),
+      Chloe Weight -> ${chloeRemixWeight} (representing ${((totalRemixCost * chloeRemixWeight) / 100).toFixed(2)} SUI)
     ]
   ]
 ) -> Result[1] (CoCreationPolicy Shared Object)
@@ -368,10 +378,10 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
     try {
       appendChainLog(`Building create_and_fund_policy for passport ${shortId(passportId)}.`)
       const tx = buildCreateAndFundPolicyTx({
-        packageId: CONTENT_RIGHT_PACKAGE_ID,
+        packageId: activePackageId,
         passportId,
         participants: liveParticipants,
-        amountMist: BigInt(totalRemixCost) * 1_000_000_000n,
+        amountMist: BigInt(Math.round(totalRemixCost * 1_000_000_000)),
       })
       appendChainLog(`Requesting wallet signature for ${totalRemixCost} SUI escrow split.`)
       
@@ -394,12 +404,12 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
   }
 
   const handleDistributeRoyalties = async () => {
-    if (!currentAccount || !CONTENT_RIGHT_PACKAGE_ID || !policyId.trim()) return
+    if (!currentAccount || !activePackageId || !policyId.trim()) return
     setChainBusy(true)
     try {
       appendChainLog(`Building distribute_royalties for policy ${shortId(policyId)}.`)
       const tx = buildDistributeRoyaltiesTx({
-        packageId: CONTENT_RIGHT_PACKAGE_ID,
+        packageId: activePackageId,
         policyId,
       })
       
@@ -413,6 +423,87 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
       triggerRoyaltySimulation()
     } catch (error: any) {
       appendChainLog(`[ERROR] ${error.message || String(error)}`)
+    } finally {
+      setChainBusy(false)
+    }
+  }
+
+  const handleAutoFillDemo = () => {
+    const state = readOnchainState()
+    if (state.passportId) {
+      setPassportId(state.passportId)
+    } else {
+      setPassportId('0x1ab2c110100f1a2ec03ee24a6bd93ffd177eacb5ef555b2abd996d91499b9486')
+    }
+
+    setParticipantA('0x552c96da7bd7bb87d4671a7140191497527fb6dbbf05aa2080bc80224f703d60')
+    if (currentAccount) {
+      setParticipantB(currentAccount.address)
+    } else {
+      setParticipantB('0xa2fb876c75ffd1763ff768763e9cff2c289dd8eff2763d32e40a9b32e993d96a')
+    }
+    setParticipantC('0x78565dfbeb2ac903d135324ec0ecdb3d4a96458d71ea9ac8c6aa869a6a914b1d')
+
+    appendChainLog("Auto-populated demo parameters: Anya (zkLogin), Ben (Wallet), Chloe (Test address). Ready for Auto-Pilot.")
+  }
+
+  const handleAutoPilot = async () => {
+    // If fields are empty, run auto-fill first
+    if (!passportId || !participantA || !participantB || !participantC) {
+      handleAutoFillDemo()
+      // Yield to state updates
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    setChainBusy(true)
+    try {
+      appendChainLog("[Auto-Pilot] Deploying and funding CoCreationPolicy shared object...")
+      
+      const packageId = activePackageId
+      
+      const tx = buildCreateAndFundPolicyTx({
+        packageId,
+        passportId: passportId || '0x1ab2c110100f1a2ec03ee24a6bd93ffd177eacb5ef555b2abd996d91499b9486',
+        participants: [
+          { address: '0x552c96da7bd7bb87d4671a7140191497527fb6dbbf05aa2080bc80224f703d60', weight: anyaRemixWeight },
+          { address: currentAccount?.address || '0xa2fb876c75ffd1763ff768763e9cff2c289dd8eff2763d32e40a9b32e993d96a', weight: benRemixWeight },
+          { address: '0x78565dfbeb2ac903d135324ec0ecdb3d4a96458d71ea9ac8c6aa869a6a914b1d', weight: chloeRemixWeight },
+        ],
+        amountMist: BigInt(Math.round(totalRemixCost * 1_000_000_000)),
+      })
+
+      appendChainLog(`[Auto-Pilot] Requesting wallet signature for ${totalRemixCost} SUI escrow split.`)
+      const deployResult = await signAndExecuteTransaction({ transaction: tx, chain: SUI_CHAIN })
+      
+      const createdPolicyId = firstCreatedObjectId(deployResult)
+      if (!createdPolicyId) {
+        throw new Error("Failed to capture deployed Policy ID.")
+      }
+      setPolicyId(createdPolicyId)
+      setLastDigest(deployResult.digest)
+      rememberOnchainState({ policyId: createdPolicyId, policyTxDigest: deployResult.digest })
+      
+      appendChainLog(`[Auto-Pilot] Policy deployed successfully: ${shortId(createdPolicyId)}`)
+      triggerRoyaltySimulation()
+
+      // Wait 2 seconds for visual coin flow and chain state commitment
+      appendChainLog("[Auto-Pilot] Waiting for state synchronization (2s)...")
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      appendChainLog(`[Auto-Pilot] Distributing royalties atomically from Policy: ${shortId(createdPolicyId)}`)
+      const distributeTx = buildDistributeRoyaltiesTx({
+        packageId,
+        policyId: createdPolicyId,
+      })
+
+      const distributeResult = await signAndExecuteTransaction({ transaction: distributeTx, chain: SUI_CHAIN })
+      setLastDigest(distributeResult.digest)
+      rememberOnchainState({ settlementTxDigest: distributeResult.digest })
+      
+      appendChainLog(`[Auto-Pilot] SUCCESS: Royalty distribution confirmed! Tx: ${shortId(distributeResult.digest, 12, 8)}`)
+      triggerRoyaltySimulation()
+    } catch (error: any) {
+      appendChainLog(`[Auto-Pilot ERROR] Aborted: ${error.message || String(error)}`)
     } finally {
       setChainBusy(false)
     }
@@ -534,9 +625,9 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                 </div>
                 <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
                   Dave (Buyer) buys the final asset for <strong>{totalRemixCost} SUI</strong>. The smart contract splits SUI atomically:
-                  Anya (<strong style={{color:'#f59e0b'}}>{((totalRemixCost * anyaRemixWeight)/100).toFixed(1)} SUI</strong>), 
-                  Ben (<strong style={{color:'#06b6d4'}}>{((totalRemixCost * benRemixWeight)/100).toFixed(1)} SUI</strong>), 
-                  Chloe (<strong style={{color:'#ec4899'}}>{((totalRemixCost * chloeRemixWeight)/100).toFixed(1)} SUI</strong>).
+                  Anya (<strong style={{color:'#f59e0b'}}>{((totalRemixCost * anyaRemixWeight)/100).toFixed(2)} SUI</strong>), 
+                  Ben (<strong style={{color:'#06b6d4'}}>{((totalRemixCost * benRemixWeight)/100).toFixed(2)} SUI</strong>), 
+                  Chloe (<strong style={{color:'#ec4899'}}>{((totalRemixCost * chloeRemixWeight)/100).toFixed(2)} SUI</strong>).
                 </p>
               </div>
             </div>
@@ -599,12 +690,13 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                 <div className="cyber-input-wrap" style={{ margin: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 600, color: 'var(--neon-gold)' }}>
                     <span>Anya (Origin Template Creator)</span>
-                    <span>{anyaFee} SUI ({anyaRemixWeight}%)</span>
+                    <span>{anyaFee.toFixed(2)} SUI ({anyaRemixWeight}%)</span>
                   </div>
                   <input
                     type="range"
-                    min="10"
-                    max="100"
+                    min="0.01"
+                    max="1.00"
+                    step="0.01"
                     value={anyaFee}
                     onChange={(e) => setAnyaFee(parseRangeValue(e.target.value, anyaFee))}
                     disabled={chainBusy}
@@ -614,12 +706,13 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                 <div className="cyber-input-wrap" style={{ margin: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 600, color: 'var(--neon-cyan)' }}>
                     <span>Ben (Remix Overlay Designer)</span>
-                    <span>{benFee} SUI ({benRemixWeight}%)</span>
+                    <span>{benFee.toFixed(2)} SUI ({benRemixWeight}%)</span>
                   </div>
                   <input
                     type="range"
-                    min="10"
-                    max="100"
+                    min="0.01"
+                    max="1.00"
+                    step="0.01"
                     value={benFee}
                     onChange={(e) => setBenFee(parseRangeValue(e.target.value, benFee))}
                     disabled={chainBusy}
@@ -629,12 +722,13 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                 <div className="cyber-input-wrap" style={{ margin: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 600, color: 'var(--neon-rose)' }}>
                     <span>Chloe (Sound FX Composer)</span>
-                    <span>{chloeFee} SUI ({chloeRemixWeight}%)</span>
+                    <span>{chloeFee.toFixed(2)} SUI ({chloeRemixWeight}%)</span>
                   </div>
                   <input
                     type="range"
-                    min="10"
-                    max="100"
+                    min="0.01"
+                    max="1.00"
+                    step="0.01"
                     value={chloeFee}
                     onChange={(e) => setChloeFee(parseRangeValue(e.target.value, chloeFee))}
                     disabled={chainBusy}
@@ -703,23 +797,44 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-                <button 
-                  className="cyber-btn cyber-btn-indigo" 
-                  disabled={!canCreatePolicy || chainBusy} 
-                  onClick={handleCreatePolicy}
-                  style={{ fontSize: '11px', fontWeight: 'bold' }}
-                >
-                  {chainBusy ? 'Deploying...' : 'Deploy & Fund Policy'}
-                </button>
-                <button 
-                  className="cyber-btn cyber-btn-rose" 
-                  disabled={!currentAccount || !CONTENT_RIGHT_PACKAGE_ID || !policyId.trim() || chainBusy} 
-                  onClick={handleDistributeRoyalties}
-                  style={{ fontSize: '11px', fontWeight: 'bold' }}
-                >
-                  Distribute Royalties
-                </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <button 
+                    className="cyber-btn cyber-btn-secondary" 
+                    onClick={handleAutoFillDemo}
+                    disabled={chainBusy}
+                    style={{ fontSize: '11px', fontWeight: 'bold', border: '1px dashed var(--neon-gold)', cursor: 'pointer' }}
+                  >
+                    ⚡ Auto-Fill Demo Params
+                  </button>
+                  <button 
+                    className="cyber-btn cyber-btn-indigo" 
+                    onClick={handleAutoPilot}
+                    disabled={chainBusy || !currentAccount}
+                    style={{ fontSize: '11px', fontWeight: 'bold', boxShadow: '0 0 10px rgba(16, 185, 129, 0.2)', cursor: 'pointer', background: 'var(--neon-emerald)', border: 'none', color: '#fff' }}
+                  >
+                    🤖 Run Auto-Pilot
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <button 
+                    className="cyber-btn cyber-btn-indigo" 
+                    disabled={!canCreatePolicy || chainBusy} 
+                    onClick={handleCreatePolicy}
+                    style={{ fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    {chainBusy ? 'Deploying...' : 'Deploy & Fund Policy'}
+                  </button>
+                  <button 
+                    className="cyber-btn cyber-btn-rose" 
+                    disabled={!currentAccount || !CONTENT_RIGHT_PACKAGE_ID || !policyId.trim() || chainBusy} 
+                    onClick={handleDistributeRoyalties}
+                    style={{ fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    Distribute Royalties
+                  </button>
+                </div>
               </div>
 
               {lastDigest && (

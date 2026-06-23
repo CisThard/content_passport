@@ -46,11 +46,16 @@ export function getZkLoginSaltForClaims(
     };
   }
 
-  const seed = env.ZKLOGIN_SALT_MASTER_SEED || env.ZKLOGIN_SALT_SEED;
+  let seed = env.ZKLOGIN_SALT_MASTER_SEED || env.ZKLOGIN_SALT_SEED;
   if (!seed) {
-    throw new Error(
-      "ZKLOGIN_SALT_MASTER_SEED is required for the per-user zkLogin salt service. Set a stable private seed, or set ZKLOGIN_USER_SALT for legacy testnet-only static salt.",
-    );
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[Server][ZkLogin Salt] ZKLOGIN_SALT_MASTER_SEED is missing in local environment. Falling back to a temporary development seed.");
+      seed = "development-fallback-only-never-use-in-production-12345";
+    } else {
+      throw new Error(
+        "ZKLOGIN_SALT_MASTER_SEED is required for the per-user zkLogin salt service. Set a stable private seed, or set ZKLOGIN_USER_SALT for legacy testnet-only static salt.",
+      );
+    }
   }
 
   const saltBytes = Buffer.from(hkdfSync(

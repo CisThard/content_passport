@@ -390,6 +390,13 @@ app.get("/api/auth/config", async (req, res) => {
   res.json(value);
 });
 
+function toBase6416Bytes(valueStr: string): string {
+  const bigIntValue = BigInt(valueStr);
+  const hex = bigIntValue.toString(16).padStart(32, "0"); // 16 bytes = 32 hex chars
+  const bytes = new Uint8Array(hex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
+  return Buffer.from(bytes).toString("base64");
+}
+
 // POST /api/auth/zklogin
 app.post("/api/auth/zklogin", async (req, res) => {
   try {
@@ -400,6 +407,11 @@ app.post("/api/auth/zklogin", async (req, res) => {
     }
     if (!Number.isSafeInteger(Number(maxEpoch)) || Number(maxEpoch) <= 0 || !randomness) {
       res.status(400).json({ success: false, error: "Missing or invalid maxEpoch/randomness" });
+      return;
+    }
+
+    if (!process.env.ENOKI_SECRET_KEY) {
+      res.status(500).json({ success: false, error: "ENOKI_SECRET_KEY is not configured on the server" });
       return;
     }
 
@@ -415,73 +427,53 @@ app.post("/api/auth/zklogin", async (req, res) => {
       return;
     }
 
-    let saltResult: ReturnType<typeof getZkLoginSaltForClaims>;
-    try {
-      saltResult = getZkLoginSaltForClaims(decodedJwt);
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message || String(error) });
-      return;
+    // 1. Fetch zkLogin Address from Enoki
+    const addressRes = await fetch("https://api.enoki.mystenlabs.com/v1/zklogin", {
+      headers: {
+        "Authorization": `Bearer ${process.env.ENOKI_SECRET_KEY}`,
+        "zklogin-jwt": jwt,
+      },
+    });
+    if (!addressRes.ok) {
+      const errText = await addressRes.text().catch(() => "");
+      throw new Error(`Enoki /v1/zklogin failed (${addressRes.status}): ${errText}`);
     }
+    const addressPayload = await addressRes.json();
+    const zkAddress = addressPayload.data.address;
 
-    const proverUrl = process.env.ZKLOGIN_PROVER_URL || "https://prover-dev.mystenlabs.com/v1";
-    const { jwtToAddress, genAddressSeed } = await import("@mysten/sui/zklogin");
-
-    let response: Response;
-    try {
-      response = await fetch(proverUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(Number(process.env.ZKLOGIN_PROVER_TIMEOUT_MS || 15_000)),
-        body: JSON.stringify({
-          jwt,
-          extendedEphemeralPublicKey: ephemeralPublicKeyB64,
-          maxEpoch: Number(maxEpoch),
-          jwtRandomness: randomness,
-          salt: saltResult.salt,
-          keyClaimName: "sub",
-        }),
-      });
-    } catch (error: any) {
-      res.status(502).json({
-        success: false,
-        error: "zkLogin prover is unreachable",
-        detail: error.message || String(error),
-      });
-      return;
+    // 2. Fetch ZK Proof and Address Seed from Enoki
+    const zkpRes = await fetch("https://api.enoki.mystenlabs.com/v1/zklogin/zkp", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.ENOKI_SECRET_KEY}`,
+        "zklogin-jwt": jwt,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        network: process.env.SUI_NETWORK || "testnet",
+        ephemeralPublicKey: ephemeralPublicKeyB64,
+        maxEpoch: Number(maxEpoch),
+        randomness: randomness,
+      }),
+    });
+    if (!zkpRes.ok) {
+      const errText = await zkpRes.text().catch(() => "");
+      throw new Error(`Enoki /v1/zklogin/zkp failed (${zkpRes.status}): ${errText}`);
     }
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      res.status(502).json({
-        success: false,
-        error: `zkLogin prover failed: ${response.status} ${response.statusText}`,
-        detail: text.slice(0, 500),
-      });
-      return;
-    }
-
-    const proverPayload = await response.json();
-    const zkProof = proverPayload.zkProof ?? proverPayload;
-    if (!zkProof?.proofPoints || !zkProof?.issBase64Details || !zkProof?.headerBase64) {
-      res.status(502).json({
-        success: false,
-        error: "zkLogin prover response is missing required proof inputs",
-      });
-      return;
-    }
-    const zkAddress = jwtToAddress(jwt, saltResult.salt, false);
-    const addressSeed = genAddressSeed(saltResult.salt, "sub", decodedJwt.sub, saltResult.audience).toString();
+    const zkpPayload = await zkpRes.json();
+    const zkProof = zkpPayload.data;
+    const addressSeed = zkpPayload.data.addressSeed;
 
     rememberZkLoginReceipt({
       address: zkAddress,
       claims: {
         iss: decodedJwt.iss,
-        aud: saltResult.audience,
+        aud: decodedJwt.aud,
         sub: decodedJwt.sub,
       },
       maxEpoch: Number(maxEpoch),
-      saltStrategy: saltResult.strategy,
-      proverUrl,
+      saltStrategy: "hkdf-master-seed",
+      proverUrl: "https://api.enoki.mystenlabs.com/v1",
     }).catch((error: any) => console.warn("[Server] Failed to persist zkLogin receipt:", error.message || String(error)));
 
     res.json({
@@ -490,13 +482,14 @@ app.post("/api/auth/zklogin", async (req, res) => {
       proof: zkProof,
       addressSeed,
       issuer: decodedJwt.iss,
-      saltStrategy: saltResult.strategy,
+      saltStrategy: "enoki",
     });
   } catch (error: any) {
-    console.error("[Server] zkLogin setup failed:", error);
+    console.error("[Server] zkLogin setup failed via Enoki:", error);
     res.status(500).json({ success: false, error: error.message || String(error) });
   }
 });
+
 
 async function rememberZkLoginReceipt(input: {
   address: string;
@@ -520,7 +513,11 @@ app.post("/api/gas/build-mint", async (req, res) => {
       return;
     }
 
-    const sponsorKeypair = getSponsorKeypair();
+    if (!process.env.ENOKI_SECRET_KEY) {
+      res.status(500).json({ success: false, error: "ENOKI_SECRET_KEY is not configured on the server. Transaction sponsorship is unavailable." });
+      return;
+    }
+
     const config = getContentRightConfig();
     const packageId = config.packageId;
 
@@ -540,28 +537,47 @@ app.post("/api/gas/build-mint", async (req, res) => {
 
     tx.setSender(sender);
 
-    if (!sponsorKeypair) {
-      res.status(500).json({ success: false, error: "SUI_SPONSOR_SECRET_KEY is not configured on the server. Transaction sponsorship is unavailable." });
-      return;
-    }
-
-    const sponsorAddress = sponsorKeypair.toSuiAddress();
-    tx.setGasOwner(sponsorAddress);
-
     const rpcUrl = process.env.SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
-    const network = (process.env.SUI_NETWORK || "testnet") as any;
-    const suiClient = new SuiJsonRpcClient({ url: rpcUrl, network });
+    const networkName = process.env.SUI_NETWORK || "testnet";
+    const suiClient = new SuiJsonRpcClient({ url: rpcUrl, network: networkName as any });
 
-    // Build the transaction
-    const txBytes = await tx.build({ client: suiClient as any });
+    // Build the transaction block kind bytes
+    const txBytes = await tx.build({ client: suiClient as any, onlyTransactionKind: true });
+    const txKindB64 = Buffer.from(txBytes).toString("base64");
+
+    // Call Enoki Sponsor API
+    const sponsorRes = await fetch("https://api.enoki.mystenlabs.com/v1/transaction-blocks/sponsor", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.ENOKI_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        network: networkName,
+        transactionBlockKindBytes: txKindB64,
+        sender: sender,
+      }),
+    });
+
+    const sponsorData = await sponsorRes.json();
+    if (!sponsorRes.ok || !sponsorData.data) {
+      console.error("[Server][Enoki Error Response]:", {
+        status: sponsorRes.status,
+        statusText: sponsorRes.statusText,
+        body: JSON.stringify(sponsorData)
+      });
+      const errMsg = sponsorData.error?.message || (sponsorData.error ? JSON.stringify(sponsorData.error) : "") || sponsorData.message || "Enoki sponsor transaction block construction failed";
+      throw new Error(errMsg);
+    }
 
     res.json({
       success: true,
       mockMode: false,
-      txBytesB64: Buffer.from(txBytes).toString("base64"),
+      txBytesB64: sponsorData.data.bytes,
+      digest: sponsorData.data.digest,
     });
   } catch (error: any) {
-    console.error("[Server] Build mint transaction failed:", error);
+    console.error("[Server] Build mint transaction failed via Enoki:", error);
     res.status(500).json({ success: false, error: error.message || String(error) });
   }
 });
@@ -569,39 +585,59 @@ app.post("/api/gas/build-mint", async (req, res) => {
 // POST /api/gas/sponsor
 app.post("/api/gas/sponsor", async (req, res) => {
   try {
-    const { txBytesB64, userSignature } = req.body;
-    if (!txBytesB64) {
-      res.status(400).json({ success: false, error: "Missing txBytesB64" });
+    const { digest, userSignature } = req.body;
+    if (!digest || !userSignature) {
+      res.status(400).json({ success: false, error: "Missing digest or userSignature in request body" });
       return;
     }
 
-    const txBytes = Buffer.from(txBytesB64, "base64");
-    const sponsorKeypair = getSponsorKeypair();
-
-    if (!sponsorKeypair) {
-      res.status(500).json({ success: false, error: "SUI_SPONSOR_SECRET_KEY is not configured on the server. Transaction sponsorship is unavailable." });
+    if (!process.env.ENOKI_SECRET_KEY) {
+      res.status(500).json({ success: false, error: "ENOKI_SECRET_KEY is not configured on the server. Transaction sponsorship is unavailable." });
       return;
     }
+
+    // Call Enoki Execute Sponsored Transaction API
+    console.log("[Server] Submitting sponsored transaction execution to Enoki...");
+    const execRes = await fetch(`https://api.enoki.mystenlabs.com/v1/transaction-blocks/sponsor/${digest}`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.ENOKI_SECRET_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        signature: userSignature,
+      }),
+    });
+
+    const execData = await execRes.json();
+    if (!execRes.ok || !execData.data) {
+      throw new Error(execData.error?.message || execData.error || "Enoki transaction execution failed");
+    }
+
+    const txDigest = execData.data.digest;
+    console.log(`[Server] Enoki executed transaction. Digest: ${txDigest}. Retrieving effects...`);
 
     const rpcUrl = process.env.SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
-    const network = (process.env.SUI_NETWORK || "testnet") as any;
-    const suiClient = new SuiJsonRpcClient({ url: rpcUrl, network });
+    const networkName = process.env.SUI_NETWORK || "testnet";
+    const suiClient = new SuiJsonRpcClient({ url: rpcUrl, network: networkName as any });
 
-    const sponsorSignResult = await sponsorKeypair.signTransaction(txBytes);
-    const combinedSignatures = [userSignature];
-    if (sponsorSignResult.signature) {
-      combinedSignatures.push(sponsorSignResult.signature);
-    }
-
-    console.log("[Server] Broadcasting sponsored transaction...");
-    const executionResult = await suiClient.executeTransactionBlock({
-      transactionBlock: txBytes,
-      signature: combinedSignatures,
-      options: {
-        showRawEffects: true,
-        showObjectChanges: true,
+    // Retrieve transaction details with retries to account for fullnode indexing lag
+    let executionResult;
+    for (let i = 0; i < 6; i++) {
+      try {
+        executionResult = await suiClient.getTransactionBlock({
+          digest: txDigest,
+          options: {
+            showEffects: true,
+            showObjectChanges: true,
+          },
+        });
+        break;
+      } catch (err) {
+        if (i === 5) throw err;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
-    });
+    }
 
     res.json({
       success: true,
@@ -611,7 +647,7 @@ app.post("/api/gas/sponsor", async (req, res) => {
       objectChanges: executionResult.objectChanges,
     });
   } catch (error: any) {
-    console.error("[Server] Sponsor execute failed:", error);
+    console.error("[Server] Sponsor execute failed via Enoki:", error);
     res.status(500).json({ success: false, error: error.message || String(error) });
   }
 });
