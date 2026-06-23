@@ -15,7 +15,7 @@ The project is deployed and fully operational at **`https://content-passport.xyz
 > [!IMPORTANT]
 > **Sui Testnet Package & Account Information**  
 > * **Submitted Package ID (Registered in Submission Form):** `0x78565dfbeb2ac903d135324ec0ecdb3d4a96458d71ea9ac8c6aa869a6a914b1d` (This is our **Developer & Gas Sponsor Wallet Address**).
-> * **Active & Verified Contract Package ID:** [`0xed3b51821840c9cbba9b898ed09dde50a61155dd8fc00e8977278c8628036f22`](https://testnet.suivision.xyz/package/0xed3b51821840c9cbba9b898ed09dde50a61155dd8fc00e8977278c8628036f22)
+> * **Active & Verified Contract Package ID:** [`0xac28432a557d52d7079930a82a5c1732a3709da3c6cb2991ce0332b0704061da`](https://testnet.suivision.xyz/package/0xac28432a557d52d7079930a82a5c1732a3709da3c6cb2991ce0332b0704061da)
 > * *Due to periodic Sui Testnet resets, the smart contract was redeployed under a fresh Package ID. Please use the Active Package ID to view modules, transaction blocks, and onchain actions.*
 
 ---
