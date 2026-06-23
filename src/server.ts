@@ -367,12 +367,17 @@ app.get("/api/auth/config", async (req, res) => {
   const rpcUrl = process.env.SUI_RPC_URL || "https://fullnode.testnet.sui.io:443";
   const network = (process.env.SUI_NETWORK || "testnet") as any;
   const suiClient = new SuiJsonRpcClient({ url: rpcUrl, network });
-  let epoch = 1000;
+  let epoch: number;
   try {
     const systemState = await suiClient.getLatestSuiSystemState();
     epoch = Number(systemState.epoch);
-  } catch (e) {
-    console.warn("[Server] Failed to fetch current epoch from RPC, falling back to 1000:", e);
+    if (!epoch || Number.isNaN(epoch)) {
+      throw new Error("Invalid epoch value received from RPC");
+    }
+  } catch (e: any) {
+    console.error("[Server] Failed to fetch current epoch from RPC:", e);
+    res.status(500).json({ success: false, error: "Failed to fetch current epoch from Sui RPC node: " + (e.message || String(e)) });
+    return;
   }
 
   const value = {

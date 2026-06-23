@@ -205,10 +205,66 @@ export default function Register() {
     setIsMinting(true)
     setPassportData(null)
     setMintLogs([])
-    setMintProgress(10)
+    setMintProgress(5)
     setMintStatusText('INITIATING')
 
     try {
+      // 1. Fetch the latest live epoch from the server for pre-check
+      let freshEpoch: number
+      try {
+        const configRes = await fetch('/api/auth/config')
+        const configData = await configRes.json()
+        if (!configRes.ok || !configData.epoch) {
+          throw new Error(configData.error || 'Invalid configuration response')
+        }
+        freshEpoch = configData.epoch
+        setCurrentEpoch(freshEpoch)
+      } catch (err: any) {
+        throw new Error(`Failed to fetch current epoch from RPC: ${err.message || String(err)}`)
+      }
+
+      const session = getOrSetEphemeralSession(freshEpoch)
+
+      // Decode JWT for diagnostics
+      let sub = ''
+      let aud = ''
+      if (jwt) {
+        try {
+          const decoded = decodeJwt(jwt)
+          sub = decoded.sub || ''
+          aud = decoded.aud || ''
+        } catch {}
+      }
+
+      // Print diagnostics log right before starting (Requirement 8)
+      console.log('=== ZKLOGIN MINT TRANSACTION DIAGNOSTICS ===', {
+        currentEpoch: freshEpoch,
+        maxEpoch: session.maxEpoch,
+        address: zkUserAddress,
+        addressSeed: zkAddressSeed,
+        salt: '(kept private on server)',
+        sub,
+        aud,
+      })
+
+      setMintLogs((prev) => [
+        ...prev,
+        '=== Diagnostic Info ===',
+        `Current Network Epoch: ${freshEpoch}`,
+        `ZK Proof Max Epoch: ${session.maxEpoch}`,
+        `Wallet Address: ${zkUserAddress}`,
+        `Address Seed: ${zkAddressSeed}`,
+        `Subject (sub): ${sub}`,
+        `Audience (aud): ${aud}`,
+        '========================',
+      ])
+
+      // 2. Epoch validation: check if the session is expired (Requirement 1 & 2)
+      if (freshEpoch > session.maxEpoch) {
+        throw new Error(`zkLogin proof has expired (current network epoch ${freshEpoch} is greater than proof maxEpoch ${session.maxEpoch}). Please logout and login again to refresh your session.`)
+      }
+
+      setMintProgress(10)
       const verification = lastVerification()
       const contentHash = verification?.objective?.sha256 || `manual:${suinsName.trim().toLowerCase()}`
       const grade = verification?.assessment?.grade || 'A'
