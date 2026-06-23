@@ -365,7 +365,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
               <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-indigo)' }}></span>
               <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Prologue: Identity Gate</strong>
               <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
-                Declare your sovereign SuiNS name, establish ephemeral cryptographic session keys, and mint your immutable Genesis Passport NFT.
+                Begin your journey keylessly. Seamlessly verify your creator identity with a simple Google login, and issue your unique Genesis Passport NFT to claim your creative authority from day one.
               </p>
             </div>
 
@@ -373,7 +373,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
               <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-gold)' }}></span>
               <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter I: Authenticity Audit</strong>
               <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
-                Perform multi-agent forensic audits. Evaluate image pixel compression (ELA), EXIF header profiles, and Gemini Visual AI patterns.
+                Protect your masterpiece from forgery. A multi-agent forensic system checks metadata integrity and audits your content using advanced AI, certifying its absolute authenticity for the world to trust.
               </p>
             </div>
 
@@ -381,7 +381,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
               <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-emerald)' }}></span>
               <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter II: Sealed Vault</strong>
               <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
-                Lock raw high-fidelity drafts under browser-level AES-256 envelope encryption, splitting keys into 5 sharded shares across Walrus nodes.
+                Your drafts, completely secured. Keep your raw creative ideas safe in a decentralized vault where files are sliced and stored across global nodes, preventing unauthorized leaks before public release.
               </p>
             </div>
 
@@ -389,7 +389,7 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
               <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-rose)' }}></span>
               <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter III: Automated Royalties</strong>
               <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
-                Deploy co-creation policy registers on-chain to instantly route and split atomic payouts to creators upon licensing.
+                Fair share for every collaborator. Establish automated royalty rules on the blockchain to instantly and transparently split licensing revenues down to the smallest fraction whenever your work is remixed.
               </p>
             </div>
           </div>
