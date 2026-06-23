@@ -388,9 +388,15 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
             <div style={{ position: 'relative' }}>
               <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-rose)' }}></span>
               <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter III: Automated Royalties</strong>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5, marginBottom: '24px' }}>
                 Fair share for every collaborator. Establish automated royalty rules on the blockchain to instantly and transparently split licensing revenues down to the smallest fraction whenever your work is remixed.
               </p>
+            </div>
+
+            <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '20px' }}>
+              <Link to="/register" className="cyber-btn cyber-btn-indigo" style={{ display: 'inline-block', textDecoration: 'none', padding: '10px 20px', fontSize: '12px', fontWeight: 'bold' }}>
+                Enter Identity Gate ➔
+              </Link>
             </div>
           </div>
         </div>
