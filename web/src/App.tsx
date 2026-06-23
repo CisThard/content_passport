@@ -38,12 +38,12 @@ function Navigation() {
 
   const NAV_ITEMS = [
     { label: 'Home', path: '/' },
+    { label: 'Odyssey', path: '/#odyssey-section' },
     { label: 'Identity Gate', path: '/register' },
     { label: 'Authenticity Audit', path: '/verify' },
     { label: 'Sealed Vault', path: '/vault' },
     { label: 'Automated Royalties', path: '/blueprint' },
-    { label: 'Judge Mode', path: '/journey' },
-    { label: 'AI Assistant', path: '/chat' }
+    { label: 'Judge Mode', path: '/journey' }
   ]
 
   return (
@@ -52,7 +52,7 @@ function Navigation() {
         <Link
           key={item.path}
           to={item.path}
-          className={`hud-nav-item ${path === item.path ? 'active' : ''}`}
+          className={`hud-nav-item ${path === item.path || (item.path.includes('#') && path === '/' && location.hash === item.path.substring(item.path.indexOf('#'))) ? 'active' : ''}`}
         >
           {item.label}
         </Link>
@@ -329,11 +329,23 @@ function MainAppShell() {
 }
 
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
 
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
+    if (hash) {
+      // Small timeout to ensure element is rendered if moving from another route
+      const timer = setTimeout(() => {
+        const id = hash.replace('#', '')
+        const element = document.getElementById(id)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 100)
+      return () => clearTimeout(timer)
+    } else {
+      window.scrollTo(0, 0)
+    }
+  }, [pathname, hash])
 
   return null
 }
