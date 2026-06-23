@@ -24,11 +24,11 @@ The project is deployed and fully operational at **`https://content-passport.xyz
 
 The ecosystem is divided into four distinct cryptographic chambers:
 
-### 1. 🎫 Identity Gate (Pure Web2.5 zkLogin)
-*   **Zero-friction Social Onboarding:** General users authenticate via **Google Account (OIDC)**. No browser wallet extensions (like Sui Wallet) or pre-existing token balances are required.
-*   **Decentralized Address Derivation:** Ephemeral session keys (ED25519) are generated in browser memory, bound to the user's Google JWT, and verified via Sui's public ZK Prover to derive a secure zkLogin address.
-*   **Sponsored Transactions ($0.00 Gas Fee):** Transactions are built by the backend, signed locally by the user's ephemeral key, and co-signed by the backend Sponsor Wallet, which pays all gas fees.
-*   **Real zkLogin Only:** Google OAuth and Sui ZK prover proof generation must succeed before the app creates a zkLogin session. Mock zkLogin fallback is disabled.
+### 1. 🎫 Identity Gate (Mysten Labs Enoki SaaS zkLogin)
+*   **Zero-friction Social Onboarding:** General users authenticate via **Google Account (OIDC)** utilizing the Mysten Labs **Enoki SDK** for seamless social logins.
+*   **SaaS-Managed Salt & Prover:** Speeds up proof generation by delegating salt extraction and ZK Proof creation to Enoki's high-performance prover service.
+*   **Sponsored Transactions ($0.00 Gas Fee):** Back-end acts as a Gas Sponsor. Using Enoki's sponsored transaction APIs, users sign transaction blocks locally via ephemeral keypairs and submit them to Enoki for zero-gas execution.
+*   **Real zkLogin Only:** Authentication, ephemeral session key binding, and gas sponsorship must succeed before any on-chain passport is minted. Mock modes are bypassed.
 
 ### 2. 🔍 Authenticity Lab (AASE Checkpoint)
 *   **Error Level Analysis (ELA):** Detect pixel manipulations by re-compressing uploaded images at 90% quality using `sharp` modules and measuring error metrics.
@@ -193,19 +193,16 @@ cp .env.example .env
 ```
 Open `.env` and configure the required keys. (See [[.env.example](file:///Users/charles/Projects/content_passport/.env.example)] for detailed parameter guidelines).
 
-#### 🛡️ Pure Web2.5 (Enoki-Free zkLogin & Sponsor) Setup:
-To enable Google social login and gas-sponsored minting without subscribing to third-party SaaS (like Mysten Labs Enoki), configure the following variables in your `.env` file:
-*   `AUTH_GOOGLE_ID`: Your Google Cloud Console OAuth 2.0 Client ID (Web Application type).
-*   `AUTH_GOOGLE_SECRET`: Your Google Cloud Console OAuth 2.0 Client Secret.
-*   `ZKLOGIN_SALT_MASTER_SEED`: Private master seed for the built-in zkLogin salt service. The server derives a stable per-user 16-byte salt from `iss/aud/sub` using HKDF, matching Sui's recommended salt-service pattern. Generate with `openssl rand -hex 32`, back it up, and keep Testnet/Mainnet seeds separate.
-*   `ZKLOGIN_USER_SALT` (or `ZKLOGIN_SALT`): Legacy numeric static salt for testnet-only experiments. Prefer `ZKLOGIN_SALT_MASTER_SEED` so every OAuth subject receives a distinct stable salt.
-*   `ZKLOGIN_PROVER_URL` (optional): Sui zkLogin prover endpoint. Defaults to `https://prover-dev.mystenlabs.com/v1`.
-*   `ZKLOGIN_PROVER_TIMEOUT_MS` (optional): Prover request timeout in milliseconds. Defaults to `15000`.
-*   `SUI_SPONSOR_SECRET_KEY` (or `SPONSOR_SECRET`): The 32-byte hex private key of the backend Sponsor Wallet. This wallet must be funded with SUI on the target network to pay transaction gas fees for users.
+#### 🛡️ Mysten Labs Enoki Integration Setup:
+To enable Google social login and gas-sponsored minting using Mysten Labs Enoki SaaS, configure the following variables in your `.env` file:
+*   `ENOKI_PUBLIC_KEY`: Enoki developer portal public client key. Used in the React frontend to initiate zkLogin flow.
+*   `ENOKI_SECRET_KEY`: Private API credentials used on the Express backend to invoke the Sponsor transaction and Execution REST endpoints.
+*   `AUTH_GOOGLE_ID`: Your Google OAuth 2.0 Client ID matching the one registered in the Enoki console.
+*   `SUI_NETWORK`: Set to `testnet` or `mainnet` to target the appropriate Sui networks.
 
 > [!IMPORTANT]
 > **Google Cloud Console Redirect URIs Configuration:**  
-> To prevent Google OAuth `redirect_uri_mismatch` errors, you **must** configure the **Authorized Redirect URIs** in your Google Cloud Console to match the application's client-side OIDC handlers. The callback URL must end in `/login-callback` (the old path `/api/auth/callback/google` is deprecated):
+> To prevent Google OAuth `redirect_uri_mismatch` errors, you **must** configure the **Authorized Redirect URIs** in your Google Cloud Console and Enoki Portal to match the application's client-side OIDC handlers. The callback URL must end in `/login-callback`:
 > *   **Production:** `https://content-passport.xyz/login-callback`
 > *   **Local Dev:** `http://localhost:3000/login-callback`
 *   `SUI_RPC_URL`: The Sui JSON-RPC node endpoint (defaults to `https://fullnode.testnet.sui.io:443`).
@@ -248,4 +245,4 @@ This automated setup script [[scripts/gcp_setup.ts](file:///Users/charles/Projec
 5. **Set GitHub Repository Secrets**: Register the WIF provider URLs and project IDs into GitHub secrets using `gh` CLI commands.
 
 Required Cloud Run Secret Manager bindings include:
-`AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_SECRET`, `ZKLOGIN_SALT_MASTER_SEED`, `SUI_PRIVATE_KEY`, `MEMWAL_ACCOUNT_ID`, `MEMWAL_PRIVATE_KEY`, and `GOOGLE_GENERATIVE_AI_API_KEY`.
+`AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_SECRET`, `ZKLOGIN_SALT_MASTER_SEED`, `SUI_PRIVATE_KEY`, `MEMWAL_ACCOUNT_ID`, `MEMWAL_PRIVATE_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, and `ENOKI_SECRET_KEY`.
