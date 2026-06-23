@@ -6,13 +6,30 @@ import {
   clearZkLoginSessionStorage,
   readZkLoginSession,
 } from './lib/authSession'
+
+// Safe dynamic importer that reloads the page on Vite chunk load failure (MIME type or network issues)
+function safeLazy<T extends React.ComponentType<any>>(importFn: () => Promise<{ default: T }>) {
+  return lazy(() =>
+    importFn().catch((error) => {
+      console.error("Chunk load failed, forcing page reload:", error)
+      const lastReload = sessionStorage.getItem('chunk_fail_reload')
+      const now = Date.now()
+      if (!lastReload || now - Number(lastReload) > 10000) {
+        sessionStorage.setItem('chunk_fail_reload', String(now))
+        window.location.reload()
+      }
+      throw error;
+    })
+  )
+}
+
 // Route-level code splitting: non-home pages load on demand (smaller initial bundle).
-const Register = lazy(() => import('./pages/Register'))
-const Verify = lazy(() => import('./pages/Verify'))
-const Vault = lazy(() => import('./pages/Vault'))
-const Chat = lazy(() => import('./pages/Chat'))
-const Blueprint = lazy(() => import('./pages/Blueprint'))
-const Journey = lazy(() => import('./pages/Journey'))
+const Register = safeLazy(() => import('./pages/Register'))
+const Verify = safeLazy(() => import('./pages/Verify'))
+const Vault = safeLazy(() => import('./pages/Vault'))
+const Chat = safeLazy(() => import('./pages/Chat'))
+const Blueprint = safeLazy(() => import('./pages/Blueprint'))
+const Journey = safeLazy(() => import('./pages/Journey'))
 import './styles.css'
 
 function Navigation() {
@@ -82,6 +99,27 @@ function MainAppShell() {
       })
       .catch((err) => console.error('Failed to load auth config in App:', err))
   }, [])
+
+  // Listen for global chunk loading errors (MIME type mismatches or network failures) and force page reload
+  useEffect(() => {
+    const handleGlobalError = (e: ErrorEvent) => {
+      const msg = e.message || '';
+      if (
+        msg.includes('Failed to fetch dynamically imported module') ||
+        msg.includes('Expected a JavaScript-or-Wasm module script')
+      ) {
+        console.warn('Chunk load error captured globally. Reloading page...', e);
+        const lastReload = sessionStorage.getItem('chunk_fail_reload');
+        const now = Date.now();
+        if (!lastReload || now - Number(lastReload) > 10000) {
+          sessionStorage.setItem('chunk_fail_reload', String(now));
+          window.location.reload();
+        }
+      }
+    };
+    window.addEventListener('error', handleGlobalError);
+    return () => window.removeEventListener('error', handleGlobalError);
+  }, []);
 
   const handleHeaderLogout = () => {
     clearZkLoginSessionStorage()
