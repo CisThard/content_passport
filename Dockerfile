@@ -2,9 +2,9 @@ FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package*.json .npmrc ./
-RUN npm ci
+RUN npm ci --ignore-scripts && npm rebuild
 COPY web/package*.json ./web/
-RUN npm --prefix web ci
+RUN npm --prefix web ci --ignore-scripts && npm --prefix web rebuild
 COPY . .
 RUN npm --prefix web run build
 
