@@ -514,8 +514,16 @@ async function rememberZkLoginReceipt(input: {
 app.post("/api/gas/build-mint", async (req, res) => {
   try {
     const { sender, recipient, contentHash, grade, mediaBlobId, evidenceBlobId } = req.body;
+    console.log("[Server] build-mint request:", { sender, recipient, contentHash: contentHash?.substring(0, 32), grade, mediaBlobId: mediaBlobId?.substring(0, 32), evidenceBlobId: evidenceBlobId?.substring(0, 32) });
     if (!sender || !recipient || !contentHash || !grade || !mediaBlobId || !evidenceBlobId) {
       res.status(400).json({ success: false, error: "Missing required fields in request body" });
+      return;
+    }
+
+    const VALID_GRADES = ["A", "AA", "AAA"];
+    if (!VALID_GRADES.includes(grade)) {
+      console.error("[Server] Invalid grade rejected:", grade);
+      res.status(400).json({ success: false, error: `Invalid grade "${grade}". Accepted values: A, AA, AAA` });
       return;
     }
 
