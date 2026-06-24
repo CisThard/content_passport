@@ -205,9 +205,17 @@ export default function Verify({ setSharedFile }: { setSharedFile?: (file: File 
         setProgressStep({ status: 'forensic_ela', progress: 10, logLine: `Fetching specimen asset: ${sample.name}...` })
         setConsoleLogs((prev) => [...prev, `Fetching specimen asset: ${sample.name}...`])
         
-        const response = await fetch(`/samples/${sample.name}`)
+        const sampleUrl = `/samples/${sample.name}`
+        console.log(`[Verify] Fetching sample: ${sampleUrl}`)
+        let response: Response
+        try {
+          response = await fetch(sampleUrl)
+        } catch (fetchErr: any) {
+          console.error(`[Verify] Sample fetch failed for ${sampleUrl}:`, fetchErr)
+          throw new Error(`Network error fetching sample image (${sampleUrl}): ${fetchErr.message || String(fetchErr)}. Check your network connection and try again.`)
+        }
         if (!response.ok) {
-          throw new Error(`Failed to load specimen image. Make sure it exists in web/public/samples/`)
+          throw new Error(`Failed to load specimen image (HTTP ${response.status}). Make sure it exists in web/public/samples/`)
         }
         fileToUpload = await response.blob()
         fileName = sample.name
@@ -220,10 +228,18 @@ export default function Verify({ setSharedFile }: { setSharedFile?: (file: File 
       const formData = new FormData()
       formData.append('file', finalFile, fileName)
 
-      const apiResponse = await fetch(`${API_BASE}/api/verify/stream`, {
-        method: 'POST',
-        body: formData,
-      })
+      const apiUrl = `${API_BASE}/api/verify/stream`
+      console.log(`[Verify] POSTing to: ${apiUrl}, fileSize: ${finalFile.size}`)
+      let apiResponse: Response
+      try {
+        apiResponse = await fetch(apiUrl, {
+          method: 'POST',
+          body: formData,
+        })
+      } catch (fetchErr: any) {
+        console.error(`[Verify] API fetch failed for ${apiUrl}:`, fetchErr)
+        throw new Error(`Network error connecting to verification server: ${fetchErr.message || String(fetchErr)}. Check your network connection and try again.`)
+      }
 
       if (!apiResponse.ok) {
         throw new Error(`Server verification failed with status: ${apiResponse.status}`)
@@ -235,7 +251,7 @@ export default function Verify({ setSharedFile }: { setSharedFile?: (file: File 
 
       await readVerificationStream(apiResponse.body, finalFile)
     } catch (err: any) {
-      console.error(err)
+      console.error('[Verify] Audit failed:', err)
       setProgressStep({ status: 'complete', progress: 100, logLine: `Error during verification: ${err.message || String(err)}` })
       setConsoleLogs((prev) => [...prev, `[ERROR] ${err.message || String(err)}`])
     } finally {

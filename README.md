@@ -24,17 +24,17 @@ The project is deployed and fully operational at **`https://content-passport.xyz
 
 The ecosystem is divided into four distinct cryptographic chambers:
 
-### 1. 🎫 Identity Gate (Mysten Labs Enoki SaaS zkLogin)
-*   **Zero-friction Social Onboarding:** General users authenticate via **Google Account (OIDC)** utilizing the Mysten Labs **Enoki SDK** for seamless social logins.
-*   **SaaS-Managed Salt & Prover:** Speeds up proof generation by delegating salt extraction and ZK Proof creation to Enoki's high-performance prover service.
-*   **Sponsored Transactions ($0.00 Gas Fee):** Back-end acts as a Gas Sponsor. Using Enoki's sponsored transaction APIs, users sign transaction blocks locally via ephemeral keypairs and submit them to Enoki for zero-gas execution.
-*   **Real zkLogin Only:** Authentication, ephemeral session key binding, and gas sponsorship must succeed before any on-chain passport is minted. Mock modes are bypassed.
-
-### 2. 🔍 Authenticity Lab (AASE Checkpoint)
+### 1. 🔍 Authenticity Lab (AASE Checkpoint)
 *   **Error Level Analysis (ELA):** Detect pixel manipulations by re-compressing uploaded images at 90% quality using `sharp` modules and measuring error metrics.
 *   **EXIF Metadata Audit:** Read hardware profiles and sensor pattern timestamps via `exifr` parsers to check for capture-vs-modification consistency.
 *   **AI Sniffer (Gemini & Vertex AI):** Pipelines forensic clues as context to Gemini cognitive visual models to audit synthetic lights, refractions, and neural net artifacts. Seamlessly supports Keyless Vertex AI in GCP production environments.
 *   **Decentralized Memory Registry (MemWal):** Saves and queries forensic logs dynamically across Sui Testnet sharded memory blocks via the Walrus MemWal Relayer.
+
+### 2. 🎫 Identity Gate (Mysten Labs Enoki SaaS zkLogin)
+*   **Zero-friction Social Onboarding:** General users authenticate via **Google Account (OIDC)** utilizing the Mysten Labs **Enoki SDK** for seamless social logins.
+*   **SaaS-Managed Salt & Prover:** Speeds up proof generation by delegating salt extraction and ZK Proof creation to Enoki's high-performance prover service.
+*   **Sponsored Transactions ($0.00 Gas Fee):** Back-end acts as a Gas Sponsor. Using Enoki's sponsored transaction APIs, users sign transaction blocks locally via ephemeral keypairs and submit them to Enoki for zero-gas execution.
+*   **Real zkLogin Only:** Authentication, ephemeral session key binding, and gas sponsorship must succeed before any on-chain passport is minted. Mock modes are bypassed.
 
 ### 3. 🔐 Sealed Vault (SEAL Cryptography)
 *   **Shamir Secret Sharing:** AES-256 symmetric keys encrypting raw drafts are sharded into 5 shares $(k=3, n=5)$ over GF(256) and stored across global guardians.
