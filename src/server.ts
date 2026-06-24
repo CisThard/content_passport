@@ -179,12 +179,17 @@ app.post("/api/verify", upload.single("file"), async (req, res) => {
 app.post("/api/verify/stream", upload.single("file"), async (req, res) => {
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders?.();
 
+  // Keep-alive heartbeat: prevents mobile network NAT / Cloud Run proxy
+  // from closing the connection during long-running AI analysis stages.
+  const heartbeat = setInterval(() => {
+    res.write(": heartbeat\n\n");
+  }, 15_000);
+
   const emit: VerifyEvent = (event, data) => {
-    res.write(`event: ${event}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   };
 
   try {
@@ -214,6 +219,7 @@ app.post("/api/verify/stream", upload.single("file"), async (req, res) => {
       error: error.message || String(error),
     });
   } finally {
+    clearInterval(heartbeat);
     res.end();
   }
 });
