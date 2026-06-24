@@ -39,8 +39,8 @@ function Navigation() {
   const NAV_ITEMS = [
     { label: 'Home', path: '/' },
     { label: 'Odyssey', path: '/#odyssey-section' },
-    { label: 'Identity Gate', path: '/register' },
     { label: 'Authenticity Audit', path: '/verify' },
+    { label: 'Identity Gate', path: '/register' },
     { label: 'Sealed Vault', path: '/vault' },
     { label: 'Automated Royalties', path: '/blueprint' },
     { label: 'Judge Mode', path: '/journey' }

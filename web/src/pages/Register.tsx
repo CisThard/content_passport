@@ -418,7 +418,7 @@ export default function Register() {
   return (
     <div className="dashboard-container" style={{ maxWidth: '1000px' }}>
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <span className="header-badge">Prologue · Identity Gate</span>
+        <span className="header-badge">Chapter II · Identity Gate</span>
         <h2 className="cyber-title">On-chain Identity Registry</h2>
         <p className="cyber-subtitle" style={{ margin: '10px auto 0' }}>
           Declare your sovereign SuiNS (Sui Name Service) identity using your Google account to instantly mint a creator passport with zero gas fees.
@@ -614,14 +614,14 @@ export default function Register() {
               animation: 'fadeIn 0.5s ease'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                <span className="header-badge badge-emerald" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 4</span>
+                <span className="header-badge badge-emerald" style={{ padding: '2px 8px', fontSize: '9px' }}>Step 2</span>
                 <strong style={{ color: 'var(--neon-emerald)', fontSize: '13px' }}>Identity Registry SUCCESS</strong>
               </div>
               <p style={{ color: 'var(--text-secondary)', fontSize: '11px', lineHeight: 1.4, margin: '0 0 16px 0' }}>
-                Your sovereign Sui Creator Passport is minted! Proceed to the **Authenticity Audit** stage to audit your media files (images) and establish their on-chain provenance.
+                Your sovereign Sui Creator Passport is minted! Proceed to the **Sealed Vault** stage to protect your raw master files using Shamir's Secret Sharing.
               </p>
               <Link 
-                to="/verify" 
+                to="/vault" 
                 className="cyber-btn cyber-btn-emerald"
                 style={{ 
                   display: 'inline-flex',
@@ -636,7 +636,7 @@ export default function Register() {
                   textDecoration: 'none'
                 }}
               >
-                🔍 Proceed to Authenticity Audit (Verify)
+                🛡️ Proceed to Sealed Vault (SEAL)
               </Link>
             </div>
           )}

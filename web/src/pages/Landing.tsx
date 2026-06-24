@@ -362,14 +362,6 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', borderLeft: '1px dashed var(--border-light)', paddingLeft: '20px', marginLeft: '10px' }}>
             <div style={{ position: 'relative' }}>
-              <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-indigo)' }}></span>
-              <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Prologue: Identity Gate</strong>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
-                Begin your journey keylessly. Seamlessly verify your creator identity with a simple Google login, and issue your unique Genesis Passport NFT to claim your creative authority from day one.
-              </p>
-            </div>
-
-            <div style={{ position: 'relative' }}>
               <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-gold)' }}></span>
               <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter I: Authenticity Audit</strong>
               <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
@@ -378,8 +370,16 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
             </div>
 
             <div style={{ position: 'relative' }}>
+              <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-indigo)' }}></span>
+              <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter II: Identity Gate</strong>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+                Begin your journey keylessly. Seamlessly verify your creator identity with a simple Google login, and issue your unique Genesis Passport NFT to claim your creative authority from day one.
+              </p>
+            </div>
+
+            <div style={{ position: 'relative' }}>
               <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-emerald)' }}></span>
-              <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter II: Sealed Vault</strong>
+              <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter III: Sealed Vault</strong>
               <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
                 Your drafts, completely secured. Keep your raw creative ideas safe in a decentralized vault where files are sliced and stored across global nodes, preventing unauthorized leaks before public release.
               </p>
@@ -387,15 +387,15 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
 
             <div style={{ position: 'relative' }}>
               <span className="status-dot" style={{ position: 'absolute', left: '-26px', top: '4px', backgroundColor: 'var(--neon-rose)' }}></span>
-              <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter III: Automated Royalties</strong>
+              <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>Chapter IV: Automated Royalties</strong>
               <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5, marginBottom: '24px' }}>
                 Fair share for every collaborator. Establish automated royalty rules on the blockchain to instantly and transparently split licensing revenues down to the smallest fraction whenever your work is remixed.
               </p>
             </div>
 
             <div style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '20px' }}>
-              <Link to="/register" className="cyber-btn cyber-btn-indigo" style={{ display: 'inline-block', textDecoration: 'none', padding: '10px 20px', fontSize: '12px', fontWeight: 'bold' }}>
-                Enter Identity Gate ➔
+              <Link to="/verify" className="cyber-btn cyber-btn-indigo" style={{ display: 'inline-block', textDecoration: 'none', padding: '10px 20px', fontSize: '12px', fontWeight: 'bold' }}>
+                Enter Authenticity Audit ➔
               </Link>
             </div>
           </div>

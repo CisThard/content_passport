@@ -742,10 +742,10 @@ export default function Verify({ setSharedFile }: { setSharedFile?: (file: File 
                       ✓ Verify SUCCESS: Provenance Confirmed
                     </h5>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '11px', margin: '0 0 16px 0', lineHeight: 1.4 }}>
-                      Your specimen is verified as an original real photograph. Proceed to lock and protect raw master files using Shamir's Secret Sharing (3/5) on Walrus storage.
+                      Your specimen is verified as an original real photograph. Proceed to the **Identity Gate** to mint your Genesis Passport NFT with the verified grade.
                     </p>
                     <Link 
-                      to="/vault" 
+                      to="/register" 
                       className="cyber-btn cyber-btn-emerald"
                       style={{ 
                         display: 'inline-flex',
@@ -760,7 +760,7 @@ export default function Verify({ setSharedFile }: { setSharedFile?: (file: File 
                         textDecoration: 'none'
                       }}
                     >
-                      🛡️ Proceed to Sealed Vault (SEAL)
+                      🪪 Proceed to Identity Gate (Register)
                     </Link>
                   </div>
                 </div>

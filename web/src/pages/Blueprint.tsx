@@ -513,7 +513,7 @@ Status: SUCCESS (Dry Run Dry-Run Simulation Mode)
     <div className="dashboard-container" style={{ maxWidth: '1200px', display: 'flex', flexDirection: 'column', gap: '60px' }}>
       {/* Page Header */}
       <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-        <span className="header-badge badge-gold">Chapter III · Automated Royalties</span>
+        <span className="header-badge badge-gold">Chapter IV · Automated Royalties</span>
         <h2 className="cyber-title">Co-Creation Economic Architecture</h2>
         <p className="cyber-subtitle" style={{ margin: '10px auto 0' }}>
           Explore the business workflows powered by Content Passport's smart contracts, threshold cryptography, and decentralized file registry.
