@@ -116,7 +116,7 @@ $$S = f(0) = \sum_{i=1}^{k} y_i \prod_{j \neq i} \frac{-x_j}{x_i - x_j} \pmod{p}
 ## 📁 Repository Directory Structure
 
 *   [docs/](file:///Users/charles/Projects/content_passport/docs): Design documents, release notes, and technical reports
-    *   [releases/](file:///Users/charles/Projects/content_passport/docs/releases): Version history and release notes (v0.9.0 ~ v0.9.2)
+    *   [releases/](file:///Users/charles/Projects/content_passport/docs/releases): Version history and release notes (v0.9.0 ~ v0.9.5)
     *   [proposals/](file:///Users/charles/Projects/content_passport/docs/proposals): Architecture, deployment, and upgrade proposal documents
     *   [reports/](file:///Users/charles/Projects/content_passport/docs/reports): Infrastructure verification and alignment reports
     *   [official-docs/](file:///Users/charles/Projects/content_passport/docs/official-docs): Sui, Walrus, and Enoki official technical specs
