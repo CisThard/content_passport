@@ -566,6 +566,34 @@ export default function Vault({ sharedFile, setSharedFile }: { sharedFile?: File
                 .catch(err => {
                   console.warn("Failed to auto-fetch preset sample in Vault:", err)
                 })
+            } else {
+              // Custom file upload: try to recover the file from the Walrus archive
+              const mediaArtifact = parsed.walrusArtifacts?.artifacts?.find((a: any) => a.kind === 'media')
+              if (mediaArtifact && mediaArtifact.url) {
+                setConsoleLogs(prev => [
+                  ...prev,
+                  `Auto-loading custom audited specimen from Walrus: ${parsed.filename}...`,
+                  `Walrus Blob URL: ${mediaArtifact.url}`
+                ])
+                fetch(mediaArtifact.url)
+                  .then(res => res.blob())
+                  .then(blob => {
+                    const file = new File([blob], parsed.filename, { type: parsed.mimeType || 'image/jpeg' })
+                    processFile(file)
+                  })
+                  .catch(err => {
+                    console.warn("Failed to auto-fetch custom file from Walrus:", err)
+                    setConsoleLogs(prev => [
+                      ...prev,
+                      `[WARNING] Failed to load custom file from Walrus: ${err.message || String(err)}. Please upload the file manually.`
+                    ])
+                  })
+              } else {
+                setConsoleLogs(prev => [
+                  ...prev,
+                  `[WARNING] Custom audited specimen '${parsed.filename}' could not be loaded automatically because the OIDC redirect reset the page state. Please upload the file manually.`
+                ])
+              }
             }
           }
         } catch (e) {
