@@ -121,15 +121,6 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
   const PORTALS = [
     {
       id: 0,
-      title: 'Identity Gate',
-      badge: 'Identity Registry',
-      desc: 'Declare your sovereign SuiNS identity, establish ephemeral cryptographic session keys, and mint an immutable, tamper-proof creator passport NFT.',
-      icon: '',
-      path: '/register',
-      colorClass: 'cyber-card-glow-indigo'
-    },
-    {
-      id: 1,
       title: 'Authenticity Lab',
       badge: 'Forensics & EXIF Audit',
       desc: 'Execute multi-agent forensics check including Error Level Analysis (ELA) pixel compression metrics, EXIF header consistency, and Gemini AISniffer verification.',
@@ -137,6 +128,15 @@ export default function Landing({ passportsCount, walrusStatus }: LandingProps) 
       path: '/verify',
       colorClass: 'cyber-card-glow-gold',
       badgeColor: 'badge-gold'
+    },
+    {
+      id: 1,
+      title: 'Identity Gate',
+      badge: 'Identity Registry',
+      desc: 'Declare your sovereign SuiNS identity, establish ephemeral cryptographic session keys, and mint an immutable, tamper-proof creator passport NFT.',
+      icon: '',
+      path: '/register',
+      colorClass: 'cyber-card-glow-indigo'
     },
     {
       id: 2,
